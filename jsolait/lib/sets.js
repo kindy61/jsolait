@@ -1,0 +1,337 @@
+/*
+  Copyright (c) 2005 Jan-Klaas Kollhof
+  
+  This file is part of the JavaScript O Lait library(jsolait).
+  
+  jsolait is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 2.1 of the License, or
+  (at your option) any later version.
+ 
+  This software is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+ 
+  You should have received a copy of the GNU Lesser General Public License
+  along with this software; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/ 
+
+/**
+    A module providing Sets.
+    @creator                 Jan-Klaas Kollhof
+    @created                2005-03-11
+    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
+    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+**/
+Module("sets", "$Revision: 59 $", function(mod){
+    
+    /**
+        Thrown if an item was not found in the set.
+    **/
+    mod.ItemNotFoundInSet=Class(mod.Exception, function(publ, supr){
+        ///The set the item was not found in.
+        publ.set;
+        ///The item that was not found.
+        publ.item;
+        
+        publ.__init__=function(set, item){
+            this.set =set;
+            this.item=item;
+        }
+    })
+    
+    mod.Set=Class(function(publ, supr){
+        /**
+            Initializes a Set instance.
+            @param itearatable=[]  A String or an Array of which the elements will be added to the set.
+        **/
+        publ.__init__=function(iterable){
+            this.items = {};
+            if(iterable === undefined){
+                iterable = [];
+            }
+            if(iterable.constructor == String){
+                iterable = iterable.split("");
+            }
+            for(var i=0;i<iterable.length;i++){
+                this.add(iterable[i]);
+            }
+        }
+        
+        /**
+            Adds an item to the set if it does not exist yet.
+            @param item The item to add.
+            @return        The item added.
+        **/
+        publ.add=function(item){
+            var h ='#' +item;
+            this.items[h] = item;
+            return item;
+        }
+        
+        
+        
+        /**
+            Removes an item from the set raising 
+            an ItemNotFoundInSet error if the item is not present
+            @param item The item to remove.
+            @return        The item that was removed.
+        **/
+        publ.remove=function(item){
+            var h = '#' + item;
+            if(this.items[h] === undefined){
+                throw new mod.ItemNotFoundInSet(this, item);
+            }else{
+                item = this.items[h];
+                delete this.items[h];    
+                return item;
+            }
+        }
+        
+        /**
+            Removes an item from the set wether or not the item realy exists.
+            @param item The item to remove.
+            @return        The item that was removed.
+        **/
+        publ.discard=function(item){
+            var h='#' + item;
+            item = this.items[h];
+            delete this.items[h];    
+            return item;
+        }
+        
+        /**
+            Returns wether or not an item is part of the set.
+            @param item The item in question.
+            @return        True if the item is found in the set, false otherwise.
+        **/
+        publ.contains=function(item){
+            var h='#' + item;
+            return (this.items[h] !== undefined)
+        }
+        /**
+            Returns wether or not the set is a sub set of another set.
+            @param setObj The set to check against.
+            @return True if the set is a subset of setObj. False otherwise.
+        **/
+        publ.isSubSet = function(setObj){
+            for(var n in this.items){
+                if(setObj.contains(this.items[n])==false){
+                    return false;
+                }
+            }
+            return true;
+        }
+                
+        /**
+            Returns wether or not the set is a super set of another set.
+            @param setObj The set to check against.
+            @return True if the set is a super set of setObj. False otherwise.
+        **/
+        publ.isSuperSet = function(setObj){
+            return setObj.isSubSet(this);
+        }
+        
+        /**
+            Returns wether or not the set is equal to the other set.
+            @param setObj The set to check against.
+            @return True if the set is equal to setObj. False otherwise.
+        **/
+        publ.equals=function(setObj){
+            return (this.isSubSet(setObj) && setObj.isSubSet(this));
+        }
+        
+        /**
+            Creates a new set containing all elements of set and setObj (newSet = set | setObj).
+            @param set The set to union with.
+            @return A new set.
+        **/
+        publ.union=function(setObj){
+            var ns= this.copy();
+            ns.unionUpdate(setObj);
+            return ns;
+        }
+        
+        /**
+            Creates a new set containing elements common to the set and setObj (newSet = set & setObj).
+            @param set The set to intersect with.
+            @return A new set.
+        **/
+        publ.intersection=function(setObj){
+            var ns=new mod.Set();
+            for(var n in this.items){
+                var item=this.items[n]
+                if(setObj.contains(item)){
+                    ns.add(item);
+                }
+            }
+            return ns;
+        }
+        /**
+            Creates a new set containing only elements of the set that are not found in setObj (newSet = set - setObj).
+            @param setObj The set containing the elements to subtract from the set.
+            @return A new set.
+        **/
+        publ.difference=function(setObj){
+            var ns=new mod.Set();
+            for(var n in this.items){
+                var item=this.items[n];
+                if(setObj.contains(item)==false){
+                    ns.add(item);
+                }
+            }
+            return ns;
+        }
+        
+        /**
+            Creates a new set containing elements from the set and setObj but no elements present in both(newSet = (set - setObj) | (setObj - set)).
+            @param setObj The set to create a symmetric difference with.
+            @return A new set.
+        **/
+        publ.symmDifference=function(setObj){
+            var ns = this.difference(setObj);
+            return ns.unionUpdate(setObj.difference(this));
+        }
+        
+        
+        /**
+            Updates the set adding all elements from setObj (set = set | setObj).
+            @param set The set to union with.
+            @return The set itself.
+        **/
+        publ.unionUpdate=function(setObj){
+            for(var n in setObj.items){
+                this.add(setObj.items[n]);
+            }
+            return this;
+        }
+        
+        /**
+            Updates the set keeping only elements also found in setObj (set = set & setObj).
+            @param set The set to intersect with.
+            @return The set itself.
+        **/
+        publ.intersectionUpdate=function(setObj){
+            for(var n in this.items){
+                var item=this.items[n];
+                if(setObj.contains(item)==false){
+                    this.remove(item);
+                }
+            }
+            return this;
+        }
+        
+        /**
+            Updates the set removing all elements found in setObj  (set = set - setObj).
+            @param setObj The set containing the elements to subtract from the set.
+            @return The set itself.
+        **/
+        publ.differenceUpdate=function(setObj){
+            for(var n in this.items){
+                var item=this.items[n];
+                if(setObj.contains(item)){
+                    this.remove(item);
+                }
+            }
+            return this;
+        }
+        
+        /**
+            Updates the set to only contain elements from the set and setObj but no elements present in both(set = (set - setObj) | (setObj - set)).
+            @param setObj The set to create a symmetric difference with.
+            @return The set itself.
+        **/
+        publ.symmDifferenceUpdate=function(setObj){
+            var union = setObj.difference(this)
+            this.differenceUpdate(setObj);
+            return this.unionUpdate(union);
+        }
+        
+        /**
+            Creates a copy of the set.
+            @return A new copy of the set.
+        **/
+        publ.copy=function(){
+            var ns = new mod.Set();
+            return ns.unionUpdate(this);
+        }
+        
+        /**
+            Removes all elements from teh set.
+        **/
+        publ.clear=function(){
+            this.items={};
+        }
+        
+        /**
+            Returns an array containing all elements of the set.
+            @return An array containing all elements of the set.
+        **/
+        publ.toArray=function(){
+            var a=[];
+            for(var n in this.items){
+                a.push(this.items[n]);
+            }
+            return a;
+        }
+        
+        publ.toString=function(){
+            var items =[];
+            for(var n in this.items){
+                items.push(this.items[n]);
+            }
+            return "{"+ items.join(",") + "}";
+        }
+    })
+    
+    
+    mod.test=function(){
+        
+        var prntRslt=function(expected, rslt){
+            print("expected\t:" + expected);
+            print("calculated\t:" + rslt);
+            if(rslt.equals(expected) == false){
+                throw "Sets are not Equal:\n" + expected + " != " + rslt;
+            }
+            print("");
+        }
+        
+        var s1=new mod.Set("0123456");
+        var s2=new mod.Set("3456789");
+        
+        print("%s | %s".format(s1, s2));
+        prntRslt(new mod.Set("0123456789"), s1.union(s2));
+        
+        print("%s | %s".format(s2, s1));
+        prntRslt(new mod.Set("0123456789"), s2.union(s1));
+        
+        print("%s & %s".format(s1, s2));
+        prntRslt(new mod.Set("3456"), s1.intersection(s2));
+        
+        print("%s & %s".format(s2, s1));
+        prntRslt(new mod.Set("3456"), s2.intersection(s1));
+        
+        print("%s - %s".format(s1, s2));
+        prntRslt(new mod.Set("012"), s1.difference(s2))
+        
+        print("%s - %s".format(s2, s1));
+        prntRslt(new mod.Set("789"), s2.difference(s1))
+        
+        print("%s ^ %s".format(s1, s2));
+        prntRslt(new mod.Set("012789"),s1.symmDifference(s2));
+        
+        print("%s ^ %s".format(s2, s1));
+        prntRslt(new mod.Set("012789"),s2.symmDifference(s1));
+    }
+})
+
+
+
+a=new Array(10);
+
+
+for(var key in a){
+    print("key: %s=%s type: %s ".format(key,  a[key], typeof key));
+}

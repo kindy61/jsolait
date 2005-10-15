@@ -1,0 +1,112 @@
+<?xml version="1.0" standalone="yes" ?>
+<job id="jsolait">
+    <?job error="true" debug="false"?>
+    <description>
+        JavaScript O Lait for WSH.
+        
+       Copyright (c) 2005 Jan-Klaas Kollhof
+       
+       This file is part of jsolait
+     
+       jsolait is free software; you can redistribute it and/or modify
+       it under the terms of the GNU Lesser General Public License as published by
+       the Free Software Foundation; either version 2.1 of the License, or
+       (at your option) any later version.
+      
+       This software is distributed in the hope that it will be useful,
+       but WITHOUT ANY WARRANTY; without even the implied warranty of
+       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+       GNU Lesser General Public License for more details.
+      
+       You should have received a copy of the GNU Lesser General Public License
+       along with this software; if not, write to the Free Software
+       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA     
+    </description>
+
+    <runtime>
+        <unnamed name="filename" helpstring="The scriptfiles to run." many="false" required="1" />
+        <named name="moduleTest" helpstring="Specifies to run a module's test method." many="false" required="0" />
+        <named name="compile" helpstring="Specifies to run a the lang.parser on it." many="false" required="0" />
+    </runtime>
+    
+    <script language="JavaScript" src="./jsolait.js" />
+    
+    <script language="JavaScript"> <![CDATA[
+        globalEval=function(){
+            eval(arguments[0]);
+        }
+        
+    print = function(m){
+        var s=[];
+        for(var i=0;i<arguments.length;i++){
+            s.push(''+arguments[i]);
+        }
+        
+        WScript.echo(s.join(" "));
+    }
+     
+    pprint=function(m, indent){
+        var m = m.split("\n");
+        
+        indent =(indent === undefined) ? 0 : indent;
+        
+        if(indent<0){
+            pprint.indent+=indent;
+        }
+        
+        var s=[];
+        for(var i=0;i<pprint.indent;i++){
+            s.push(' ');
+        }
+        s=s.join('');
+        for(var i=0;i<m.length;i++){
+            print(s + m[i]);
+        }
+        
+        if(indent>0){
+            pprint.indent += indent;
+        }
+    }
+    pprint.indent=0;
+    
+    Error.prototype.toString=function(){
+        return this.name +": " + this.message;
+    }
+            
+    LogError=1;
+    LogWarn=2;
+    LogInfo=4;
+    Error.prototype.toTraceString=function(){
+        return this.message
+    }
+    
+    log=function(msg, level){
+        level = level==null?LogInfo:level;
+        if(typeof msg !="string"){
+            level = LogError;
+            
+            msg = msg.toTraceString();
+        }
+        
+        if(level & log.level){
+            print(msg);
+        }
+    }
+    log.level = LogInfo | LogWarn | LogError;    
+   
+]]>
+    </script>
+    
+    <script language="JavaScript" src="./libws/jsolaitws.js" />
+    
+    <script language="JavaScript" ><![CDATA[
+        try{
+            jsolait.imprt("jsolaitws").run();
+        }catch(e){
+            log(e,LogError);
+        }
+       
+    ]]>
+    </script>
+    
+</job>

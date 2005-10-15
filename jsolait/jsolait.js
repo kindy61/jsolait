@@ -1,0 +1,792 @@
+/*
+    Copyright (c) 2003-2005 Jan-Klaas Kollhof
+    
+    This file is part of the JavaScript O Lait library(jsolait).
+    
+    jsolait is free software; you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
+    
+    This software is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+    
+    You should have received a copy of the GNU Lesser General Public License
+    along with this software; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+/**
+    The main jsolait script.
+    It provides the core functionalities  for creating classes, modules and for importing modules.
+    
+    @varsion 2.0
+    $LastChangedBy: Jan-Klaas Kollhof $
+    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    $Revision: 59 $
+**/
+
+
+/**
+    Creates a new class object which inherits from superClass.
+    @param className="anonymous"  The name of the new class.
+                                                  If the created class is a public member of a module then 
+                                                  the className is automatically set.
+    @param superClass=Object         The class to inherit from (super class).
+    @param mixinClass(*)                 The mixin class.
+    @param classScope(-1)               A function which is executed for class construction.
+                                                As 1st parameter it will get the new class' protptype for 
+                                                overrideing or extending the super class. As 2nd parameter it will get
+                                                the super class' wrapper for calling inherited methods.
+**/
+Class=function(className, superClass, mixinClass, classScope){
+    var args=[];
+    for(var i=0;i<arguments.length;i++){
+        args[i] = arguments[i];
+    }
+    //last arg should be a classScope
+    classScope = args.pop();
+    
+    //first arg is the class' name if it is a string
+    if((args.length>0) && (typeof args[0] =='string')){
+        className=args.shift();
+    }else{
+        className = "anonymous";
+    }
+    //the next arg should be the superclass
+    if(args.length > 0){
+        superClass = args.shift();
+    }else{
+        superClass = Object;
+    }
+    var mixinClasses=args;
+    
+    //this is the constructor for the new objects created from the new class.
+    //if and only if it is NOT used for prototyping/subclassing the __init__ method of the newly created object will be called.
+    var NewClass = function(calledBy){
+        if(calledBy !== Class){
+            //simulate Array and Function subclassing
+            if(NewClass.prototype instanceof Array || NewClass.prototype instanceof Function){
+                var rslt;
+                if(NewClass.prototype instanceof Array){
+                    rslt=[];
+                }else{
+                    rslt = function(){
+                        return rslt.__call__.apply(rslt, arguments);
+                    };
+                }
+                //transfer all properties defined in teh class to the new object(as it is empty)
+                for(var n in NewClass.prototype){
+                    rslt[n] = NewClass.prototype[n];
+                }
+                //these props are not copied in the above loop
+                rslt.constructor = NewClass;
+                rslt.toString = NewClass.prototype.toString;
+                    
+                rslt.__init__.apply(rslt,arguments);
+                return rslt;
+            }else{
+                //todo should a constructor be able to return something?
+                this.__init__.apply(this, arguments);
+            }
+        }
+    };
+    //This will create a new prototype object of the new class.
+    NewClass.createPrototype = function(){
+        return new NewClass(Class);
+    };
+    //setting class properties for the new class.
+    NewClass.superClass = superClass;
+    NewClass.className=className; 
+    NewClass.toString = function(){
+        return "[class %s]".format(NewClass.className);
+    };
+    
+    NewClass.isSubclassOf=function(cls){
+        return this.prototype instanceof cls;
+    };
+    
+   //see if the super class can create prototypes. (creating an object without calling __init__())
+    if(superClass.createPrototype!==undefined){
+        NewClass.prototype = superClass.createPrototype();
+    }else{//just create an object of the super class
+        NewClass.prototype = new superClass();
+    }
+    //reset the constructor for new objects to the actual constructor.
+    NewClass.prototype.constructor = NewClass;
+    
+    
+    if(superClass == Object){//all other objects already have a nice toString method.
+        NewClass.prototype.toString = function(){
+            return "[object %s]".format(this.constructor.className);
+        };
+    }
+    //make sure the new class has an __init__ method if it inherits from Object,Array or Function
+    switch(superClass){
+        case Object:
+            NewClass.prototype.__init__=function(){
+            };    
+            break;
+        case Array:
+            //immitate a call to new Array()
+            NewClass.prototype.__init__=function(){
+                if (arguments.length==0){
+                
+                }else if(arguments.lengt==1){
+                    this.length=arguments[0];
+                }else{
+                    for(var i=0;i<arguments.length;i++){
+                        this.push(arguments[i]);
+                    }
+                }
+            };    
+            break;
+        case Function:
+            //Subclasses of Function do not impl. Function's default behavior
+            //as this would not make much sense, we allow subclassing of functions so people can create callable objects
+            NewClass.prototype.__init__=function(){
+            };
+            //needs to be overwritten by users
+            NewClass.prototype.__call__=function(){
+            };
+            NewClass.prototype.toString=function(){
+                return "[callable %s]".format(this.constructor.className);
+                //return Function.prototype.toString.call(this);
+            };
+            break;
+    }
+    
+    for(var i=0;i<mixinClasses.length;i++){
+        var mixin = mixinClasses[i].prototype;
+        for(var n in mixin){
+            if(n != "__init__"){
+                NewClass.prototype[n] = mixin[n];
+            }
+        }
+    }
+       
+    //create a supr  function to be used to call methods of the super class
+    var supr = function(self){
+        //make sure its a legal call to supr
+        if(! (self.constructor.isSubclassOf(superClass))){
+            throw "Illegal call of supr:\n %s is not an instance of %s".format(self, superClass);
+        }
+        var wrapper;
+        //if a wrapper has been created already then use it
+        if(self[" super_this_" + superClass.className]){
+            wrapper = self[" super_this_" + superClass.className];
+        }else{
+            //set up super class functionality so a call to super(this) will return an object with all super class methods 
+            //the methods can be called like super(this).foo and the this object will be bound to that method.
+            wrapper = {};
+            var superProto = superClass.prototype;
+            for(var n in superProto){
+                if(superProto[n] instanceof Function){
+                    wrapper[n] = function(){
+                                            var f = arguments.callee;
+                                            return superProto[f._name].apply(self, arguments);
+                                        }
+                    wrapper[n]._name = n;
+                }
+            }
+            //save the wrapper so calling of supr a second time is much faster and skips the wrapper setup
+            self[" super_this_" + superClass.className]=wrapper;
+        }
+        return wrapper;
+    };
+        
+    //execute the scope of the class
+    classScope(NewClass.prototype, supr);
+    return NewClass;
+}    
+Class.toString = function(){
+    return "[object Class]";
+}
+Class.createPrototype=function(){ 
+    throw "Can't use Class as a super class.";
+}
+
+
+/**
+    Creates a new module and registers it.
+    @param name              The name of the module.
+    @param version            The version of a module.
+    @param moduleScope    A function which is executed for module creation.
+                                     As 1st parameter it will get the module variable.                          
+                                     The imported modules(imports) will be passed to the moduleScope starting with the 2nd parameter.
+**/
+Module=function(name, version, moduleScope){
+    var mod = {};
+    mod.name = name;
+    mod.version = version;
+
+    mod.toString=function(){
+        //todo:SVN adaption
+        return "[module '%s' version: %s]".format(mod.name, mod.version);
+    }
+
+    //give a module it's own exception class which makes debugging easier
+    mod.Exception=Class(Module.Exception, function(publ, supr){
+        publ.module = mod;
+    })
+
+    //this is for hooks that need to work with modules before their scope is run
+    Module.preScopeExecution(mod);
+
+    try{//to execute the scope of the module
+        moduleScope.call(mod, mod);
+    }catch(e){
+        throw new Module.ModuleScopeExecFailed(mod, e);
+    }
+    
+    //todo: set classNames for anonymous classes.
+    for(var n in mod){
+        if(mod[n]){
+            if(mod[n].className == "anonymous"){
+                mod[n].className = n;
+            }
+        }
+    }
+    jsolait.registerModule(mod);
+    return mod;
+}
+
+Module.toString=function(){
+    return "[object Module]";
+}
+Module.createPrototype=function(){ 
+    throw "Can't use Module as a super class.";
+}
+/**
+    Base class for all module-Exceptions.
+    This class should not be instaciated directly but rather
+    use the exception that is part of the module.
+**/
+Module.Exception=Class("Exception", function(publ){
+    /**
+        Initializes a new Exception.
+        @param msg           The error message for the user.
+        @param trace=undefined  The error causing this Exception if available.
+    **/
+    publ.__init__=function(msg, trace){
+        this.name = this.constructor.className;
+        this.message = msg;
+        this.trace = trace;
+    }
+    
+    publ.toString=function(){
+        var s = "%s %s\n\n".format(this.name, this.module);
+        s += this.message;
+        return s;
+    }
+    /**
+        Returns the complete trace of the exception.
+        @return The error trace.
+    **/
+    publ.toTraceString=function(){
+        var s = "%s in %s:\n    ".format(this.name, this.module );
+        s+="%s\n\n".format(this.message);
+        if(this.trace){
+            if(this.trace.toTraceString){
+                s+= this.trace.toTraceString();
+            }else{
+                s+= this.trace + 'sdfsdf';
+            }
+        }
+        return s;
+    }
+    ///The name of the Exception(className).
+    publ.name;
+    ///The error message.
+    publ.message;
+    ///The module the Exception belongs to.
+    publ.module="jsolait";
+    ///The error which caused the Exception or undefined.
+    publ.trace;      
+})
+
+/**
+    Thrown if a module scope could not be run.
+**/
+Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, function(publ, supr){
+    /**
+        Initializes a new ModuleScopeExecFailed Exception.
+        @param mod      The module.
+        @param trace      The error cousing this Exception.
+    **/
+    publ.__init__=function(mod, trace){
+        supr(this).__init__("Failed to run the module scope for %s".format(mod), trace);
+        this.failedModule = mod;
+    }
+    ///The module that could not be createed.
+    publ.module;
+})
+///a hook for other modules to override for customization todo:doc
+Module.preScopeExecution=function(mod){};
+  
+    
+/**
+    
+    @author                 Jan-Klaas Kollhof
+    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
+    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+**/
+Module("jsolait", "$Revision: 59 $", function(mod){
+    jsolait=mod;
+    mod.modules={};
+    
+    /**
+        Thrown when a module could not be found.
+    **/
+    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
+        /**
+            Initializes a new ModuleImportFailed Exception.
+            @param name      The name of the module.
+            @param trace      The error cousing this Exception.
+        **/
+        publ.__init__=function(moduleName, trace){
+            supr(this).__init__("Failed to import module: '%s'".format(moduleName), trace);
+            this.moduleName = moduleName;
+        }
+        ///The  name of the module that was not found.
+        publ.moduleName;
+    })
+        
+    
+    mod.__import__=function(modName){
+        var modImp = mod.modules[modName];
+        if(modImp !== undefined){
+            return modImp;
+        }else{
+            if(mod.modules.moduleLoader){
+                return mod.modules.moduleLoader.imprt(modName);
+            }else{
+                throw mod.ImportFailed(modName, new mod.Exception("No module loader available"))
+            }
+        }
+    }
+    
+    /**
+        Imports a module given its name.
+        Modules must have registered themselfes before they can be imported.
+        @param name   The name of the module to load.
+        @return           The module object.
+    **/
+    mod.imprt = function(name){
+        return mod.__import__(name);
+    }
+    
+    imprt = function(name){
+        return mod.imprt(name);
+    }
+    
+    mod.__registerModule__=function(modObj, modName){
+        if(modName != 'jsolait'){
+            mod.modules[modName] = modObj;
+        }
+    }
+       
+    mod.registerModule=function(modObj, modName){
+        modName = modName===undefined?modObj.name : modName;
+        mod.__registerModule__(modObj, modName);
+    }
+
+
+//---------------------------------------------------String Format -------------------------------------------------------    
+    /**
+        Creates a format specifier object. 
+    **/
+    var FormatSpecifier=function(s){
+        var s = s.match(/%(\(\w+\)){0,1}([ 0-]){0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}(.)/);
+        if(s[1]){
+            this.key=s[1].slice(1,-1);
+        }else{
+            this.key = null;
+        }
+        this.paddingFlag = s[2];
+        if(this.paddingFlag==""){
+            this.paddingFlag =" " 
+        }
+        this.signed=(s[3] == "+");
+        this.minLength = parseInt(s[4]);
+        if(isNaN(this.minLength)){
+            this.minLength=0;
+        }
+        if(s[5]){
+            this.percision = parseInt(s[5].slice(1,s[5].length));
+        }else{
+            this.percision=-1;
+        }
+        this.type = s[6];
+    }
+
+    /**
+        Formats a string replacing formatting specifiers with values provided as arguments
+        which are formatted according to the specifier.
+        This is an implementation of  python's % operator for strings and is similar to sprintf from C.
+        Usage:
+            resultString = formatString.format(value1, v2, ...);
+        
+        Each formatString can contain any number of formatting specifiers which are
+        replaced with the formated values.
+        
+        specifier([...]-items are optional): 
+            "%(key)[flag][sign][min][percision]typeOfValue"
+            
+            (key)  If specified the 1st argument is treated as an object/associative array and the formating values 
+                     are retrieved from that object using the key.
+                
+            flag:
+                0      Use 0s for padding.
+                -      Left justify result, padding it with spaces.
+                        Use spaces for padding.
+            sign:
+                +      Numeric values will contain a +|- infront of the number.
+            min:
+                l      The string will be padded with the padding character until it has a minimum length of l. 
+            percision:
+               .x     Where x is the percision for floating point numbers and the lenght for 0 padding for integers.
+            typeOfValue:
+                d    Signed integer decimal.  	 
+                i     Signed integer decimal. 	 
+                b    Unsigned binary.                       //This does not exist in python!
+                o    Unsigned octal. 	
+                u    Unsigned decimal. 	 
+                x    Unsigned hexidecimal (lowercase). 	
+                X   Unsigned hexidecimal (uppercase). 	
+                e   Floating point exponential format (lowercase). 	 
+                E   Floating point exponential format (uppercase). 	 
+                f    Floating point decimal format. 	 
+                F   Floating point decimal format. 	 
+                c   Single character (accepts byte or single character string). 	 
+                s   String (converts any object using object.toString()). 	
+        Examples:
+            "%02d".format(8) == "08"
+            "%05.2f".format(1.234) == "01.23"
+            "123 in binary is: %08b".format(123) == "123 in binary is: 01111011"
+            
+        @param *  Each parameter is treated as a formating value. 
+        @return The formated String.
+    **/
+    String.prototype.format=function(){
+        var sf = this.match(/(%(\(\w+\)){0,1}[ 0-]{0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}[dibouxXeEfFgGcrs%])|([^%]+)/g);
+        if(sf){
+            if(sf.join("") != this){
+                throw new mod.Exception("Unsupported formating string.");
+            }
+        }else{
+            throw new mod.Exception("Unsupported formating string.");
+        }
+        var rslt ="";
+        var s;
+        var obj;
+        var cnt=0;
+        var frmt;
+        var sign="";
+        
+        for(var i=0;i<sf.length;i++){
+            s=sf[i];
+            if(s == "%%"){
+                s = "%";
+            }else if(s.slice(0,1) == "%"){
+                frmt = new FormatSpecifier(s);//get the formating object
+                if(frmt.key){//an object was given as formating value
+                    if((typeof arguments[0]) == "object" && arguments.length == 1){
+                        obj = arguments[0][frmt.key];
+                    }else{
+                        throw new mod.Exception("Object or associative array expected as formating value.");
+                    }
+                }else{//get the current value
+                    if(cnt>=arguments.length){
+                        throw new mod.Exception("Not enough arguments for format string.");
+                    }else{
+                        obj=arguments[cnt];
+                        cnt++;
+                    }
+                }
+                    
+                if(frmt.type == "s"){//String
+                    if (obj === null){
+                        obj = "null";
+                    }else if(obj===undefined){
+                        obj = "undefined";
+                    }
+                    s=obj.toString().pad(frmt.paddingFlag, frmt.minLength);
+                    
+                }else if(frmt.type == "c"){//Character
+                    if(frmt.paddingFlag == "0"){
+                        frmt.paddingFlag=" ";//padding only spaces
+                    }
+                    if(typeof obj == "number"){//get the character code
+                        s = String.fromCharCode(obj).pad(frmt.paddingFlag , frmt.minLength) ;
+                    }else if(typeof obj == "string"){
+                        if(obj.length == 1){//make sure it's a single character
+                            s=obj.pad(frmt.paddingFlag, frmt.minLength);
+                        }else{
+                            throw new mod.Exception("Character of length 1 required.");
+                        }
+                    }else{
+                        throw new mod.Exception("Character or Byte required.");
+                    }
+                }else if(typeof obj == "number"){
+                    //get sign of the number
+                    if(obj < 0){
+                        obj = -obj;
+                        sign = "-"; //negative signs are always needed
+                    }else if(frmt.signed){
+                        sign = "+"; // if sign is always wanted add it 
+                    }else{
+                        sign = "";
+                    }
+                    //do percision padding and number conversions
+                    switch(frmt.type){
+                        case "f": //floats
+                        case "F":
+                            if(frmt.percision > -1){
+                                s = obj.toFixed(frmt.percision).toString();
+                            }else{
+                                s = obj.toString();
+                            }
+                            break;
+                        case "E"://exponential
+                        case "e":
+                            if(frmt.percision > -1){
+                                s = obj.toExponential(frmt.percision);
+                            }else{
+                                s = obj.toExponential();
+                            }
+                            s = s.replace("e", frmt.type);
+                            break;
+                        case "b"://binary
+                            s = obj.toString(2);
+                            s = s.pad("0", frmt.percision);
+                            break;
+                        case "o"://octal
+                            s = obj.toString(8);
+                            s = s.pad("0", frmt.percision);
+                            break;
+                        case "x"://hexadecimal
+                            s = obj.toString(16).toLowerCase();
+                            s = s.pad("0", frmt.percision);
+                            break;
+                        case "X"://hexadecimal
+                            s = obj.toString(16).toUpperCase();
+                            s = s.pad("0", frmt.percision);
+                            break;
+                        default://integers
+                            s = parseInt(obj).toString();
+                            s = s.pad("0", frmt.percision);
+                            break;
+                    }
+                    if(frmt.paddingFlag == "0"){//do 0-padding
+                        //make sure that the length of the possible sign is not ignored
+                        s=s.pad("0", frmt.minLength - sign.length);
+                    }
+                    s=sign + s;//add sign
+                    s=s.pad(frmt.paddingFlag, frmt.minLength);//do padding and justifiing
+                }else{
+                    throw new mod.Exception("Number required.");
+                }
+            }
+            rslt += s;
+        }
+        return rslt;
+    }
+    
+    /**
+        Padds a String with a character to have a minimum length.
+        
+        @param flag   "-":      to padd with " " and left justify the string.
+                            Other: the character to use for padding. 
+        @param len    The minimum length of the resulting string.
+    **/
+    String.prototype.pad = function(flag, len){
+        var s = "";
+        if(flag == "-"){
+            var c = " ";
+        }else{
+            var c = flag;
+        }
+        for(var i=0;i<len-this.length;i++){
+            s += c;
+        }
+        if(flag == "-"){
+            s = this + s;
+        }else{
+            s += this;
+        }
+        return s;
+    }
+    
+
+    ///Tests the module.
+    mod.test=function(){
+        
+    }
+})
+
+//--------------------------------------------Module loader--------------------------------------------
+
+
+Module("moduleLoader", "$Revision: 59 $", function(mod){
+    
+    ///The paths to search for modules
+    mod.moduleSearchPaths = ["."];
+    
+    ///The location where jsolait is installed.
+    mod.installPath="./jsolait";
+    
+    ///The paths of  the modules that come with jsolait.
+    var modulePathMap={codecs:"%(installPath)s/lib/codecs.js",
+                                    crypto:"%(installPath)s/lib/crypto.js",
+                                    dom:"%(installPath)s/lib/dom.js",
+                                    forms:"%(installPath)s/lib/forms.js",
+                                    iter:"%(installPath)s/lib/iter.js",
+                                    jsonrpc:"%(installPath)s/lib/jsonrpc.js",
+                                    lang:"%(installPath)s/lib/lang.js",
+                                    sets:"%(installPath)s/lib/sets.js",
+                                    testing:"%(installPath)s/lib/testing.js",
+                                    urllib:"%(installPath)s/lib/urllib.js",
+                                    xml:"%(installPath)s/lib/xml.js",
+                                    xmlrpc:"%(installPath)s/lib/xmlrpc.js"}                                      
+    
+    /**
+       Imports a module given its name(someModule.someSubModule).
+       A module's file location is determined by treating each module name as a directory.
+       Only the last one points to a file.
+       If the module's URL is not known to jsolait then it will be searched for in jsolait.baseURL which is "." by default.
+       @param name   The name of the module to load.
+       @return           The module object.
+    */
+    mod.imprt = function(name){
+
+        if (jsolait.modules[name]){ //module already loaded
+            return mod.modules[name];
+        }else{
+            var src,modPath;
+            
+            //check if jsolait already knows the path of the module
+            if(modulePathMap[name]){
+                modPath = modulePathMap[name].format(mod);
+                try{//to load the source of the module
+                    src = getFile(modPath);
+                }catch(e){
+                    throw new mod.ImportFailed(name, modPath, e);
+                }
+            }else{//go through the search path and try loading the module
+                var failedPaths=[];
+                for(var i=0;i<mod.moduleSearchPaths.length; i++){
+                    modPath = "%s/%s.js".format(mod.moduleSearchPaths[i], name.split(".").join("/"));
+                    try{
+                        src = getFile(modPath);
+                        break;
+                    }catch(e){
+                        failedPaths.push(modPath);
+                    }
+                }
+                if(src == null){
+                    throw new mod.ModuleImportFailed(name, failedPaths, e);
+                }
+            }
+            
+            try{//interpret the script
+                (new Function("",src))(); //todo should it use globalEval ?
+            }catch(e){
+                throw new mod.ImportFailed(name, modPath, e);
+            }
+            
+            return jsolait.__import__(name); 
+        }
+    } 
+    
+    /**
+        Thrown when a module could not be found.
+    **/
+    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
+        /**
+            Initializes a new ModuleImportFailed Exception.
+            @param name      The name of the module.
+            @param modulePath The path or a list of paths jsolait tried to load the modules from
+            @param trace      The error cousing this Exception.
+        **/
+        publ.__init__=function(moduleName, modulePath, trace){
+            supr(this).__init__("Failed to import module: '%s' from:\n%s".format(moduleName, modulePath), trace);
+            this.moduleName = moduleName;
+            this.modulePath = modulePath;
+        }
+        ///The  name of the module that was not found.
+        publ.moduleName;
+        ///The path or a list of paths jsolait tried to load the modules from.
+        publ.modulePath;
+    })
+    
+    /**
+        Creates an HTTP request object for retreiving files.
+        @return HTTP request object.
+    */
+    var getHTTP=function() {
+        var obj;
+        try{ //to get the mozilla httprequest object
+            obj = new XMLHttpRequest();
+        }catch(e){
+            try{ //to get MS HTTP request object
+                obj=new ActiveXObject("Msxml2.XMLHTTP.4.0");
+            }catch(e){
+                try{ //to get MS HTTP request object
+                    obj=new ActiveXObject("Msxml2.XMLHTTP");
+                }catch(e){
+                    try{// to get the old MS HTTP request object
+                        obj = new ActiveXObject("microsoft.XMLHTTP"); 
+                    }catch(e){
+                        throw new mod.Exception("Unable to get an HTTP request object.");
+                    }
+                }    
+            }
+        }
+        return obj;
+    }
+    
+    /**
+        Retrieves a file given its URL.
+        @param url             The url to load.
+        @param headers=[]  The headers to use.
+        @return                 The content of the file.
+    */
+    var getFile=function(url, headers) { 
+        //if callback is defined then the operation is done async
+        headers = (headers !== undefined) ? headers : [];
+        //setup the request
+        try{
+            var xmlhttp= getHTTP();
+            xmlhttp.open("GET", url, false);
+            for(var i=0;i< headers.length;i++){
+                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);    
+            }
+            xmlhttp.send("");
+        }catch(e){
+            throw new mod.Exception("Unable to load URL: '%s'.".format(url), e);
+        }
+        if(xmlhttp.status == 200 || xmlhttp.status == 0){
+            return xmlhttp.responseText;
+        }else{
+             throw new mod.Exception("File not loaded: '%s'.".format(url));
+        }
+    }
+    
+    /**
+        Loads and interprets a script file.
+        @param url  The url of the script to load.
+    */
+    mod.loadScript=function(url){
+        var src = getFile(url);
+        try{//to interpret the source 
+            (new Function("",src))();
+        }catch(e){
+            throw new mod.EvalFailed(url, e);
+        }
+    }  
+})
+
+
