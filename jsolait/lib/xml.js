@@ -23,10 +23,10 @@
     Provides parseXML and an importNode implementation.
     @creator                Jan-Klaas Kollhof
     @created                2003-07-10
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("xml","$Revision: 59 $", function(mod){
+Module("xml","$Revision$", function(mod){
     mod.XMLNS="http://www.w3.org/2000/xmlns/";
     mod.NSXML ="http://www.w3.org/XML/1998/namespace";
     mod.nsPrefixMap={"http://www.w3.org/2000/xmlns/" : "xmlns","http://www.w3.org/XML/1998/namespace":"xml"};

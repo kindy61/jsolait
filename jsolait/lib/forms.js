@@ -23,11 +23,11 @@
     
     @creator                 Jan-Klaas Kollhof
     @created                2005-03-20
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 **/
 
-Module("forms", "$Revision: 59 $", function(mod){
+Module("forms", "$Revision$", function(mod){
     /**
         A class that resembles the functionality of an HTML form.
         One can access the elements using the elements property of the form or

@@ -22,10 +22,10 @@
     A module providing Sets.
     @creator                 Jan-Klaas Kollhof
     @created                2005-03-11
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 **/
-Module("sets", "$Revision: 59 $", function(mod){
+Module("sets", "$Revision$", function(mod){
     
     /**
         Thrown if an item was not found in the set.

@@ -22,10 +22,10 @@
     Provides a lightweight JSON-RPC imlementation for JSON-RPC over HTTP.
     @creator Jan-Klaas Kollhof
     @created 2005-02-25
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("jsonrpc","$Revision: 59 $", function(mod){
+Module("jsonrpc","$Revision$", function(mod){
     var urllib = imprt("urllib");
     /**
         Thrown if a  server did not respond with response status 200 (OK).

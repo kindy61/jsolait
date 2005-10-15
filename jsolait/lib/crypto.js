@@ -23,10 +23,10 @@
     Provides String encryption/decryption and hashing. 
     @creator                 Jan-Klaas Kollhof
     @created                2003-12-07
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-09-16 01:06:59 +0100 (Fri, 16 Sep 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("crypto", "$Revision: 56 $", function(mod){
+Module("crypto", "$Revision$", function(mod){
     /**
         Returns all all available encrypters.
         @return  An array of encrypters names.

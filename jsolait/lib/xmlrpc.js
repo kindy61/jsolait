@@ -23,10 +23,10 @@
     It is similar to python's xmlrpclib module.
     @creator                 Jan-Klaas Kollhof
     @created                2003-07-10
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("xmlrpc","$Revision: 59 $", function(mod){
+Module("xmlrpc","$Revision$", function(mod){
     var xmlext = imprt("xml");
     var urllib = imprt("urllib");
     /**

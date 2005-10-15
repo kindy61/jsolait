@@ -24,10 +24,10 @@
     To add new decoders simply create new String.prototype.decode_yourCodec methods.
     @creator                 Jan-Klaas Kollhof
     @created                2004-03-12
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-09-16 01:06:59 +0100 (Fri, 16 Sep 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("codecs", "$Revision: 56 $", function(mod){
+Module("codecs", "$Revision$", function(mod){
     /**
         Returns all all available encoders.
         @return  An array of encoder names.

@@ -23,9 +23,9 @@
     It provides the core functionalities  for creating classes, modules and for importing modules.
     
     @varsion 2.0
-    $LastChangedBy: Jan-Klaas Kollhof $
-    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
-    $Revision: 59 $
+    $LastChangedBy$
+    $Date$
+    $Revision$
 **/
 
 
@@ -330,10 +330,10 @@ Module.preScopeExecution=function(mod){};
 /**
     
     @author                 Jan-Klaas Kollhof
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 **/
-Module("jsolait", "$Revision: 59 $", function(mod){
+Module("jsolait", "$Revision$", function(mod){
     jsolait=mod;
     mod.modules={};
     
@@ -630,7 +630,7 @@ Module("jsolait", "$Revision: 59 $", function(mod){
 //--------------------------------------------Module loader--------------------------------------------
 
 
-Module("moduleLoader", "$Revision: 59 $", function(mod){
+Module("moduleLoader", "$Revision$", function(mod){
     
     ///The paths to search for modules
     mod.moduleSearchPaths = ["."];

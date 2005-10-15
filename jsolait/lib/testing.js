@@ -22,11 +22,11 @@
     
     @author                 Jan-Klaas Kollhof
     @created                2003-12-14    
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-09-14 22:56:56 +0100 (Wed, 14 Sep 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 **/
 
-Module("testing", "$Revision: 53 $", function(mod){
+Module("testing", "$Revision$", function(mod){
     
     /**
         Returns the average time used for executing a function.

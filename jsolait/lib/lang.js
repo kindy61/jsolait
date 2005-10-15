@@ -24,11 +24,11 @@
     To customize JSON serialization of Objects just overwrite the toJSON method in your class.
     @creator                 Jan-Klaas Kollhof
     @created                2004-03-14
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
 
-Module("lang", "$Revision: 59 $", function(mod){
+Module("lang", "$Revision$", function(mod){
     var sets=imprt('sets');
     
     var extractQoutedText=function(s, startEndChar){

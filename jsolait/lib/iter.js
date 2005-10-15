@@ -26,10 +26,10 @@
     The Range class is there to create an iterable object over a range of numbers.
     @creator                 Jan-Klaas Kollhof
     @created                2004-12-08
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 */
-Module("iter", "$Revision: 59 $", function(mod){
+Module("iter", "$Revision$", function(mod){
         
     /**
         Base class for Iterators.

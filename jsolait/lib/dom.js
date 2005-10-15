@@ -21,10 +21,10 @@
     Module providing DOM implementations.
     
     @author                  Jan-Klaas Kollhof
-    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
-    @lastchangeddate    $Date: 2005-10-15 14:08:00 +0100 (Sat, 15 Oct 2005) $
+    @lastchangedby       $LastChangedBy$
+    @lastchangeddate    $Date$
 **/
-Module("dom", "$Revision: 59 $", function(mod){
+Module("dom", "$Revision$", function(mod){
     var sets=imprt("sets");
     
     /**
