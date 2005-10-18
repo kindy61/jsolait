@@ -22,7 +22,7 @@
     The main jsolait script.
     It provides the core functionalities  for creating classes, modules and for importing modules.
     
-    @varsion 2.0
+    @version 2.0
     $LastChangedBy$
     $Date$
     $Revision$
@@ -231,10 +231,7 @@ Module=function(name, version, moduleScope){
     mod.Exception=Class(Module.Exception, function(publ, supr){
         publ.module = mod;
     })
-
-    //this is for hooks that need to work with modules before their scope is run
-    Module.preScopeExecution(mod);
-
+    
     try{//to execute the scope of the module
         moduleScope.call(mod, mod);
     }catch(e){
@@ -323,9 +320,7 @@ Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, fu
     ///The module that could not be createed.
     publ.module;
 })
-///a hook for other modules to override for customization todo:doc
-Module.preScopeExecution=function(mod){};
-  
+ 
     
 /**
     
@@ -354,19 +349,149 @@ Module("jsolait", "$Revision$", function(mod){
         publ.moduleName;
     })
         
+        ///The paths of  the modules that come with jsolait.
+    mod.modulePaths={codecs:"%(installPath)s/lib/codecs.js",
+                                    crypto:"%(installPath)s/lib/crypto.js",
+                                    dom:"%(installPath)s/lib/dom.js",
+                                    forms:"%(installPath)s/lib/forms.js",
+                                    iter:"%(installPath)s/lib/iter.js",
+                                    jsonrpc:"%(installPath)s/lib/jsonrpc.js",
+                                    lang:"%(installPath)s/lib/lang.js",
+                                    sets:"%(installPath)s/lib/sets.js",
+                                    testing:"%(installPath)s/lib/testing.js",
+                                    urllib:"%(installPath)s/lib/urllib.js",
+                                    xml:"%(installPath)s/lib/xml.js",
+                                    xmlrpc:"%(installPath)s/lib/xmlrpc.js"};
     
-    mod.__import__=function(modName){
-        var modImp = mod.modules[modName];
-        if(modImp !== undefined){
-            return modImp;
-        }else{
-            if(mod.modules.moduleLoader){
-                return mod.modules.moduleLoader.imprt(modName);
-            }else{
-                throw mod.ImportFailed(modName, new mod.Exception("No module loader available"))
+    ///The paths to search for modules
+    mod.moduleSearchPaths = ["."];
+    
+    ///The location where jsolait is installed.
+    mod.installPath="./jsolait";
+    
+    /**
+        Creates an HTTP request object for retreiving files.
+        @return HTTP request object.
+    */
+    var getHTTP=function() {
+        var obj;
+        try{ //to get the mozilla httprequest object
+            obj = new XMLHttpRequest();
+        }catch(e){
+            try{ //to get MS HTTP request object
+                obj=new ActiveXObject("Msxml2.XMLHTTP.4.0");
+            }catch(e){
+                try{ //to get MS HTTP request object
+                    obj=new ActiveXObject("Msxml2.XMLHTTP");
+                }catch(e){
+                    try{// to get the old MS HTTP request object
+                        obj = new ActiveXObject("microsoft.XMLHTTP"); 
+                    }catch(e){
+                        throw new mod.Exception("Unable to get an HTTP request object.");
+                    }
+                }    
             }
         }
+        return obj;
     }
+    
+    /**
+        Retrieves a file given its URL.
+        @param url             The url to load.
+        @param headers=[]  The headers to use.
+        @return                 The content of the file.
+    */
+    mod.loadFile=function(url, headers) { 
+        //if callback is defined then the operation is done async
+        headers = (headers !== undefined) ? headers : [];
+        //setup the request
+        try{
+            var xmlhttp= getHTTP();
+            xmlhttp.open("GET", url, false);
+            for(var i=0;i< headers.length;i++){
+                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);    
+            }
+            xmlhttp.send("");
+        }catch(e){
+            throw new mod.Exception("Unable to load URL: '%s'.".format(url), e);
+        }
+        if(xmlhttp.status == 200 || xmlhttp.status == 0){
+            return xmlhttp.responseText;
+        }else{
+             throw new mod.Exception("File not loaded: '%s'.".format(url));
+        }
+    }
+    
+     /**
+       Imports a module given its name(someModule.someSubModule).
+       A module's file location is determined by treating each module name as a directory.
+       Only the last one points to a file.
+       If the module's URL is not known to jsolait then it will be searched for in jsolait.baseURL which is "." by default.
+       @param name   The name of the module to load.
+       @return           The module object.
+    */
+    mod.__imprt__ = function(name){
+
+        if(mod.modules[name]){ //module already loaded
+            return mod.modules[name];
+        }else{
+            var src,modPath;
+            
+            //check if jsolait already knows the path of the module
+            if(mod.modulePaths[name]){
+                modPath = mod.modulePaths[name].format(mod);
+                try{//to load the source of the module
+                    src = mod.loadFile(modPath);
+                }catch(e){
+                    throw new mod.ImportFailed(name, modPath, e);
+                }
+            }else{//go through the search path and try loading the module
+                var failedPaths=[];
+                for(var i=0;i<mod.moduleSearchPaths.length; i++){
+                    modPath = "%s/%s.js".format(mod.moduleSearchPaths[i], name.split(".").join("/"));
+                    try{
+                        src = mod.loadFile(modPath);
+                        break;
+                    }catch(e){
+                        failedPaths.push(modPath);
+                    }
+                }
+                if(src == null){
+                    throw new mod.ModuleImportFailed(name, failedPaths, e);
+                }
+            }
+            
+            try{//interpret the script
+                (new Function("",src))(); //todo should it use globalEval ?
+            }catch(e){
+                throw new mod.ImportFailed(name, modPath, e);
+            }
+            
+            return mod.modules[name]; 
+        }
+    };
+    
+    
+    /**
+        Thrown when a module could not be found.
+    **/
+    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
+        /**
+            Initializes a new ModuleImportFailed Exception.
+            @param name      The name of the module.
+            @param modulePath The path or a list of paths jsolait tried to load the modules from
+            @param trace      The error cousing this Exception.
+        **/
+        publ.__init__=function(moduleName, modulePath, trace){
+            supr(this).__init__("Failed to import module: '%s' from:\n%s".format(moduleName, modulePath), trace);
+            this.moduleName = moduleName;
+            this.modulePath = modulePath;
+        }
+        ///The  name of the module that was not found.
+        publ.moduleName;
+        ///The path or a list of paths jsolait tried to load the modules from.
+        publ.modulePath;
+    })
     
     /**
         Imports a module given its name.
@@ -374,12 +499,8 @@ Module("jsolait", "$Revision$", function(mod){
         @param name   The name of the module to load.
         @return           The module object.
     **/
-    mod.imprt = function(name){
-        return mod.__import__(name);
-    }
-    
     imprt = function(name){
-        return mod.imprt(name);
+        return mod.__imprt__(name);
     }
     
     mod.__registerModule__=function(modObj, modName){
@@ -625,168 +746,7 @@ Module("jsolait", "$Revision$", function(mod){
     mod.test=function(){
         
     }
-})
+});
 
-//--------------------------------------------Module loader--------------------------------------------
-
-
-Module("moduleLoader", "$Revision$", function(mod){
-    
-    ///The paths to search for modules
-    mod.moduleSearchPaths = ["."];
-    
-    ///The location where jsolait is installed.
-    mod.installPath="./jsolait";
-    
-    ///The paths of  the modules that come with jsolait.
-    var modulePathMap={codecs:"%(installPath)s/lib/codecs.js",
-                                    crypto:"%(installPath)s/lib/crypto.js",
-                                    dom:"%(installPath)s/lib/dom.js",
-                                    forms:"%(installPath)s/lib/forms.js",
-                                    iter:"%(installPath)s/lib/iter.js",
-                                    jsonrpc:"%(installPath)s/lib/jsonrpc.js",
-                                    lang:"%(installPath)s/lib/lang.js",
-                                    sets:"%(installPath)s/lib/sets.js",
-                                    testing:"%(installPath)s/lib/testing.js",
-                                    urllib:"%(installPath)s/lib/urllib.js",
-                                    xml:"%(installPath)s/lib/xml.js",
-                                    xmlrpc:"%(installPath)s/lib/xmlrpc.js"}                                      
-    
-    /**
-       Imports a module given its name(someModule.someSubModule).
-       A module's file location is determined by treating each module name as a directory.
-       Only the last one points to a file.
-       If the module's URL is not known to jsolait then it will be searched for in jsolait.baseURL which is "." by default.
-       @param name   The name of the module to load.
-       @return           The module object.
-    */
-    mod.imprt = function(name){
-
-        if (jsolait.modules[name]){ //module already loaded
-            return mod.modules[name];
-        }else{
-            var src,modPath;
-            
-            //check if jsolait already knows the path of the module
-            if(modulePathMap[name]){
-                modPath = modulePathMap[name].format(mod);
-                try{//to load the source of the module
-                    src = getFile(modPath);
-                }catch(e){
-                    throw new mod.ImportFailed(name, modPath, e);
-                }
-            }else{//go through the search path and try loading the module
-                var failedPaths=[];
-                for(var i=0;i<mod.moduleSearchPaths.length; i++){
-                    modPath = "%s/%s.js".format(mod.moduleSearchPaths[i], name.split(".").join("/"));
-                    try{
-                        src = getFile(modPath);
-                        break;
-                    }catch(e){
-                        failedPaths.push(modPath);
-                    }
-                }
-                if(src == null){
-                    throw new mod.ModuleImportFailed(name, failedPaths, e);
-                }
-            }
-            
-            try{//interpret the script
-                (new Function("",src))(); //todo should it use globalEval ?
-            }catch(e){
-                throw new mod.ImportFailed(name, modPath, e);
-            }
-            
-            return jsolait.__import__(name); 
-        }
-    } 
-    
-    /**
-        Thrown when a module could not be found.
-    **/
-    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
-        /**
-            Initializes a new ModuleImportFailed Exception.
-            @param name      The name of the module.
-            @param modulePath The path or a list of paths jsolait tried to load the modules from
-            @param trace      The error cousing this Exception.
-        **/
-        publ.__init__=function(moduleName, modulePath, trace){
-            supr(this).__init__("Failed to import module: '%s' from:\n%s".format(moduleName, modulePath), trace);
-            this.moduleName = moduleName;
-            this.modulePath = modulePath;
-        }
-        ///The  name of the module that was not found.
-        publ.moduleName;
-        ///The path or a list of paths jsolait tried to load the modules from.
-        publ.modulePath;
-    })
-    
-    /**
-        Creates an HTTP request object for retreiving files.
-        @return HTTP request object.
-    */
-    var getHTTP=function() {
-        var obj;
-        try{ //to get the mozilla httprequest object
-            obj = new XMLHttpRequest();
-        }catch(e){
-            try{ //to get MS HTTP request object
-                obj=new ActiveXObject("Msxml2.XMLHTTP.4.0");
-            }catch(e){
-                try{ //to get MS HTTP request object
-                    obj=new ActiveXObject("Msxml2.XMLHTTP");
-                }catch(e){
-                    try{// to get the old MS HTTP request object
-                        obj = new ActiveXObject("microsoft.XMLHTTP"); 
-                    }catch(e){
-                        throw new mod.Exception("Unable to get an HTTP request object.");
-                    }
-                }    
-            }
-        }
-        return obj;
-    }
-    
-    /**
-        Retrieves a file given its URL.
-        @param url             The url to load.
-        @param headers=[]  The headers to use.
-        @return                 The content of the file.
-    */
-    var getFile=function(url, headers) { 
-        //if callback is defined then the operation is done async
-        headers = (headers !== undefined) ? headers : [];
-        //setup the request
-        try{
-            var xmlhttp= getHTTP();
-            xmlhttp.open("GET", url, false);
-            for(var i=0;i< headers.length;i++){
-                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);    
-            }
-            xmlhttp.send("");
-        }catch(e){
-            throw new mod.Exception("Unable to load URL: '%s'.".format(url), e);
-        }
-        if(xmlhttp.status == 200 || xmlhttp.status == 0){
-            return xmlhttp.responseText;
-        }else{
-             throw new mod.Exception("File not loaded: '%s'.".format(url));
-        }
-    }
-    
-    /**
-        Loads and interprets a script file.
-        @param url  The url of the script to load.
-    */
-    mod.loadScript=function(url){
-        var src = getFile(url);
-        try{//to interpret the source 
-            (new Function("",src))();
-        }catch(e){
-            throw new mod.EvalFailed(url, e);
-        }
-    }  
-})
 
 

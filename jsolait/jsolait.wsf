@@ -32,79 +32,164 @@
     <script language="JavaScript" src="./jsolait.js" />
     
     <script language="JavaScript"> <![CDATA[
-        globalEval=function(){
-            eval(arguments[0]);
-        }
-        
-    print = function(m){
-        var s=[];
-        for(var i=0;i<arguments.length;i++){
-            s.push(''+arguments[i]);
-        }
-        
-        WScript.echo(s.join(" "));
-    }
-     
-    pprint=function(m, indent){
-        var m = m.split("\n");
-        
-        indent =(indent === undefined) ? 0 : indent;
-        
-        if(indent<0){
-            pprint.indent+=indent;
-        }
-        
-        var s=[];
-        for(var i=0;i<pprint.indent;i++){
-            s.push(' ');
-        }
-        s=s.join('');
-        for(var i=0;i<m.length;i++){
-            print(s + m[i]);
-        }
-        
-        if(indent>0){
-            pprint.indent += indent;
-        }
-    }
-    pprint.indent=0;
     
-    Error.prototype.toString=function(){
-        return this.name +": " + this.message;
-    }
+    Module("jsolaitws", "0.0.1", function(mod){
+        
             
-    LogError=1;
-    LogWarn=2;
-    LogInfo=4;
-    Error.prototype.toTraceString=function(){
-        return this.message
-    }
+        var fs= new ActiveXObject("Scripting.FileSystemObject");
+        var wshShell= new ActiveXObject("WScript.Shell");
+        var ForReading = 1, ForWriting = 2;
     
-    log=function(msg, level){
-        level = level==null?LogInfo:level;
-        if(typeof msg !="string"){
-            level = LogError;
-            
-            msg = msg.toTraceString();
+        ///The paths to search for modules
+        jsolait.moduleSearchPaths = [fs.buildPath(fs.getParentFolderName(WScript.scriptFullName),"lib")];
+        
+        ///The location where jsolait is installed.
+        jsolait.installPath = fs.getParentFolderName(WScript.scriptFullName);
+          
+        jsolait.loadFile=function(path){
+            try{
+                var f = fs.GetFile(path);
+                var src = f.OpenAsTextStream(ForReading).readall();
+                var pse = Module.preScopeExecution;
+                Module.preScopeExecution = function(mod){
+                    mod.__fileName__ = path;
+                };
+                return src;
+            }catch(e){
+                //Module.preScopeExecution=pse;
+                throw new mod.ScriptLoadingFailed(path, e);
+            }
         }
         
-        if(level & log.level){
-            print(msg);
+        print = function(m){
+            var s=[];
+            for(var i=0;i<arguments.length;i++){
+                s.push(''+arguments[i]);
+            }
+            
+            WScript.echo(s.join(" "));
         }
+         
+        pprint=function(m, indent){
+            var m = m.split("\n");
+            
+            indent =(indent === undefined) ? 0 : indent;
+            
+            if(indent<0){
+                pprint.indent+=indent;
+            }
+            
+            var s=[];
+            for(var i=0;i<pprint.indent;i++){
+                s.push(' ');
+            }
+            s=s.join('');
+            for(var i=0;i<m.length;i++){
+                print(s + m[i]);
+            }
+            
+            if(indent>0){
+                pprint.indent += indent;
+            }
+        }
+        pprint.indent=0;
+        
+        Error.prototype.toString=function(){
+            return this.name +": " + this.message;
+        }
+                
+        LogError=1;
+        LogWarn=2;
+        LogInfo=4;
+        Error.prototype.toTraceString=function(){
+            return this.message
+        }
+        
+        log=function(msg, level){
+            level = level==null?LogInfo:level;
+            if(typeof msg !="string"){
+                level = LogError;
+                
+                msg = msg.toTraceString();
+            }
+            
+            if(level & log.level){
+                print(msg);
+            }
+        }
+        log.level = LogInfo | LogWarn | LogError;    
+        
+        mod.run=function(){
+            mod.__fileName__ = WScript.scriptFullName;
+            jsolait.__fileName__ = WScript.scriptFullName.slice(0,-3) + "js";
+            
+            if (WScript.arguments.unnamed.length==0){
+                WScript.Arguments.ShowUsage();                                              
+                return;
+            }else{
+                var fileName=fs.getAbsolutePathName(WScript.arguments.unnamed.item(0));
+                //todo:check if file exists
+            }
+            
+            //get the base of the file to execute
+            var fileBase= fs.getParentFolderName(fileName);
+            //make sure the search path is updated to include the fileBase
+            jsolait.moduleSearchPaths.push(fileBase);
+            
+            //change working dir to the file's location
+            //todo:is it OK to change cwd?
+            wshShell.currentDirectory = fileBase;
+            
+            
+            if(WScript.arguments.named.exists("compile")){
+                var lang = imprt('lang');
+                
+                var s = jsolait.loadFile(fileName);
+                var p = new lang.Parser(s);
+                    
+                try{
+                    p.parseStatements(p.next());
+                }catch(e){
+                    var l=p.getPosition();
+                    throw fileName + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200);
+                } 
+    
+            }else{
+      
+                try{//load the script if it is not the main jsolait or jsolaitws module that has already been loaded.
+                    if(fileName.toLowerCase() != jsolait.__fileName__.toLowerCase()  &&
+                                fileName.toLowerCase() != mod.__fileName__.toLowerCase()){
+                        mod.loadScript(fileName);
+                    }
+                }catch(e){
+                    log(e);
+                    return;
+                }
+                
+                
+                if(WScript.arguments.named.exists("testModule")){
+                    //if the script was loaded correctly and it contained a module then 
+                    //that module should have a __filename__ property which matches fileName
+                    //and is teh one that needs to be tested
+                    for(var mn in jsolait.modules){
+                        if(jsolait.modules[mn].__fileName__.toLowerCase() == fileName.toLowerCase()){
+                            var testing = jsolait.imprt("testing");
+                            testing.testModule(mn);        
+                            return;
+                        }
+                    }
+                    throw "No Module found";
+                }
+            }
+        }
+       
+   })
+
+    try{
+        imprt("jsolaitws").run();
+    }catch(e){
+        log(e,LogError);
     }
-    log.level = LogInfo | LogWarn | LogError;    
-   
-]]>
-    </script>
-    
-    <script language="JavaScript" src="./libws/jsolaitws.js" />
-    
-    <script language="JavaScript" ><![CDATA[
-        try{
-            jsolait.imprt("jsolaitws").run();
-        }catch(e){
-            log(e,LogError);
-        }
        
     ]]>
     </script>
