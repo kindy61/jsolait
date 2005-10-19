@@ -94,11 +94,11 @@ Class=function(name, superClass, mixinClass, classScope){
         }
     };
     //This will create a new prototype object of the new class.
-    NewClass.createPrototype = function(){
+    NewClass.__createProto__ = function(){
         return new NewClass(Class);
     };
     //setting class properties for the new class.
-    NewClass.superClass = superClass;
+    NewClass.__super__ = superClass;
     NewClass.__name__= name; 
     NewClass.toString = function(){
         return "[class %s]".format(NewClass.__name__);
@@ -109,8 +109,8 @@ Class=function(name, superClass, mixinClass, classScope){
     };
     
    //see if the super class can create prototypes. (creating an object without calling __init__())
-    if(superClass.createPrototype!==undefined){
-        NewClass.prototype = superClass.createPrototype();
+    if(superClass.__createProto__!==undefined){
+        NewClass.prototype = superClass.__createProto__();
     }else{//just create an object of the super class
         NewClass.prototype = new superClass();
     }
@@ -125,6 +125,7 @@ Class=function(name, superClass, mixinClass, classScope){
             NewClass.prototype.toString = function(){
                 return "[object %s]".format(this.constructor.__name__);
             };
+            //todo
             NewClass.prototype.__hash__=function(){
                 if(NewClass.__objcnt__){
                     NewClass.__objcnt__ ++;
@@ -207,7 +208,7 @@ Class=function(name, superClass, mixinClass, classScope){
 Class.toString = function(){
     return "[object Class]";
 };
-Class.createPrototype=function(){ 
+Class.__createProto__=function(){ 
     throw "Can't use Class as a super class.";
 };
 
@@ -257,7 +258,7 @@ Module.toString=function(){
     return "[object Module]";
 };
 
-Module.createPrototype=function(){ 
+Module.__createProto__=function(){ 
     throw "Can't use Module as a super class.";
 };
 /**
