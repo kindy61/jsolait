@@ -47,6 +47,7 @@
         jsolait.installPath = fs.getParentFolderName(WScript.scriptFullName);
           
         jsolait.loadFile=function(path){
+        print(path)
             try{
                 var f = fs.GetFile(path);
                 var src = f.OpenAsTextStream(ForReading).readall();
@@ -56,8 +57,8 @@
                 };
                 return src;
             }catch(e){
-                //Module.preScopeExecution=pse;
-                throw new mod.ScriptLoadingFailed(path, e);
+                Module.preScopeExecution=pse;
+                throw new mod.Exception("File not loaded: '%s'.".format(path));
             }
         }
         
@@ -159,7 +160,8 @@
                 try{//load the script if it is not the main jsolait or jsolaitws module that has already been loaded.
                     if(fileName.toLowerCase() != jsolait.__fileName__.toLowerCase()  &&
                                 fileName.toLowerCase() != mod.__fileName__.toLowerCase()){
-                        mod.loadScript(fileName);
+                        var src = jsolait.loadFile(fileName);
+                         (new Function("",src))()
                     }
                 }catch(e){
                     log(e);
@@ -170,7 +172,7 @@
                 if(WScript.arguments.named.exists("testModule")){
                     //if the script was loaded correctly and it contained a module then 
                     //that module should have a __filename__ property which matches fileName
-                    //and is teh one that needs to be tested
+                    //and is the one that needs to be tested
                     for(var mn in jsolait.modules){
                         if(jsolait.modules[mn].__fileName__.toLowerCase() == fileName.toLowerCase()){
                             var testing = jsolait.imprt("testing");

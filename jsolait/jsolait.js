@@ -332,24 +332,7 @@ Module("jsolait", "$Revision$", function(mod){
     jsolait=mod;
     mod.modules={};
     
-    /**
-        Thrown when a module could not be found.
-    **/
-    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
-        /**
-            Initializes a new ModuleImportFailed Exception.
-            @param name      The name of the module.
-            @param trace      The error cousing this Exception.
-        **/
-        publ.__init__=function(moduleName, trace){
-            supr(this).__init__("Failed to import module: '%s'".format(moduleName), trace);
-            this.moduleName = moduleName;
-        }
-        ///The  name of the module that was not found.
-        publ.moduleName;
-    })
-        
-        ///The paths of  the modules that come with jsolait.
+    ///The paths of  the modules that come with jsolait.
     mod.modulePaths={codecs:"%(installPath)s/lib/codecs.js",
                                     crypto:"%(installPath)s/lib/crypto.js",
                                     dom:"%(installPath)s/lib/dom.js",
@@ -364,7 +347,7 @@ Module("jsolait", "$Revision$", function(mod){
                                     xmlrpc:"%(installPath)s/lib/xmlrpc.js"};
     
     ///The paths to search for modules
-    mod.moduleSearchPaths = ["."];
+    mod.moduleSearchPaths = [".", "%(installPath)s/lib"];
     
     ///The location where jsolait is installed.
     mod.installPath="./jsolait";
@@ -448,7 +431,7 @@ Module("jsolait", "$Revision$", function(mod){
             }else{//go through the search path and try loading the module
                 var failedPaths=[];
                 for(var i=0;i<mod.moduleSearchPaths.length; i++){
-                    modPath = "%s/%s.js".format(mod.moduleSearchPaths[i], name.split(".").join("/"));
+                    modPath = "%s/%s.js".format(mod.moduleSearchPaths[i].format(mod), name.split(".").join("/"));
                     try{
                         src = mod.loadFile(modPath);
                         break;
@@ -457,7 +440,7 @@ Module("jsolait", "$Revision$", function(mod){
                     }
                 }
                 if(src == null){
-                    throw new mod.ModuleImportFailed(name, failedPaths, e);
+                    throw new mod.ImportFailed(name, failedPaths, e);
                 }
             }
             
@@ -477,7 +460,7 @@ Module("jsolait", "$Revision$", function(mod){
     **/
     mod.ImportFailed=Class(mod.Exception, function(publ, supr){
         /**
-            Initializes a new ModuleImportFailed Exception.
+            Initializes a new ImportFailed Exception.
             @param name      The name of the module.
             @param modulePath The path or a list of paths jsolait tried to load the modules from
             @param trace      The error cousing this Exception.
@@ -740,13 +723,12 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return s;
     }
-    
 
     ///Tests the module.
     mod.test=function(){
+
         
     }
 });
-
 
 
