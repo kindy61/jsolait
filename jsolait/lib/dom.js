@@ -33,7 +33,7 @@ Module("dom", "$Revision$", function(mod){
     mod.Event=Class(function(publ, supr){
         ///The event type.
         publ.type=null;
-    })
+    });
     
     
     /**
@@ -42,7 +42,7 @@ Module("dom", "$Revision$", function(mod){
     mod.EventTarget =Class(function(publ, supr){
         publ.__init__=function(){
             this.eventListeners={};
-        }
+        };
         /**
             Dispatches an event to it's listeners.
             @param evt The event to dispatch.
@@ -54,7 +54,7 @@ Module("dom", "$Revision$", function(mod){
                     l[h].handleEvent(evt);
                 }
             }
-        }
+        };
         /**
             Adds an EventListener.
             @param evtType  The event type to register the listener for.
@@ -66,7 +66,7 @@ Module("dom", "$Revision$", function(mod){
                 this.eventListeners[evtType] = new sets.Set();
             }
             this.eventListeners[evtType].add(listener);
-        }
+        };
         /**
             Removes a registered EventListener.
             @param evtType  The event type the listener was registered for.
@@ -77,8 +77,8 @@ Module("dom", "$Revision$", function(mod){
             if(this.eventListeners[evtType]){
                 this.eventListeners[evtType].discard(listener);
             }
-        }
-    })
+        };
+    });
     
     /**
         An EventListener wrapper.
@@ -94,12 +94,12 @@ Module("dom", "$Revision$", function(mod){
             if(this[evt.type]){
                 this[evt.type](evt);
             }
-        }
-    }) 
+        };
+    });
     
     /**
         A combination of an EventTarget and a EventListener.
     **/
     mod.EventListenerTarget=Class(mod.EventTarget, mod.EventListener, function(publ, supr){
-    })
-})
+    });
+});

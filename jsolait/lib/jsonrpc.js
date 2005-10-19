@@ -38,10 +38,10 @@ Module("jsonrpc","$Revision$", function(mod){
         publ.__init__= function(status){
             supr(this).__init__("The server did not respond with a status 200 (OK) but with: " + status);
             this.status = status;
-        }
+        };
          ///The status returned by the server.
         publ.status;
-    })
+    });
     
     /**
         Thrown if an JSON-RPC response is not well formed.
@@ -56,10 +56,10 @@ Module("jsonrpc","$Revision$", function(mod){
         publ.__init__= function(msg, s, trace){
             supr(this).__init__(msg,trace);
             this.source = s;
-        }
+        };
          ///The json source which was mal formed.
         publ.source;
-    })
+    });
     /**
         Thrown if an JSON-RPC error is returned.
     */
@@ -71,8 +71,8 @@ Module("jsonrpc","$Revision$", function(mod){
         */
         publ.__init__= function(err, trace){
             supr(this).__init__(err,trace);
-        }
-    })
+        };
+    });
     
     
     /**
@@ -97,7 +97,7 @@ Module("jsonrpc","$Revision$", function(mod){
             }
             return "{" + v.join(", ") + "}";
         }
-    }
+    };
     
     /**
         Unmarshalls a JSON source to a JavaScript object. 
@@ -112,7 +112,7 @@ Module("jsonrpc","$Revision$", function(mod){
         }catch(e){
             throw new mod.MalformedJSONRpc("The server's response could not be parsed.", source, e);
         }
-    }
+    };
     /**
         Class for creating JSON-RPC methods.
         Calling the created method will result in a JSON-RPC call to the service.
@@ -133,7 +133,7 @@ Module("jsonrpc","$Revision$", function(mod){
             }else{
                 return urllib.postURL(url, user, pass, data, [["Content-Type", "text/plain"]], callback);
             }
-        }
+        };
         
         var handleResponse=function(resp){
             var status=null;
@@ -160,12 +160,12 @@ Module("jsonrpc","$Revision$", function(mod){
             }else{
                 throw new mod.InvalidServerResponse(status);
             }
-        }
+        };
         
         var jsonRequest = function(id, methodName, args){
             var p = [mod.marshall(id), mod.marshall(methodName), mod.marshall(args)];
             return '{"id":' + p[0] + ', "method":' + p[1] + ', "params":' + p[2] + "}";
-        }
+        };
         /**
             Initializes the JSON-RPC method.
             @param url                 The URL of the service providing the method.
@@ -178,7 +178,7 @@ Module("jsonrpc","$Revision$", function(mod){
             this.url = url;
             this.user = user;
             this.password=pass;
-        }
+        };
          
         publ.__call__=function(){
             var args=new Array();
@@ -209,7 +209,7 @@ Module("jsonrpc","$Revision$", function(mod){
                     resp = null;
                 });
             }
-        }
+        };
         /**
             Sets username and password for HTTP Authentication.
             @param user    The user name.
@@ -218,7 +218,7 @@ Module("jsonrpc","$Revision$", function(mod){
         publ.setAuthentication = function(user, pass){
             this.user = user;
             this.password = pass;
-        }
+        };
         
         /** 
             Sends the call as a notification which does not have a response.
@@ -231,7 +231,7 @@ Module("jsonrpc","$Revision$", function(mod){
             }
             var data=jsonRequest(null, this.methodName, args);
             postData(this.url, this.user, this.password, data, function(resp){});
-        }
+        };
         
         ///The name of the remote method.
         publ.methodName;
@@ -241,7 +241,7 @@ Module("jsonrpc","$Revision$", function(mod){
         publ.user;
         ///The password used for HTTP authorization.
         publ.password;
-    })
+    });
     
     /**
         Creates proxy objects which resemble the remote service.
@@ -265,7 +265,7 @@ Module("jsonrpc","$Revision$", function(mod){
             this._user = user;
             this._password = pass;
             this._addMethodNames(methodNames);
-        }
+        };
         
         /**
             Adds new JSONRPCMethods to the proxy server which can then be invoked.
@@ -293,7 +293,7 @@ Module("jsonrpc","$Revision$", function(mod){
                     this._methods.push(mth);
                 }
             }
-        }
+        };
         
         /**
             Sets username and password for HTTP Authentication for all methods of this service.
@@ -306,7 +306,7 @@ Module("jsonrpc","$Revision$", function(mod){
             for(var i=0;i<this._methods.length;i++){
                 this._methods[i].setAuthentication(user, pass);
             }
-        }
+        };
         
         ///The url of the service to resemble.
         publ._url;
@@ -316,7 +316,7 @@ Module("jsonrpc","$Revision$", function(mod){
         publ._password;
         ///All methods.
         publ._methods=new Array();
-    })
+    });
     
     ///@deprecated  Use ServiceProxy instead.
     mod.ServerProxy= mod.ServiceProxy;
@@ -328,21 +328,21 @@ Module("jsonrpc","$Revision$", function(mod){
         var s = '"' + this.replace(/(["\\])/g, '\\$1') + '"';
         s = s.replace(/(\n)/g,"\\n");
         return s;
-    }
+    };
     
     /**
         Converts a Number to JSON.
     */
     Number.prototype.toJSON = function(){
         return this.toString();
-    }
+    };
     
     /**
         Converts a Boolean to JSON.
     */
     Boolean.prototype.toJSON = function(){
         return this.toString();
-    }
+    };
     
     /**
         Converts a Date to JSON.
@@ -350,9 +350,9 @@ Module("jsonrpc","$Revision$", function(mod){
     */
     Date.prototype.toJSON= function(){
         var padd=function(s, p){
-            s=p+s
-            return s.substring(s.length - p.length)
-        }
+            s=p+s;
+            return s.substring(s.length - p.length);
+        };
         var y = padd(this.getUTCFullYear(), "0000");
         var m = padd(this.getUTCMonth() + 1, "00");
         var d = padd(this.getUTCDate(), "00");
@@ -363,7 +363,7 @@ Module("jsonrpc","$Revision$", function(mod){
         var isodate = y +  m  + d + "T" + h +  ":" + min + ":" + s;
         
         return '{"jsonclass":["sys.ISODate", ["' + isodate + '"]]}';
-    }
+    };
     
     /**
         Converts an Array to JSON.
@@ -374,9 +374,9 @@ Module("jsonrpc","$Revision$", function(mod){
             v.push(mod.marshall(this[i])) ;
         }
         return "[" + v.join(", ") + "]";
-    }
+    };
 
-    mod.test = function(){
+    mod.__main__ = function(){
         print("creating ServiceProxy object using introspection for method construction...\n");
         var s = new mod.ServiceProxy("http://jsolait.net/testj.py",["echo"]);
         print("%s created\n".format(s));
@@ -385,10 +385,9 @@ Module("jsonrpc","$Revision$", function(mod){
         print(mod.marshall(o));
         print("\ncalling echo() on remote service...\n");
         var r = s.echo(o);
-        print("service returned data(marshalled again):\n")
+        print("service returned data(marshalled again):\n");
         print(mod.marshall(r));
-  
-    }
-})
+    };
+});
 
 

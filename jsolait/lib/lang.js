@@ -73,7 +73,7 @@ Module("lang", "$Revision$", function(mod){
         };
         
         publ.toString=function(){
-            return "[" + this.constructor.className+ " " + this.value+"]";
+            return "[" + this.constructor.__name__+ " " + this.value+"]";
         };
     });
     
@@ -217,6 +217,8 @@ Module("lang", "$Revision$", function(mod){
                 }else{
                     tkn = new mod.TokenIdentifier(tkn);
                 }
+            }else if(tkn=hexNumber.exec(this._working)){
+                tkn = new mod.TokenNumber(tkn[0], this.source.length - this._working.length);
             }else if(tkn=expNumber.exec(this._working)){
                 tkn = new mod.TokenNumber(tkn[0], this.source.length - this._working.length);
             }else if(tkn=floatNumber.exec(this._working)){
@@ -262,40 +264,49 @@ Module("lang", "$Revision$", function(mod){
         };
     });
     
+    var LookAhead=1;
     
     mod.Script=Class(function(publ,supr){
         publ.__init__=function(source){
             this.publics=[];
             this.modules=[];
+            this.tokens=new mod.Tokenizer(source);
             
-        }
+        };
         
         publ.parse=function(){
-            var tkn = this.lookAheadNonIgnorable();
+            var tkn = this.tokens.next(IgonreWSAndNewLine, LookAhead);
             while(tkn!==undefined){
                 if(tkn instanceof mod.TokenDocComment){
-                  
+                    this.parseDocComment();
                 }else if(this['parseStatement_' + tkn.value]){
-                    tkn = this['parseStatement_' + tkn.value].call(this);
-                }else if(tkn instanceof mod.TokenIdentifier){//function call or assignment statement
-                    this.parseExpression();
-                    this.parseEndOfStatement();
+                    this['parseStatement_' + tkn.value].call(this);
+                }else if(tkn instanceof mod.TokenIdentifier){
+                    this.parseStatement_callOrAssignment();
                 }else{
                     throw "Beginning of a statement expected but found %s".format(tkn);
                 }
             }
-        }
+        };
+        
+        
+        publ.parseStatement_callOrAssignment=function(){
+            
+        };
         
         publ.parseStatement_Module=function(){
-            
             var tkn = this.lookAheadNonWhitespace();
             if(tkn.value = "("){
-                
-                
+                var m = this.appendChild(new mod.ModuleNode(this));
+                this.publics.push(m);
+                m.parse();
             }else{
-               
+                throw "Module not allowed here";
             }
-        }
+        };
+        
+        
+        
     });
     
     
@@ -303,18 +314,18 @@ Module("lang", "$Revision$", function(mod){
     mod.ModuleNode=Class(function(publ,supr){
         publ.__init__=function(script){
             this.script=script;
-        }
+        };
         
         publ.parse=function(){
             
-        }
-        
-    })
+        };
+    });
     
     
     mod.CodeNode=Class(function(publ,supr){
         publ.__init__=function(){
             this.childNodes=[];
+            this.dependencies=[];
         };
         
         publ.appendChild=function(child){
@@ -340,6 +351,7 @@ Module("lang", "$Revision$", function(mod){
             this.childNodes=[];
             this.publics=[];
             this.parameters=[];
+            this.dependencies=[];
             
         };
         
@@ -370,9 +382,11 @@ Module("lang", "$Revision$", function(mod){
 
     mod.Parser=Class(mod.Tokenizer, function(publ, supr){
         
-        publ.__init__=function(s){
+        publ.__init__=function(s, globalNode){
             supr(this).__init__(s);
-            this.currentNode=new mod.GlobalNode();
+            globalNode = globalNode === undefined ? new mod.GlobalNode() : globalNode;
+            this.currentNode=globalNode;
+            this.globalNode= globalNode;
             this.lastDoc = '';
         };
         
@@ -430,19 +444,22 @@ Module("lang", "$Revision$", function(mod){
         };
         
         publ.parseDocComment=function(tkn){
-            this.lastDoc=tkn.value.slice(3,-3);
+            if(tkn.value.charAt(2) == '*'){
+                this.lastDoc=tkn.value.slice(3, -3);
+            }else{
+                this.lastDoc=tkn.value.slice(3);
+            }
             tkn = this.nextNonWhiteSpace(true);
             return tkn;
         };
                 
         publ.parseStatement=function(tkn){
-            if(this['parseStatement_' + tkn.constructor.className]){
-                tkn = this['parseStatement_' + tkn.constructor.className].call(this,tkn);
+            if(this['parseStatement_' + tkn.constructor.__name__]){
+                tkn = this['parseStatement_' + tkn.constructor.__name__].call(this,tkn);
             }else if(this['parseStatement_' + tkn.value]){
                 tkn = this['parseStatement_' + tkn.value].call(this,tkn);
             }else if(tkn instanceof mod.TokenIdentifier){//function call or assignment statement
-                this.lastDoc="";
-                
+               
                 tkn = this.parseExpression(tkn);
                 tkn = this.parseEndOfStatement(tkn);
             }else{
@@ -453,7 +470,7 @@ Module("lang", "$Revision$", function(mod){
         
         publ.parseEndOfStatement=function(tkn){
             
-            if((tkn !== undefined )&& (tkn.value == ";")){
+            if((tkn !== undefined ) && (tkn.value == ";")){
                 return this.nextNonWhiteSpace(true);
             }else{    
                 throw "Expected ';' at end of statement but found %s".format(tkn);
@@ -574,30 +591,77 @@ Module("lang", "$Revision$", function(mod){
         };
                 
         publ.parseStatement_Module=function(tkn){
-            this.currentNode = this.currentNode.addPublic(new mod.ModuleNode());
+            tkn=this.nextNonWhiteSpace();
+            if(tkn.value == '('){
             
-            tkn=this.nextNonWhiteSpaceExpect('(');
-            tkn=this.nextNonWhiteSpaceExpect(mod.TokenString, true);
-            this.currentNode.name = tkn.value.slice(1,-1);
-            
-            tkn=this.nextNonWhiteSpaceExpect(',');
-            tkn=this.nextNonWhiteSpaceExpect(mod.TokenString, true);
-            
-            this.currentNode.version = tkn.value.slice(1,-1);
-            this.currentNode.documentation = this.getDocumentation();
-                        
-            tkn=this.nextNonWhiteSpaceExpect(',');
-            tkn=this.nextNonWhiteSpaceExpect('function', true);
-            tkn=this.nextNonWhiteSpaceExpect('(');
-            tkn=this.nextNonWhiteSpaceExpect('mod', true);
-            tkn=this.nextNonWhiteSpaceExpect(')', true);
-            tkn=this.nextNonWhiteSpaceExpect('{');
-            tkn=this.parseBlock(tkn);
-            this.expect(")", tkn);
-            tkn=this.nextNonWhiteSpaceExpect(';');
-            tkn=this.nextNonWhiteSpace(true);
+                this.currentNode = this.currentNode.addPublic(new mod.ModuleNode());
+                tkn=this.nextNonWhiteSpaceExpect(mod.TokenString, true);
+                this.currentNode.name = tkn.value.slice(1,-1);
+                
+                tkn=this.nextNonWhiteSpaceExpect(',');
+                tkn=this.nextNonWhiteSpaceExpect(mod.TokenString, true);
+                
+                this.currentNode.version = tkn.value.slice(1,-1);
+                this.currentNode.documentation = this.getDocumentation();
+                            
+                tkn=this.nextNonWhiteSpaceExpect(',');
+                tkn=this.nextNonWhiteSpaceExpect('function', true);
+                tkn=this.nextNonWhiteSpaceExpect('(');
+                tkn=this.nextNonWhiteSpaceExpect('mod', true);
+                tkn=this.nextNonWhiteSpaceExpect(')', true);
+                tkn=this.nextNonWhiteSpaceExpect('{');
+                tkn=this.parseBlock(tkn);
+                this.expect(")", tkn);
+                tkn = this.nextNonWhiteSpace();
+                tkn = this.parseEndOfStatement(tkn);
+            }else if(tkn.value=='='){
+                tkn = this.nextNonWhiteSpaceExpect('function');    
+                this.currentNode = this.currentNode.addPublic(new mod.MethodNode());
+                tkn = this.parseExpression_function(tkn);
+                tkn = this.parseEndOfStatement(tkn);
+            }else if(tkn.value=='.'){
+                tkn=this.next();
+                tkn = this.parseExpression(tkn);
+                tkn = this.parseEndOfStatement(tkn);
+                return tkn;
+            }else{
+                return tkn;
+            }
             
             this.currentNode = this.currentNode.parentNode;
+            return tkn;
+        };
+                    
+        publ.parseStatement_Class=function(tkn){
+            tkn=this.nextNonWhiteSpace();
+            if(tkn.value=='='){
+                tkn=this.nextNonWhiteSpaceExpect('function');
+                tkn = this.parseExpression_function(tkn);
+            }else if(tkn.value=='.'){
+                tkn=this.next();
+                tkn=this.parseExpression(tkn);
+            }
+            
+            tkn = this.parseEndOfStatement(tkn);
+            return tkn;
+        };
+        
+        publ.parseStatement_imprt=function(tkn){
+            tkn=this.nextNonWhiteSpace();
+            if(tkn.value='='){
+                tkn = this.nextNonWhiteSpaceExpect('function');    
+                tkn = this.parseExpression_function(tkn);
+                tkn = this.parseEndOfStatement(tkn);
+            }else{
+                tkn=this.expect('(');
+                tkn =this.nextNonWhiteSpace(mod.TokenString);
+                
+                this.currentNode.dependencies.push(tkn.value.slice(1,-1));
+    
+                tkn = this.nextNonWhiteSpaceExpect(')');
+                tkn = this.nextNonWhiteSpace();
+                tkn = this.parseEndOfStatement(tkn);
+            }
             return tkn;
         };
         
@@ -621,22 +685,29 @@ Module("lang", "$Revision$", function(mod){
                 switch(tkn.value){
                     case 'function':
                         this.currentNode = this.currentNode.addPublic(new mod.MethodNode());
+                        this.currentNode.name = name;
+                        this.currentNode.documentation = this.getDocumentation();
                         tkn = this.parseExpression_function(tkn);
                         break;
                     case 'Class':
                         this.currentNode = this.currentNode.addPublic(new mod.ClassNode());
+                        this.currentNode.name = name;
+                        this.currentNode.documentation = this.getDocumentation();
                         tkn = this.parseExpression_Class(tkn);
                         break;
                     default:
                         this.currentNode = this.currentNode.addPublic(new mod.PropertyNode());
+                        this.currentNode.name = name;
+                        this.currentNode.documentation = this.getDocumentation();
                         tkn = this.parseExpression(tkn);
                 }
             }else{
                 this.currentNode = this.currentNode.addPublic(new mod.PropertyNode());
+                this.currentNode.name = name;
+                this.currentNode.documentation = this.getDocumentation();
             }
             
-            this.currentNode.name = name;
-            this.currentNode.documentation = this.getDocumentation();
+            
             this.currentNode = this.currentNode.parentNode;
             
             tkn = this.parseEndOfStatement(tkn);
@@ -664,8 +735,6 @@ Module("lang", "$Revision$", function(mod){
             var invokationAllowed = true;          
             if(tkn.value == 'imprt'){
                 tkn = this.parseExpression_imprt(tkn);
-            }else if(tkn.value == 'Class'){
-                tkn =this.parseExpression_Class(tkn);
             }else if((tkn instanceof mod.TokenIdentifier) || (tkn.value == 'this')){
                 tkn =this.parseExpression_objectAccess(tkn);
             }else if(tkn.value == 'new'){
@@ -753,7 +822,7 @@ Module("lang", "$Revision$", function(mod){
         };
         
         publ.parseExpression_Class=function(tkn){
-            tkn=this.nextNonWhiteSpaceExpect('(');
+            tkn=this.nextNonWhiteSpace();
             tkn=this.nextNonWhiteSpace();
             if(tkn instanceof mod.TokenString){
                 this.currentNode.name = tkn.value.slice(1,-1);
@@ -789,7 +858,7 @@ Module("lang", "$Revision$", function(mod){
         };
         
         publ.parseExpression_imprt=function(tkn){
-            tkn = this.nextNonWhiteSpaceExpect('(');
+            tkn=this.nextNonWhiteSpaceExpect('(');
             tkn =this.nextNonWhiteSpaceExpect(mod.TokenString);
             
             this.currentNode.dependencies.push(tkn.value.slice(1,-1));
@@ -857,6 +926,7 @@ Module("lang", "$Revision$", function(mod){
         
         publ.parseExpression_object=function(tkn){
             tkn = this.nextNonWhiteSpace();
+            
             while(tkn.value != '}'){
                 if(tkn instanceof mod.TokenString){
                 }else{
@@ -984,7 +1054,6 @@ Module("lang", "$Revision$", function(mod){
     
    
     mod.DocParser=Class(function(publ,supr){
-                
         publ.printGlobalNode=function(n){
             pprint('<global>', 4);
             pprint('<modules>', 4);
@@ -997,6 +1066,8 @@ Module("lang", "$Revision$", function(mod){
             }
             
             pprint('</modules>', -4);
+            
+            
             pprint('</global>', -4);
         }; 
         
@@ -1092,27 +1163,43 @@ Module("lang", "$Revision$", function(mod){
     });
        
     
-    mod.test=function(){
+    mod.__main__=function(){
         //var s='switch(a){\n case "as":\n\na=2;\nbreak;case "df":\nbreak;   } a.';
+        var iter =imprt('iter');
+        var filenames= ['jsolait.js', 
+                'lib/codecs.js',  
+                'lib/crypto.js',
+                'lib/dom.js',
+                'lib/forms.js',
+                'lib/iter.js',
+                'lib/jsonrpc.js',
+                'lib/lang.js',
+                'lib/sets.js',
+                'lib/testing.js',
+                'lib/urllib.js',
+                'lib/xml.js',
+                'lib/xmlrpc.js'];
         
-        var j= imprt("jsolaitws");
-        var filename= 'xmlrpc.js';
-        var s = j.loadSource(filename);
-    
-        var p = new mod.Parser(s);
+        var gn = new mod.GlobalNode();
+        
+        forin(filenames, function(fname){
+            fname=jsolait.baseURI + '/' + fname;
+            var s = jsolait.loadURI(fname);
+        
+            var p = new mod.Parser(s, gn);
                 
-            
-        try{
-            p.parseStatements(p.next());
-        }catch(e){
-            var l=p.getPosition();
-            print(filename + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200));
-        } 
+            try{
+                p.parseStatements(p.next());
+            }catch(e){
+                var l=p.getPosition();
+                throw fname.slice('file://'.length) + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200);
+            } 
+        });
+        
         var dp = new mod.DocParser();
-        
-        dp.printGlobalNode(p.currentNode);
-        
+        dp.printGlobalNode(gn);
     };
 });
+
 
 

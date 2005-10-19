@@ -36,8 +36,8 @@ Module("urllib","$Revision$", function(mod){
         */
         publ.__init__=function(trace){
             supr(this).__init__( "Could not create an HTTP request object", trace);
-        }
-    })
+        };
+    });
     
     /**
         Thrown if an HTTP request could not be opened.
@@ -49,8 +49,8 @@ Module("urllib","$Revision$", function(mod){
         */
         publ.__init__=function(trace){
             supr(this).__init__( "Opening of HTTP request failed.", trace);
-        }
-    })
+        };
+    });
     
     /**
         Thrown is arequest could not be sent to the server.
@@ -62,8 +62,8 @@ Module("urllib","$Revision$", function(mod){
         */
         publ.__init__ = function(trace){
             supr(this).__init__( "Sending of HTTP request failed.", trace);
-        }
-    })
+        };
+    });
     
     /**
         Mimics the HTTPRequest object using Adobe's SVG Viewer's postURL and getURL.
@@ -82,7 +82,7 @@ Module("urllib","$Revision$", function(mod){
                 this.__contType ="";
                 this.status=200;
             }
-        }
+        };
         /**
             Mimics the open method without actually opening a connection.
             @param type          "GET" or "POST".
@@ -96,7 +96,7 @@ Module("urllib","$Revision$", function(mod){
             this.__type = type;
             this.__url = url;
             this.readyState=0;
-        }
+        };
         /**
             Sets a header.
             @param name  The header name. All but "Content-Type" are ignored.
@@ -106,7 +106,7 @@ Module("urllib","$Revision$", function(mod){
             if (name=="Content-Type"){
                 this.__contType =value;
             }
-        }
+        };
         /**
             Sends the request.
             @param data   The data to send when doing a post.
@@ -122,7 +122,7 @@ Module("urllib","$Revision$", function(mod){
                         self.onreadystatechange();
                     }
                 }
-            }
+            };
             cbh.ignoreComplete = false;
             try{
                 if(this.__type =="GET"){
@@ -134,8 +134,8 @@ Module("urllib","$Revision$", function(mod){
                 cbh.ignoreComplete=true;
                 throw e;
             }
-        }
-    })
+        };
+    });
     
     /**
         Creates an HTTP request object for retreiving files.
@@ -150,7 +150,7 @@ Module("urllib","$Revision$", function(mod){
                 obj=new ActiveXObject("Msxml2.XMLHTTP.4.0");
             }catch(e){
                 try{ //to get MS HTTP request object
-                    obj=new ActiveXObject("Msxml2.XMLHTTP")
+                    obj=new ActiveXObject("Msxml2.XMLHTTP");
                 }catch(e){
                     try{// to get the old MS HTTP request object
                         obj = new ActiveXObject("microsoft.XMLHTTP"); 
@@ -165,7 +165,7 @@ Module("urllib","$Revision$", function(mod){
             }
         }
         return obj;
-    }
+    };
     /**
         Sends a request to a server.
         To explain the way the optional arguments work I will give examples:
@@ -263,7 +263,7 @@ Module("urllib","$Revision$", function(mod){
                         
                     }
                 }
-            }
+            };
         }
         
         try{
@@ -277,7 +277,7 @@ Module("urllib","$Revision$", function(mod){
             }
         }
         return xmlhttp;
-    }
+    };
     /**
         Shorthand for a GET request.
         It calls sendRequest with "GET" as first argument.
@@ -294,8 +294,8 @@ Module("urllib","$Revision$", function(mod){
         for(var i=0;i<arguments.length;i++){
             a.push(arguments[i]);
         }
-        return mod.sendRequest.apply(this,a)
-    }
+        return mod.sendRequest.apply(this,a);
+    };
     /**
         Shorthand for a POST request.
         It calls sendRequest with "POST" as first argument.
@@ -313,7 +313,7 @@ Module("urllib","$Revision$", function(mod){
         for(var i=0;i<arguments.length;i++){
             a.push(arguments[i]);
         }
-        return mod.sendRequest.apply(this,a)
-    }
-})
+        return mod.sendRequest.apply(this,a);
+    };
+});
 

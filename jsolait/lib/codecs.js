@@ -40,7 +40,7 @@ Module("codecs", "$Revision$", function(mod){
             }
         }
         return c;
-    }
+    };
     /**
         Returns all all available decoders.
         @return  An array of decoder names.
@@ -53,7 +53,7 @@ Module("codecs", "$Revision$", function(mod){
             }
         }
         return c;
-    }
+    };
     
     /**
         Decodes an encoded string.
@@ -71,7 +71,7 @@ Module("codecs", "$Revision$", function(mod){
         }else{
             throw new mod.Exception("Decoder '%s' not found.".format(codec));
         }
-    }
+    };
     
     /**
         Encodes a string.
@@ -89,7 +89,7 @@ Module("codecs", "$Revision$", function(mod){
         }else{
             throw new mod.Exception("Ecnoder '%s' not found.".format(codec));
         }
-    }
+    };
     
     /**
         Decodes a Base64 encoded string to a byte string.
@@ -117,7 +117,7 @@ Module("codecs", "$Revision$", function(mod){
          }else{
              throw new mod.Exception("String length must be divisible by 4.");
          }
-    }
+    };
     
     /**
         Encodes a string using Base64.
@@ -153,19 +153,19 @@ Module("codecs", "$Revision$", function(mod){
             }
             return rslt.join("");
         }
-    }
+    };
 
     /**
         Decodes a URI using decodeURI.
     **/
     String.prototype.decode_uri=function(){
         return decodeURI(this);
-    }
+    };
     
     /**
         Encodes a URI using encodeURI.
     **/
     String.prototype.encode_uri=function(){
         return encodeURI(this);
-    }
-})
+    };
+});

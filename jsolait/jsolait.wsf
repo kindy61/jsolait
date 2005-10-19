@@ -24,9 +24,9 @@
     </description>
 
     <runtime>
-        <unnamed name="filename" helpstring="The scriptfiles to run." many="false" required="1" />
-        <named name="moduleTest" helpstring="Specifies to run a module's test method." many="false" required="0" />
         <named name="compile" helpstring="Specifies to run a the lang.parser on it." many="false" required="0" />
+        <unnamed name="filename" helpstring="The scriptfiles to run." many="false" required="1" />
+        <named name="script arguments" helpstring="Specifies arguments to pass to the module/script being run" many="false" required="0" />
     </runtime>
     
     <script language="JavaScript" src="./jsolait.js" />
@@ -34,33 +34,10 @@
     <script language="JavaScript"> <![CDATA[
     
     Module("jsolaitws", "0.0.1", function(mod){
-        
             
         var fs= new ActiveXObject("Scripting.FileSystemObject");
         var wshShell= new ActiveXObject("WScript.Shell");
         var ForReading = 1, ForWriting = 2;
-    
-        ///The paths to search for modules
-        jsolait.moduleSearchPaths = [fs.buildPath(fs.getParentFolderName(WScript.scriptFullName),"lib")];
-        
-        ///The location where jsolait is installed.
-        jsolait.installPath = fs.getParentFolderName(WScript.scriptFullName);
-          
-        jsolait.loadFile=function(path){
-        print(path)
-            try{
-                var f = fs.GetFile(path);
-                var src = f.OpenAsTextStream(ForReading).readall();
-                var pse = Module.preScopeExecution;
-                Module.preScopeExecution = function(mod){
-                    mod.__fileName__ = path;
-                };
-                return src;
-            }catch(e){
-                Module.preScopeExecution=pse;
-                throw new mod.Exception("File not loaded: '%s'.".format(path));
-            }
-        }
         
         print = function(m){
             var s=[];
@@ -121,31 +98,37 @@
         log.level = LogInfo | LogWarn | LogError;    
         
         mod.run=function(){
-            mod.__fileName__ = WScript.scriptFullName;
-            jsolait.__fileName__ = WScript.scriptFullName.slice(0,-3) + "js";
-            
+            mod.__sourceURI__ = 'file://' + WScript.scriptFullName;
+            jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
+                        
+            ///The location where jsolait is installed.
+            jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
+        
             if (WScript.arguments.unnamed.length==0){
                 WScript.Arguments.ShowUsage();                                              
                 return;
             }else{
-                var fileName=fs.getAbsolutePathName(WScript.arguments.unnamed.item(0));
+                //var fileName=fs.getAbsolutePathName(WScript.arguments.unnamed.item(0));
+                var fileName=WScript.arguments.unnamed.item(0);
                 //todo:check if file exists
             }
-            
+                        
             //get the base of the file to execute
             var fileBase= fs.getParentFolderName(fileName);
+            
             //make sure the search path is updated to include the fileBase
-            jsolait.moduleSearchPaths.push(fileBase);
+            jsolait.moduleSearchURIs = [fileBase,  "%(baseURI)s/lib"];
             
             //change working dir to the file's location
             //todo:is it OK to change cwd?
-            wshShell.currentDirectory = fileBase;
+            if(fileBase.slice(0, 'file://'.length) == 'file://'){
+                wshShell.currentDirectory = fileBase.slice('file://'.length);
+            }
             
             
             if(WScript.arguments.named.exists("compile")){
                 var lang = imprt('lang');
-                
-                var s = jsolait.loadFile(fileName);
+                var s = jsolait.loadURI(fileName);
                 var p = new lang.Parser(s);
                     
                 try{
@@ -156,36 +139,33 @@
                 } 
     
             }else{
-      
                 try{//load the script if it is not the main jsolait or jsolaitws module that has already been loaded.
-                    if(fileName.toLowerCase() != jsolait.__fileName__.toLowerCase()  &&
-                                fileName.toLowerCase() != mod.__fileName__.toLowerCase()){
-                        var src = jsolait.loadFile(fileName);
-                         (new Function("",src))()
+                    if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&
+                                fileName.toLowerCase() != mod.__sourceURI__.toLowerCase()){
+                        var src = jsolait.loadURI(fileName);
+                        src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
+                        var f=new Function("",src); //todo should it use globalEval ?
+                        f();
                     }
                 }catch(e){
                     log(e);
                     return;
                 }
                 
-                
-                if(WScript.arguments.named.exists("testModule")){
-                    //if the script was loaded correctly and it contained a module then 
-                    //that module should have a __filename__ property which matches fileName
-                    //and is the one that needs to be tested
-                    for(var mn in jsolait.modules){
-                        if(jsolait.modules[mn].__fileName__.toLowerCase() == fileName.toLowerCase()){
-                            var testing = jsolait.imprt("testing");
-                            testing.testModule(mn);        
-                            return;
+                //if the loaded file contained a module then run it's __main__ method
+                for(var mn in jsolait.modules){
+                    var modl =jsolait.modules[mn];
+                    if(modl.__sourceURI__.toLowerCase() == fileName.toLowerCase()){
+                        if(modl.__main__){
+                            //todo find arguments
+                            modl.__main__.call(modl,[]);
                         }
+                        return;
                     }
-                    throw "No Module found";
                 }
             }
         }
-       
-   })
+    });
 
     try{
         imprt("jsolaitws").run();

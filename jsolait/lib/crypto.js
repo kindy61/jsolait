@@ -39,7 +39,7 @@ Module("crypto", "$Revision$", function(mod){
             }
         }
         return c;
-    }
+    };
     /**
         Returns all all available decrypters.
         @return  An array of decrypters names.
@@ -52,7 +52,7 @@ Module("crypto", "$Revision$", function(mod){
             }
         }
         return c;
-    }
+    };
     
     /**
         Encrypts a string.
@@ -70,7 +70,7 @@ Module("crypto", "$Revision$", function(mod){
         }else{
             throw new mod.Exception("Decrypter '%s' not found.".format(crydec));
         }
-    }
+    };
     /**
         Decrypts a string.
         Parameters but the crypdec parameter are forwardet to the crypdec.
@@ -87,7 +87,7 @@ Module("crypto", "$Revision$", function(mod){
         }else{
             throw new mod.Exception("Encrypter '%s' not found.".format(crydec));
         }
-    }
+    };
     
     /**
         Encrypts a string using XOR.
@@ -102,7 +102,7 @@ Module("crypto", "$Revision$", function(mod){
             e[i] = String.fromCharCode(this.charCodeAt(i) ^ key.charCodeAt(i % l));
         }
         return e.join("");
-    }
+    };
     /**
         Decrypts a string using XOR.
         Since XORing is symetric it is the same as the encrypter.
@@ -115,7 +115,7 @@ Module("crypto", "$Revision$", function(mod){
     **/
     String.prototype.encrypt_rc4=function(key){
         //generate substitution box
-        var sbox = new Array (256);
+        var sbox = new Array(256);
         for (var i=0; i<256; i++){
              sbox[i]=i;
         }
@@ -143,12 +143,12 @@ Module("crypto", "$Revision$", function(mod){
             rslt[k] = String.fromCharCode(this.charCodeAt(k) ^ sbox[t]);
         }
         return rslt.join("");
-    }
+    };
     /**
         Decrypts a string using the ARC4 algorithm.
         Since it is symetric it is the same as the encrypter.
         @param key  The key to use for decryption.
     **/
     String.prototype.decrypt_rc4=String.prototype.encrypt_rc4;
-})
+});
 

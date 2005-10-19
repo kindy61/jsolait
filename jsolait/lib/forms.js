@@ -50,7 +50,7 @@ Module("forms", "$Revision$", function(mod){
             this.elements=[];
             this.action= (action==null)?"":action;
             this.method= (method==null)?"GET":method;
-        }
+        };
         
         /**
             Adds a new form element to the form or sets the value of an existing element. 
@@ -76,7 +76,7 @@ Module("forms", "$Revision$", function(mod){
                 this[name] = f;
             }
             return f;
-        }
+        };
         
         /**
             Encodes the form to a form data String.
@@ -85,10 +85,10 @@ Module("forms", "$Revision$", function(mod){
         publ.encode=function(){
             var data=[];
             for(var i=0;i<this.elements.length;i++){
-                data.push(this.elements[i].encode())
+                data.push(this.elements[i].encode());
             }
             return data.join("&");
-        }
+        };
         
         /**
             Creates a query URL using the action property and
@@ -98,7 +98,7 @@ Module("forms", "$Revision$", function(mod){
         **/
         publ.queryString=function(){
             return this.action + "?" + this.encode();
-        }
+        };
                 
         /**
             Submits the form to the server, reloading the page.
@@ -133,7 +133,7 @@ Module("forms", "$Revision$", function(mod){
                 }
                 frm.submit();
             }
-        }
+        };
         
         /**
             Submits the form to the server without reloading the page.
@@ -157,8 +157,8 @@ Module("forms", "$Revision$", function(mod){
             }else{
                 throw "No action and/or method defined";
             }
-        }
-    })
+        };
+    });
         
     /**
         A form element class.
@@ -177,27 +177,27 @@ Module("forms", "$Revision$", function(mod){
         publ.__init__=function(name, value){
             this.name = name;
             this.value = value;
-        }
+        };
         /**
             Encodes an element as form data.
             @return The encoded element data.
         **/
         publ.encode=function(){
             return encodeURIComponent(this.name) + "=" + encodeURIComponent(this.value);
-        }
-    })    
+        };
+    }) ;   
     
-    mod.test=function(){
+    mod.__main__=function(){
         var fm = new mod.Form("http://localhost/echoform.py", "get");
         print("testing all sorts of chars, the should be encoded.");
         fm.set("testchars", "abcdefghijklmnopqrstuvwxyz1234567890 \n\t!@#$%^&*()_+-=[]{};'\\:\"|,./<>?");
         print(fm.encode());
         try{
-        print(fm.submitNoReload().responseText)
+            print(fm.submitNoReload().responseText);
         }catch(e){
-            print(e)
+            print(e);
         }
         fm.method="post";
-        print(fm.submitNoReload().responseText)
-    }
-})
+        print(fm.submitNoReload().responseText);
+    };
+});

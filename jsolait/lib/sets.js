@@ -39,8 +39,8 @@ Module("sets", "$Revision$", function(mod){
         publ.__init__=function(set, item){
             this.set =set;
             this.item=item;
-        }
-    })
+        };
+    });
     
     mod.Set=Class(function(publ, supr){
         /**
@@ -58,7 +58,7 @@ Module("sets", "$Revision$", function(mod){
             for(var i=0;i<iterable.length;i++){
                 this.add(iterable[i]);
             }
-        }
+        };
         
         /**
             Adds an item to the set if it does not exist yet.
@@ -66,10 +66,15 @@ Module("sets", "$Revision$", function(mod){
             @return        The item added.
         **/
         publ.add=function(item){
-            var h ='#' +item;
+            var h;
+            if(item.__hash__){
+                h='#' +item.__hash__();
+            }else{
+                h='#' +item;
+            }
             this.items[h] = item;
             return item;
-        }
+        };
         
         
         
@@ -80,7 +85,12 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.remove=function(item){
-            var h = '#' + item;
+            var h;
+            if(item.__hash__){
+                h='#' +item.__hash__();
+            }else{
+                h='#' +item;
+            }
             if(this.items[h] === undefined){
                 throw new mod.ItemNotFoundInSet(this, item);
             }else{
@@ -88,7 +98,7 @@ Module("sets", "$Revision$", function(mod){
                 delete this.items[h];    
                 return item;
             }
-        }
+        };
         
         /**
             Removes an item from the set wether or not the item realy exists.
@@ -96,11 +106,16 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.discard=function(item){
-            var h='#' + item;
+            var h;
+            if(item.__hash__){
+                h='#' +item.__hash__();
+            }else{
+                h='#' +item;
+            }
             item = this.items[h];
             delete this.items[h];    
             return item;
-        }
+        };
         
         /**
             Returns wether or not an item is part of the set.
@@ -108,9 +123,14 @@ Module("sets", "$Revision$", function(mod){
             @return        True if the item is found in the set, false otherwise.
         **/
         publ.contains=function(item){
-            var h='#' + item;
-            return (this.items[h] !== undefined)
-        }
+            var h;
+            if(item.__hash__){
+                h='#' +item.__hash__();
+            }else{
+                h='#' +item;
+            }
+            return (this.items[h] !== undefined);
+        };
         /**
             Returns wether or not the set is a sub set of another set.
             @param setObj The set to check against.
@@ -123,7 +143,7 @@ Module("sets", "$Revision$", function(mod){
                 }
             }
             return true;
-        }
+        };
                 
         /**
             Returns wether or not the set is a super set of another set.
@@ -132,7 +152,7 @@ Module("sets", "$Revision$", function(mod){
         **/
         publ.isSuperSet = function(setObj){
             return setObj.isSubSet(this);
-        }
+        };
         
         /**
             Returns wether or not the set is equal to the other set.
@@ -141,7 +161,7 @@ Module("sets", "$Revision$", function(mod){
         **/
         publ.equals=function(setObj){
             return (this.isSubSet(setObj) && setObj.isSubSet(this));
-        }
+        };
         
         /**
             Creates a new set containing all elements of set and setObj (newSet = set | setObj).
@@ -152,7 +172,7 @@ Module("sets", "$Revision$", function(mod){
             var ns= this.copy();
             ns.unionUpdate(setObj);
             return ns;
-        }
+        };
         
         /**
             Creates a new set containing elements common to the set and setObj (newSet = set & setObj).
@@ -162,13 +182,13 @@ Module("sets", "$Revision$", function(mod){
         publ.intersection=function(setObj){
             var ns=new mod.Set();
             for(var n in this.items){
-                var item=this.items[n]
+                var item=this.items[n];
                 if(setObj.contains(item)){
                     ns.add(item);
                 }
             }
             return ns;
-        }
+        };
         /**
             Creates a new set containing only elements of the set that are not found in setObj (newSet = set - setObj).
             @param setObj The set containing the elements to subtract from the set.
@@ -183,7 +203,7 @@ Module("sets", "$Revision$", function(mod){
                 }
             }
             return ns;
-        }
+        };
         
         /**
             Creates a new set containing elements from the set and setObj but no elements present in both(newSet = (set - setObj) | (setObj - set)).
@@ -193,7 +213,7 @@ Module("sets", "$Revision$", function(mod){
         publ.symmDifference=function(setObj){
             var ns = this.difference(setObj);
             return ns.unionUpdate(setObj.difference(this));
-        }
+        };
         
         
         /**
@@ -206,7 +226,7 @@ Module("sets", "$Revision$", function(mod){
                 this.add(setObj.items[n]);
             }
             return this;
-        }
+        };
         
         /**
             Updates the set keeping only elements also found in setObj (set = set & setObj).
@@ -221,7 +241,7 @@ Module("sets", "$Revision$", function(mod){
                 }
             }
             return this;
-        }
+        };
         
         /**
             Updates the set removing all elements found in setObj  (set = set - setObj).
@@ -236,7 +256,7 @@ Module("sets", "$Revision$", function(mod){
                 }
             }
             return this;
-        }
+        };
         
         /**
             Updates the set to only contain elements from the set and setObj but no elements present in both(set = (set - setObj) | (setObj - set)).
@@ -244,10 +264,10 @@ Module("sets", "$Revision$", function(mod){
             @return The set itself.
         **/
         publ.symmDifferenceUpdate=function(setObj){
-            var union = setObj.difference(this)
+            var union = setObj.difference(this);
             this.differenceUpdate(setObj);
             return this.unionUpdate(union);
-        }
+        };
         
         /**
             Creates a copy of the set.
@@ -256,14 +276,14 @@ Module("sets", "$Revision$", function(mod){
         publ.copy=function(){
             var ns = new mod.Set();
             return ns.unionUpdate(this);
-        }
+        };
         
         /**
             Removes all elements from teh set.
         **/
         publ.clear=function(){
             this.items={};
-        }
+        };
         
         /**
             Returns an array containing all elements of the set.
@@ -275,7 +295,7 @@ Module("sets", "$Revision$", function(mod){
                 a.push(this.items[n]);
             }
             return a;
-        }
+        };
         
         publ.toString=function(){
             var items =[];
@@ -283,11 +303,11 @@ Module("sets", "$Revision$", function(mod){
                 items.push(this.items[n]);
             }
             return "{"+ items.join(",") + "}";
-        }
-    })
+        };
+    });
     
     
-    mod.test=function(){
+    mod.__main__=function(){
         
         var prntRslt=function(expected, rslt){
             print("expected\t:" + expected);
@@ -296,7 +316,7 @@ Module("sets", "$Revision$", function(mod){
                 throw "Sets are not Equal:\n" + expected + " != " + rslt;
             }
             print("");
-        }
+        };
         
         var s1=new mod.Set("0123456");
         var s2=new mod.Set("3456789");
@@ -314,24 +334,16 @@ Module("sets", "$Revision$", function(mod){
         prntRslt(new mod.Set("3456"), s2.intersection(s1));
         
         print("%s - %s".format(s1, s2));
-        prntRslt(new mod.Set("012"), s1.difference(s2))
+        prntRslt(new mod.Set("012"), s1.difference(s2));
         
         print("%s - %s".format(s2, s1));
-        prntRslt(new mod.Set("789"), s2.difference(s1))
+        prntRslt(new mod.Set("789"), s2.difference(s1));
         
         print("%s ^ %s".format(s1, s2));
         prntRslt(new mod.Set("012789"),s1.symmDifference(s2));
         
         print("%s ^ %s".format(s2, s1));
         prntRslt(new mod.Set("012789"),s2.symmDifference(s1));
-    }
-})
+    };
+});
 
-
-
-a=new Array(10);
-
-
-for(var key in a){
-    print("key: %s=%s type: %s ".format(key,  a[key], typeof key));
-}

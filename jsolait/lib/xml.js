@@ -41,8 +41,8 @@ Module("xml","$Revision$", function(mod){
         */
         publ.__init__=function(trace){
             supr(this).__init__("Could not create an XML parser.", trace);
-        }
-    })
+        };
+    });
     /**
         Thrown if a document could not be parsed.
     */
@@ -55,10 +55,10 @@ Module("xml","$Revision$", function(mod){
         publ.__init__=function(xml,trace){
              supr(this).__init__("Failed parsing XML document.",trace);
             this.xml = xml;
-        }
+        };
         ///The xml source which could not be parsed.
         publ.xml;
-    })
+    });
     /**
         Parses an xml document.
         @param xml     The xml text.
@@ -112,7 +112,7 @@ Module("xml","$Revision$", function(mod){
         }catch(e){
             throw new mod.ParsingFailed(xml,e);
         }
-    }
+    };
     /**
         DOM2 implimentation of document.importNode().
         This will import into the current document. In SVG it will create SVG nodes in HTML it will create HTML nodes....
@@ -143,7 +143,7 @@ Module("xml","$Revision$", function(mod){
                     parent.appendChild(n);
                 }
             }
-        }
+        };
         var node=null;
         switch(importedNode.nodeType){
             case ATTRIBUTE_NODE:
@@ -186,7 +186,7 @@ Module("xml","$Revision$", function(mod){
                 break;
         }
         return node;
-    }
+    };
     
     var getNSPrefix = function(node, namespaceURI, nsPrefixMap){
         if(! namespaceURI){
@@ -214,7 +214,7 @@ Module("xml","$Revision$", function(mod){
             //todo:
             throw new Error("Cannot find a namespace prefix for " + namespaceURI);
         }
-    }
+    };
     
     /**
         Turns an XML document into a String.
@@ -289,5 +289,5 @@ Module("xml","$Revision$", function(mod){
                 break;
         }
         return s;
-    }
-})
+    };
+});

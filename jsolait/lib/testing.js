@@ -44,7 +44,7 @@ Module("testing", "$Revision$", function(mod){
             fn.apply(null, args);    
         }
         return ((new Date()).getTime()-t) / (repeat+1);
-    }
+    };
     
     
     mod.testModule=function(modName){
@@ -74,13 +74,13 @@ Module("testing", "$Revision$", function(mod){
         var t= (new Date()).getTime()-t ; 
         log("Testing of module '%s' completed in %s ms.".format(modName, t < 1? "< 1":t)) ;
     
-    }
+    };
     
     mod.objectKeys=function(obj){
         var keys=[];
         for(var n in obj){
-            keys.push(n)
+            keys.push(n);
         }
         return keys;
-    }
-})
+    };
+});
