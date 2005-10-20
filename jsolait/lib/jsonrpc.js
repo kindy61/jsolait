@@ -36,7 +36,7 @@ Module("jsonrpc","$Revision$", function(mod){
             @param status       The status returned by the server.
         */
         publ.__init__= function(status){
-            supr(this).__init__("The server did not respond with a status 200 (OK) but with: " + status);
+            supr.__init__.call(this, "The server did not respond with a status 200 (OK) but with: " + status);
             this.status = status;
         };
          ///The status returned by the server.
@@ -54,7 +54,7 @@ Module("jsonrpc","$Revision$", function(mod){
             @param trace=undefined  The error causing this Exception
         */
         publ.__init__= function(msg, s, trace){
-            supr(this).__init__(msg,trace);
+            supr.__init__.call(this, msg,trace);
             this.source = s;
         };
          ///The json source which was mal formed.
@@ -70,7 +70,7 @@ Module("jsonrpc","$Revision$", function(mod){
             @param trace=undefined  The error causing this Exception
         */
         publ.__init__= function(err, trace){
-            supr(this).__init__(err,trace);
+            supr.__init__.call(this, err,trace);
         };
     });
     

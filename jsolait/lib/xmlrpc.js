@@ -38,7 +38,7 @@ Module("xmlrpc","$Revision$", function(mod){
             @param status       The status returned by the server.
         */
         publ.__init__= function(status){
-            supr(this).__init__("The server did not respond with a status 200 (OK) but with: " + status);
+            supr.__init__.call(this, "The server did not respond with a status 200 (OK) but with: " + status);
             this.status = status;
         };
          ///The status returned by the server.
@@ -56,7 +56,7 @@ Module("xmlrpc","$Revision$", function(mod){
             @param trace=null  The error causing this Exception
         */
         publ.__init__= function(msg, xml, trace){
-            supr(this).__init__(msg,trace);
+            supr.__init__.call(this, msg,trace);
             this.xml = xml;
         };
          ///The xml source which was mal formed.
@@ -72,7 +72,7 @@ Module("xmlrpc","$Revision$", function(mod){
             @param faultString      The fault string returned by the rpc call.
         */
         publ.__init__= function(faultCode, faultString){
-            supr(this).__init__("XML-RPC Fault: " +  faultCode + "\n\n" + faultString);
+            supr.__init__.call(this, "XML-RPC Fault: " +  faultCode + "\n\n" + faultString);
             this.faultCode = faultCode;
             this.faultString = faultString;
         };
@@ -811,7 +811,7 @@ Module("xmlrpc","$Revision$", function(mod){
     };
 
 
-    mod.test = function(){
+    mod.__main__ = function(){
         var s = new mod.ServiceProxy("http://jsolait.net/test.py",['echo']);
         print("creating ServiceProxy object using introspection for method construction...\n");
         print("%s created\n".format(s));

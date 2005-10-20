@@ -158,7 +158,11 @@
                     if(modl.__sourceURI__.toLowerCase() == fileName.toLowerCase()){
                         if(modl.__main__){
                             //todo find arguments
-                            modl.__main__.call(modl,[]);
+                            try{
+                                modl.__main__.call(modl,[]);
+                            }catch(e){
+                                throw new mod.Exception("runing %s  __main__()  failed\n".format(modl),e)
+                            }
                         }
                         return;
                     }

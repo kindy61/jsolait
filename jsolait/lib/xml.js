@@ -40,7 +40,7 @@ Module("xml","$Revision$", function(mod){
             @param trace  The error causing the Exception.
         */
         publ.__init__=function(trace){
-            supr(this).__init__("Could not create an XML parser.", trace);
+            supr.__init__.call(this, "Could not create an XML parser.", trace);
         };
     });
     /**
@@ -53,7 +53,7 @@ Module("xml","$Revision$", function(mod){
             @param trace The error causing this Exception.
         */
         publ.__init__=function(xml,trace){
-             supr(this).__init__("Failed parsing XML document.",trace);
+             supr.__init__.call(this, "Failed parsing XML document.",trace);
             this.xml = xml;
         };
         ///The xml source which could not be parsed.

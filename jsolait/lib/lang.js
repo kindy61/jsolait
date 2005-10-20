@@ -383,7 +383,7 @@ Module("lang", "$Revision$", function(mod){
     mod.Parser=Class(mod.Tokenizer, function(publ, supr){
         
         publ.__init__=function(s, globalNode){
-            supr(this).__init__(s);
+            supr.__init__.call(this, s);
             globalNode = globalNode === undefined ? new mod.GlobalNode() : globalNode;
             this.currentNode=globalNode;
             this.globalNode= globalNode;
@@ -1010,7 +1010,7 @@ Module("lang", "$Revision$", function(mod){
         
     mod.Compressor=Class(mod.Tokenizer, function(publ,supr){
         publ.__init__=function(source){
-            supr(this).__init__(source);
+            supr.__init__.call(this, source);
             this.wsNeeded=false;
         };
         
@@ -1165,7 +1165,7 @@ Module("lang", "$Revision$", function(mod){
     
     mod.__main__=function(){
         //var s='switch(a){\n case "as":\n\na=2;\nbreak;case "df":\nbreak;   } a.';
-        var i =imprt('iter');
+        var it =imprt('iter');
         var filenames= ['jsolait.js', 
                 'lib/codecs.js',  
                 'lib/crypto.js',
@@ -1200,4 +1200,6 @@ Module("lang", "$Revision$", function(mod){
         dp.printGlobalNode(gn);
     };
 });
+
+
 

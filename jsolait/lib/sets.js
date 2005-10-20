@@ -55,9 +55,19 @@ Module("sets", "$Revision$", function(mod){
             if(iterable.constructor == String){
                 iterable = iterable.split("");
             }
-            for(var i=0;i<iterable.length;i++){
-                this.add(iterable[i]);
-            }
+            //todo do iterable impl
+            /*
+            if(iterable.__iter__){
+                var i=iterable.__iter__();
+                var item;
+                while(item=i.next()!==undefined){
+                    this.add(item);
+                }
+            }else{*/
+                for(var i=0;i<iterable.length;i++){
+                    this.add(iterable[i]);
+                }
+            //}
         };
         
         /**
@@ -161,6 +171,14 @@ Module("sets", "$Revision$", function(mod){
         **/
         publ.equals=function(setObj){
             return (this.isSubSet(setObj) && setObj.isSubSet(this));
+        };
+        
+        publ.__equals__=function(setObj){
+            if(setObj instanceof publ.constructor){
+                return this.equals(setObj);
+            }else{
+                return false;
+            }
         };
         
         /**
@@ -308,42 +326,37 @@ Module("sets", "$Revision$", function(mod){
     
     
     mod.__main__=function(){
-        
-        var prntRslt=function(expected, rslt){
-            print("expected\t:" + expected);
-            print("calculated\t:" + rslt);
-            if(rslt.equals(expected) == false){
-                throw "Sets are not Equal:\n" + expected + " != " + rslt;
-            }
-            print("");
-        };
+       
         
         var s1=new mod.Set("0123456");
         var s2=new mod.Set("3456789");
+        var testing=imprt('testing');
         
-        print("%s | %s".format(s1, s2));
-        prntRslt(new mod.Set("0123456789"), s1.union(s2));
-        
-        print("%s | %s".format(s2, s1));
-        prntRslt(new mod.Set("0123456789"), s2.union(s1));
-        
-        print("%s & %s".format(s1, s2));
-        prntRslt(new mod.Set("3456"), s1.intersection(s2));
-        
-        print("%s & %s".format(s2, s1));
-        prntRslt(new mod.Set("3456"), s2.intersection(s1));
-        
-        print("%s - %s".format(s1, s2));
-        prntRslt(new mod.Set("012"), s1.difference(s2));
-        
-        print("%s - %s".format(s2, s1));
-        prntRslt(new mod.Set("789"), s2.difference(s1));
-        
-        print("%s ^ %s".format(s1, s2));
-        prntRslt(new mod.Set("012789"),s1.symmDifference(s2));
-        
-        print("%s ^ %s".format(s2, s1));
-        prntRslt(new mod.Set("012789"),s2.symmDifference(s1));
+        print(testing.test(function(){
+            testing.assertEquals("checking %s | %s".format(s1, s2), 
+                                        new mod.Set("0123456789"), s1.union(s2))
+            
+            testing.assertEquals("checking %s | %s".format(s2, s1),
+                                        new mod.Set("0123456789"), s2.union(s1));
+
+            testing.assertEquals("checking %s & %s".format(s1, s2),
+                                         new mod.Set("3456"), s1.intersection(s2));
+            
+            testing.assertEquals("checking %s & %s".format(s2, s1),
+                                        new mod.Set("3456"), s2.intersection(s1));
+            
+            testing.assertEquals("checking %s - %s".format(s1, s2),
+                                        new mod.Set("012"), s1.difference(s2));
+            
+            testing.assertEquals("checking %s - %s".format(s2, s1),
+                                        new mod.Set("789"), s2.difference(s1));
+            
+            testing.assertEquals("checking %s ^ %s".format(s1, s2),
+                                        new mod.Set("012789"),s1.symmDifference(s2));
+            
+            testing.assertEquals("checking %s ^ %s".format(s2, s1),
+                                        new mod.Set("012789"),s2.symmDifference(s1));
+        }))
     };
 });
 

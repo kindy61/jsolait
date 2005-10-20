@@ -170,44 +170,24 @@ Class=function(name, superClass, mixinClass, classScope){
             }
         }
     }
-       
-    //create a supr  function to be used to call methods of the super class
-    var supr = function(self){
-        //make sure its a legal call to supr
-        if(! (self.constructor.isSubclassOf(superClass))){
-            throw "Illegal call of supr:\n %s is not an instance of %s".format(self, superClass);
-        }
-        var wrapper;
-        //if a wrapper has been created already then use it
-        if(self[" super_this_" + superClass.__name__]){
-            wrapper = self[" super_this_" + superClass.__name__];
-        }else{
-            //set up super class functionality so a call to super(this) will return an object with all super class methods 
-            //the methods can be called like super(this).foo and the this object will be bound to that method.
-            wrapper = {};
-            var superProto = superClass.prototype;
-            for(var n in superProto){
-                if(superProto[n] instanceof Function){
-                    wrapper[n] = function(){
-                                            var f = arguments.callee;
-                                            return superProto[f._name].apply(self, arguments);
-                                        };
-                    wrapper[n]._name = n;
-                }
-            }
-            //save the wrapper so calling of supr a second time is much faster and skips the wrapper setup
-            self[" super_this_" + superClass.__name__]=wrapper;
-        }
-        return wrapper;
-    };
-        
+    
     //execute the scope of the class
-    classScope(NewClass.prototype, supr);
+    switch(classScope.length){
+        case 3: //publ, statc, supr  
+            classScope(NewClass.prototype, NewClass, superClass.prototype);
+            break;
+        default://publ, supr
+            classScope(NewClass.prototype, superClass.prototype);
+            break;
+    }
+    
     return NewClass;
 };    
+
 Class.toString = function(){
     return "[object Class]";
 };
+
 Class.__createProto__=function(){ 
     throw "Can't use Class as a super class.";
 };
@@ -261,6 +241,8 @@ Module.toString=function(){
 Module.__createProto__=function(){ 
     throw "Can't use Module as a super class.";
 };
+
+    
 /**
     Base class for all module-Exceptions.
     This class should not be instaciated directly but rather
@@ -274,32 +256,35 @@ Module.Exception=Class("Exception", function(publ){
     **/
     publ.__init__=function(msg, trace){
         this.name = this.constructor.__name__;
-        this.message = msg;
+        this.message = ''+msg;
         this.trace = trace;
     };
     
+    
     publ.toString=function(){
-        var s = "%s %s\n\n".format(this.name, this.module);
-        s += this.message;
+        var s = "%s %s".format(this.name, this.module);
         return s;
     };
     /**
         Returns the complete trace of the exception.
         @return The error trace.
     **/
-    publ.toTraceString=function(){
-    //todo:use  constructor.__name__
-        var s = "%s in %s:\n    ".format(this.name, this.module );
-        s+="%s\n\n".format(this.message);
+    publ.toTraceString=function(indent){
+        indent = indent==null ? 0 : indent;
+        
+        //todo:use  constructor.__name__
+        var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
         if(this.trace){
             if(this.trace.toTraceString){
-                s+= this.trace.toTraceString();
+                s+='\n\n'+ this.trace.toTraceString(indent + 8);
             }else{
-                s+= this.trace + 'sdfsdf';
+                s+=(this.trace +'\n').indent(indent);
             }
         }
         return s;
     };
+    
+   
     
     ///The name of the Exception.
     publ.name;//todo is that needed?
@@ -321,7 +306,7 @@ Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, fu
         @param trace      The error cousing this Exception.
     **/
     publ.__init__=function(module, trace){
-        supr(this).__init__("Failed to run the module scope for %s".format(module), trace);
+        supr.__init__.call(this, "Failed to run the module scope for %s".format(module), trace);
         this.failedModule = module;
     };
     ///The module that could not be createed.
@@ -425,7 +410,7 @@ Module("jsolait", "$Revision$", function(mod){
             @param trace      The error cousing this Exception.
         **/
         publ.__init__=function(sourceURI, trace){
-            supr(this).__init__("Failed to load file: '%s'".format(sourceURI), trace);
+            supr.__init__.call(this, "Failed to load file: '%s'".format(sourceURI), trace);
             this.sourceURI = sourceURI;
         };
         ///The path paths jsolait tried to load the file from.
@@ -503,7 +488,7 @@ Module("jsolait", "$Revision$", function(mod){
             @param trace      The error cousing this Exception.
         **/
         publ.__init__=function(moduleName, moduleURIs, trace){
-            supr(this).__init__("Failed to import module: '%s' from:\n%s".format(moduleName, moduleURIs.join(',\n')), trace);
+            supr.__init__.call(this, "Failed to import module: '%s' from:\n%s".format(moduleName, moduleURIs.join(',\n')), trace);
             this.moduleName = moduleName;
             this.moduleURIs = moduleURIs;
         };
@@ -760,7 +745,20 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return s;
     };
-
+    
+    String.prototype.indent=function(indent){
+        var out=[];
+        var s=this.split('\n');
+        for(var i=0;i<s.length;i++){
+            var pr='';
+            for(var k=0;k<indent;k++){
+                pr +=' ';
+            }  
+            out.push(pr + s[i]);
+        }
+        return out.join('\n');
+    }
+    
     ///Tests the module.
     mod.test=function(){
         

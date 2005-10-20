@@ -35,7 +35,7 @@ Module("urllib","$Revision$", function(mod){
             @param trace The error causing this exception.
         */
         publ.__init__=function(trace){
-            supr(this).__init__( "Could not create an HTTP request object", trace);
+            supr.__init__.call(this,  "Could not create an HTTP request object", trace);
         };
     });
     
@@ -48,7 +48,7 @@ Module("urllib","$Revision$", function(mod){
             @param trace The error causing this exception.
         */
         publ.__init__=function(trace){
-            supr(this).__init__( "Opening of HTTP request failed.", trace);
+            supr.__init__.call(this,  "Opening of HTTP request failed.", trace);
         };
     });
     
@@ -61,7 +61,7 @@ Module("urllib","$Revision$", function(mod){
             @param trace The error causing this exception.
         */
         publ.__init__ = function(trace){
-            supr(this).__init__( "Sending of HTTP request failed.", trace);
+            supr.__init__.call(this,  "Sending of HTTP request failed.", trace);
         };
     });
     
