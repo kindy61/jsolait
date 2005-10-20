@@ -1165,7 +1165,7 @@ Module("lang", "$Revision$", function(mod){
     
     mod.__main__=function(){
         //var s='switch(a){\n case "as":\n\na=2;\nbreak;case "df":\nbreak;   } a.';
-        var iter =imprt('iter');
+        var i =imprt('iter');
         var filenames= ['jsolait.js', 
                 'lib/codecs.js',  
                 'lib/crypto.js',
@@ -1182,7 +1182,7 @@ Module("lang", "$Revision$", function(mod){
         
         var gn = new mod.GlobalNode();
         
-        forin(filenames, function(fname){
+        iter(filenames, function(fname){
             fname=jsolait.baseURI + '/' + fname;
             var s = jsolait.loadURI(fname);
         
@@ -1200,6 +1200,4 @@ Module("lang", "$Revision$", function(mod){
         dp.printGlobalNode(gn);
     };
 });
-
-
 

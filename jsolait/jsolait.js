@@ -133,7 +133,7 @@ Class=function(name, superClass, mixinClass, classScope){
                     NewClass.__objcnt__ = 1;
                 }
                 return NewClass.__objcnt__;
-            }
+            };
             break;
         case Array:
             //immitate a call to new Array()
