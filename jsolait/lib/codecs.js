@@ -156,16 +156,16 @@ Module("codecs", "$Revision$", function(mod){
     };
 
     /**
-        Decodes a URI using decodeURI.
+        Decodes a URI using decodeURIComponent.
     **/
     String.prototype.decode_uri=function(){
-        return decodeURI(this);
+        return decodeURIComponent(this);
     };
     
     /**
-        Encodes a URI using encodeURI.
+        Encodes a URI using encodeURIComponent.
     **/
     String.prototype.encode_uri=function(){
-        return encodeURI(this);
+        return encodeURIComponent(this);
     };
 });

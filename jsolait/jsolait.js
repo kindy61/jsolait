@@ -559,7 +559,7 @@ Module("jsolait", "$Revision$", function(mod){
         replaced with the formated values.
         
         specifier([...]-items are optional): 
-            "%(key)[flag][sign][min][percision]typeOfValue"
+            "%[(key)][flag][sign][min][percision]typeOfValue"
             
             (key)  If specified the 1st argument is treated as an object/associative array and the formating values 
                      are retrieved from that object using the key.
@@ -757,7 +757,7 @@ Module("jsolait", "$Revision$", function(mod){
             out.push(pr + s[i]);
         }
         return out.join('\n');
-    }
+    };
     
     ///Tests the module.
     mod.test=function(){

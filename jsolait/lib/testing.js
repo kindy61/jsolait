@@ -49,7 +49,7 @@ Module("testing", "$Revision$", function(mod){
     mod.Test=Class(function(publ,supr){
         publ.__init__=function(testScope){
             this.testScope=testScope;
-        }
+        };
         
         publ.run=function(){
             this.startTime=(new Date()).getTime();
@@ -64,7 +64,7 @@ Module("testing", "$Revision$", function(mod){
             }
             this.endTime=(new Date()).getTime();
             this.duration=this.endTime-this.startTime;
-        }
+        };
         
         publ.report=function(){
             if(this.error){
@@ -72,7 +72,7 @@ Module("testing", "$Revision$", function(mod){
             }else{
                 return "Test completed in %s ms".format(this.duration);
             }
-        }
+        };
         
         publ.startTime;
         publ.endTime;
@@ -90,7 +90,7 @@ Module("testing", "$Revision$", function(mod){
             this.failMessage = failMsg;
             this.comment = comment;
             supr.__init__.call(this, "%s failed: %s".format(comment, failMsg));
-        }
+        };
     });
     
     mod.assert=function(comment, value, failMsg){
@@ -103,7 +103,7 @@ Module("testing", "$Revision$", function(mod){
         if(value!==true){
             throw new mod.AssertFailed(comment, failMsg===undefined ? "Expected true but found: %s".format(value) : failMsg);
         }
-    }
+    };
     
     mod.assertTrue=function(comment, value){
         if(arguments.length==1){
@@ -111,7 +111,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value===true, "Expected true but found: %s".format(value));            
-    }
+    };
     
     mod.assertFalse=function(comment, value){
         if(arguments.length==1){
@@ -119,7 +119,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value===false, "Expected false but found: %s".format(value));            
-    }
+    };
     
     mod.assertEquals=function(comment, value1, value2){
         if(arguments.length==2){
@@ -132,7 +132,7 @@ Module("testing", "$Revision$", function(mod){
         }else{
             mod.assert(comment, value1  === value2, "Expected %s === %s.".format(value1, value2));            
         }
-    }
+    };
     
     mod.assertNotEquals=function(comment, value1, value2){
         if(arguments.length==2){
@@ -145,7 +145,7 @@ Module("testing", "$Revision$", function(mod){
         }else{
             mod.assert(comment, value1  !== value2, "Expected %s !== %s.".format(value1, value2));            
         }
-    }
+    };
     
     mod.assertNull=function(comment, value){
         if(arguments.length==1){
@@ -153,7 +153,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value===null, "Expected %s === null.".format(value));
-    }
+    };
     
     mod.assertNotNull=function(comment, value){
         if(arguments.length==1){
@@ -161,7 +161,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value !==null, "Expected %s !== null.".format(value));
-    }
+    };
     
     mod.assertUndefined=function(comment, value){
         if(arguments.length==1){
@@ -169,7 +169,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value===undefined, "Expected %s === undefined.".format(value));
-    }
+    };
     
     mod.assertNotUndefined=function(comment, value){
         if(arguments.length==1){
@@ -177,7 +177,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, value!==undefined, "Expected %s !== undefined".format(value));
-    }
+    };
     
     mod.assertNaN=function(comment, value){
         if(arguments.length==1){
@@ -185,7 +185,7 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(value));
-    }
+    };
     
     mod.assertNotNaN=function(comment, value){
         if(arguments.length==1){
@@ -193,11 +193,11 @@ Module("testing", "$Revision$", function(mod){
             comment ='';
         }
         mod.assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(value));
-    }
+    };
     
     mod.fail=function(){
         
-    }
+    };
         
     mod.objectKeys=function(obj){
         var keys=[];
@@ -230,7 +230,7 @@ Module("testing", "$Revision$", function(mod){
             mod.assertNotEquals(null,undefined);
             mod.assertNotEquals(mod,{});
         }));
-    }
+    };
 });
 
 

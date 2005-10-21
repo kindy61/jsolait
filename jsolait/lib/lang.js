@@ -19,9 +19,8 @@
 */
 
 /**
-    Module providing language services like tokenizing JavaScript code
-    or converting JavaScript objects to and from JSON (see json.org).
-    To customize JSON serialization of Objects just overwrite the toJSON method in your class.
+    Module providing language services like tokenizing and parsing JavaScript code.
+    
     @creator                 Jan-Klaas Kollhof
     @created                2004-03-14
     @lastchangedby       $LastChangedBy$
@@ -304,24 +303,8 @@ Module("lang", "$Revision$", function(mod){
                 throw "Module not allowed here";
             }
         };
-        
-        
-        
     });
-    
-    
-    
-    mod.ModuleNode=Class(function(publ,supr){
-        publ.__init__=function(script){
-            this.script=script;
-        };
         
-        publ.parse=function(){
-            
-        };
-    });
-    
-    
     mod.CodeNode=Class(function(publ,supr){
         publ.__init__=function(){
             this.childNodes=[];
@@ -602,7 +585,7 @@ Module("lang", "$Revision$", function(mod){
                 tkn=this.nextNonWhiteSpaceExpect(mod.TokenString, true);
                 
                 this.currentNode.version = tkn.value.slice(1,-1);
-                this.currentNode.documentation = this.getDocumentation();
+                this.currentNode.description = this.getDocumentation();
                             
                 tkn=this.nextNonWhiteSpaceExpect(',');
                 tkn=this.nextNonWhiteSpaceExpect('function', true);
@@ -666,7 +649,12 @@ Module("lang", "$Revision$", function(mod){
         };
         
         publ.parseStatement_mod=function(tkn){
-            return this.parseStatement_publProp(tkn);
+            if(this.currentNode instanceof mod.ModuleNode){
+                return this.parseStatement_publProp(tkn);
+            }else{
+                tkn = this.parseExpression(tkn);
+                return this.parseEndOfStatement(tkn);
+            }
         };
         
         publ.parseStatement_publ=function(tkn){
@@ -686,25 +674,25 @@ Module("lang", "$Revision$", function(mod){
                     case 'function':
                         this.currentNode = this.currentNode.addPublic(new mod.MethodNode());
                         this.currentNode.name = name;
-                        this.currentNode.documentation = this.getDocumentation();
+                        this.currentNode.description = this.getDocumentation();
                         tkn = this.parseExpression_function(tkn);
                         break;
                     case 'Class':
                         this.currentNode = this.currentNode.addPublic(new mod.ClassNode());
                         this.currentNode.name = name;
-                        this.currentNode.documentation = this.getDocumentation();
+                        this.currentNode.description = this.getDocumentation();
                         tkn = this.parseExpression_Class(tkn);
                         break;
                     default:
                         this.currentNode = this.currentNode.addPublic(new mod.PropertyNode());
                         this.currentNode.name = name;
-                        this.currentNode.documentation = this.getDocumentation();
+                        this.currentNode.description = this.getDocumentation();
                         tkn = this.parseExpression(tkn);
                 }
             }else{
                 this.currentNode = this.currentNode.addPublic(new mod.PropertyNode());
                 this.currentNode.name = name;
-                this.currentNode.documentation = this.getDocumentation();
+                this.currentNode.description = this.getDocumentation();
             }
             
             
@@ -1074,9 +1062,9 @@ Module("lang", "$Revision$", function(mod){
         publ.printModuleNode=function(n){
             pprint('<module>',4);
             pprint('<name>'+n.name+'</name>');
-            pprint('<documentation>', 4);
-            pprint(n.documentation);
-            pprint('</documentation>', -4);
+            pprint('<description>', 4);
+            pprint(n.description);
+            pprint('</description>', -4);
             pprint('<dependencies>'+n.dependencies+'</dependencies>');
             
             this.printPublics(n);
@@ -1088,9 +1076,9 @@ Module("lang", "$Revision$", function(mod){
             pprint('<class>',4);
             pprint('<name>'+n.name+'</name>');
             
-            pprint('<documentation>', 4);
-            pprint(n.documentation);
-            pprint('</documentation>', -4);
+            pprint('<description>', 4);
+            pprint(n.description);
+            pprint('</description>', -4);
             
             this.printPublics(n);
 
@@ -1145,9 +1133,9 @@ Module("lang", "$Revision$", function(mod){
         publ.printPropertyNode=function(n){
             pprint('<property>',4);
             pprint('<name>' + n.name + '</name>');
-            pprint('<documentation>', 4);
-            pprint(n.documentation);
-            pprint('</documentation>', -4);
+            pprint('<description>', 4);
+            pprint(n.description);
+            pprint('</description>', -4);
             pprint('</property>',-4);
             
         };
@@ -1155,9 +1143,9 @@ Module("lang", "$Revision$", function(mod){
         publ.printMethodNode=function(n){
             pprint('<method>',4);
             pprint('<name>' + n.name + '(' + n.parameters.join(', ') +  ')</name>');
-            pprint('<documentation>', 4);
-            pprint(n.documentation);
-            pprint('</documentation>', -4);
+            pprint('<description>', 4);
+            pprint(n.description);
+            pprint('</description>', -4);
             pprint('</method>',-4);
         };
     });
@@ -1165,7 +1153,9 @@ Module("lang", "$Revision$", function(mod){
     
     mod.__main__=function(){
         //var s='switch(a){\n case "as":\n\na=2;\nbreak;case "df":\nbreak;   } a.';
-        var it =imprt('iter');
+        var it=imprt('iter');
+        var c= imprt('codecs');
+        
         var filenames= ['jsolait.js', 
                 'lib/codecs.js',  
                 'lib/crypto.js',
@@ -1185,6 +1175,7 @@ Module("lang", "$Revision$", function(mod){
         iter(filenames, function(fname){
             fname=jsolait.baseURI + '/' + fname;
             var s = jsolait.loadURI(fname);
+           print(s.encode('uri'));
         
             var p = new mod.Parser(s, gn);
                 
@@ -1192,7 +1183,7 @@ Module("lang", "$Revision$", function(mod){
                 p.parseStatements(p.next());
             }catch(e){
                 var l=p.getPosition();
-                throw fname.slice('file://'.length) + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200);
+                throw new mod.Exception(fname.slice('file://'.length) + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200));
             } 
         });
         

@@ -334,7 +334,7 @@ Module("sets", "$Revision$", function(mod){
         
         print(testing.test(function(){
             testing.assertEquals("checking %s | %s".format(s1, s2), 
-                                        new mod.Set("0123456789"), s1.union(s2))
+                                        new mod.Set("0123456789"), s1.union(s2));
             
             testing.assertEquals("checking %s | %s".format(s2, s1),
                                         new mod.Set("0123456789"), s2.union(s1));
@@ -356,7 +356,7 @@ Module("sets", "$Revision$", function(mod){
             
             testing.assertEquals("checking %s ^ %s".format(s2, s1),
                                         new mod.Set("012789"),s2.symmDifference(s1));
-        }))
+        }));
     };
 });
 
