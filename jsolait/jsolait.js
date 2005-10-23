@@ -65,6 +65,8 @@ Class=function(name, superClass, mixinClass, classScope){
     
     //this is the constructor for the new objects created from the new class.
     //if and only if it is NOT used for prototyping/subclassing the __init__ method of the newly created object will be called.
+//todo: this breaks mozilla's implementation of instanceof which returns true for every jsolait object and any jsolait class
+//a workaround would be using new Function    
     var NewClass = function(calledBy){
         if(calledBy !== Class){
             //simulate Array and Function subclassing
