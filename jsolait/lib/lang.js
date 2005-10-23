@@ -410,6 +410,14 @@ Module("lang", "$Revision$", function(mod){
             }
         };
         
+        
+        publ.parseSource=function(){
+            var tkn = this.parseStatements(this.next());
+            if(tkn !== undefined){
+                throw mod.Expected("Expected end of source but found % .".format(tkn));
+            }
+        };
+        
         publ.parseStatements=function(tkn){
             while(tkn!==undefined){
                 if(tkn instanceof mod.TokenDocComment){
@@ -437,12 +445,12 @@ Module("lang", "$Revision$", function(mod){
         };
                 
         publ.parseStatement=function(tkn){
+        
             if(this['parseStatement_' + tkn.constructor.__name__]){
                 tkn = this['parseStatement_' + tkn.constructor.__name__].call(this,tkn);
             }else if(this['parseStatement_' + tkn.value]){
                 tkn = this['parseStatement_' + tkn.value].call(this,tkn);
             }else if(tkn instanceof mod.TokenIdentifier){//function call or assignment statement
-               
                 tkn = this.parseExpression(tkn);
                 tkn = this.parseEndOfStatement(tkn);
             }else{
@@ -1001,20 +1009,26 @@ Module("lang", "$Revision$", function(mod){
             supr.__init__.call(this, source);
             this.wsNeeded=false;
         };
+        var leftAndRightSpace=new sets.Set(['instanceof' , 'in']);
+        var rightSpace = new sets.Set(['var', 'delete', 'throw', 'new', 'return', 'else', 'instanceof','in', 'case', 'typeof']);
         
         publ.next=function(){
             if(this.bufferedTkn){
                 var tkn = this.bufferedTkn;
                 this.bufferedTkn=null;
             }else{
-                var tkn = this.nextNonWhiteSpace();
-                while((tkn instanceof mod.TokenComment)|| ((tkn instanceof mod.TokenNewLine ) && (this.lastTkn instanceof mod.TokenNewLine))){
-                    tkn = this.nextNonWhiteSpace();
+                var tkn = supr.next.call(this);
+                while((tkn instanceof mod.TokenWhiteSpace) || (tkn instanceof mod.TokenComment)|| ((tkn instanceof mod.TokenNewLine ) && (this.lastTkn instanceof mod.TokenNewLine))){
+                    tkn = supr.next.call(this);
                 }
-                if(tkn.value == 'instanceof'){
-                    this.wsNeeded=false;
-                    this.bufferedTkn=tkn;
-                    return new mod.TokenWhiteSpace(' ');
+                if(tkn === undefined){
+                    return tkn;
+                }else{
+                   if(leftAndRightSpace.contains(tkn.value)){
+                        this.wsNeeded=false;
+                        this.bufferedTkn=tkn;
+                        return new mod.TokenWhiteSpace(' ');
+                    }
                 }
             }
             
@@ -1029,9 +1043,8 @@ Module("lang", "$Revision$", function(mod){
                 var tkn=new mod.TokenWhiteSpace(' ');
                 this.wsNeeded=false;
             }else{
-                switch(tkn.value){
-                    case 'var': case 'delete': case 'throw': case 'new': case 'return': case 'else': case 'instanceof':
-                        this.wsNeeded=true;
+                if(rightSpace.contains(tkn.value)){
+                    this.wsNeeded=true;
                 }
             }
             
@@ -1042,9 +1055,38 @@ Module("lang", "$Revision$", function(mod){
     
    
     mod.DocParser=Class(function(publ,supr){
+        publ.__init__=function(file){
+            this.file=file;
+        };
+        
+        publ.pprint=function(m, indent){
+            var m = m.split("\n");
+            
+            indent =(indent === undefined) ? 0 : indent;
+            
+            if(indent<0){
+               this.pprintIndent+=indent;
+            }
+            
+            var s=[];
+            for(var i=0;i<this.pprintIndent;i++){
+                s.push(' ');
+            }
+            s=s.join('');
+            for(var i=0;i<m.length;i++){
+                this.file.write(s + m[i] + '\n');
+               //print(s + m[i] );
+            }
+            
+            if(indent>0){
+               this.pprintIndent += indent;
+            }
+        };
+        publ.pprintIndent=0;
+        
         publ.printGlobalNode=function(n){
-            pprint('<global>', 4);
-            pprint('<modules>', 4);
+           this.pprint('<global>', 4);
+           this.pprint('<modules>', 4);
                       
             for(var i=0;i<n.publics.length;i++){
                 var nn = n.publics[i];
@@ -1053,36 +1095,36 @@ Module("lang", "$Revision$", function(mod){
                 }
             }
             
-            pprint('</modules>', -4);
+           this.pprint('</modules>', -4);
             
             
-            pprint('</global>', -4);
+           this.pprint('</global>', -4);
         }; 
         
         publ.printModuleNode=function(n){
-            pprint('<module>',4);
-            pprint('<name>'+n.name+'</name>');
-            pprint('<description>', 4);
-            pprint(n.description);
-            pprint('</description>', -4);
-            pprint('<dependencies>'+n.dependencies+'</dependencies>');
+           this.pprint('<module>',4);
+           this.pprint('<name>'+n.name+'</name>');
+           this.pprint('<description>', 4);
+           this.pprint(n.description);
+           this.pprint('</description>', -4);
+           this.pprint('<dependencies>'+n.dependencies+'</dependencies>');
             
             this.printPublics(n);
             
-            pprint('</module>',-4);
+           this.pprint('</module>',-4);
         };
         
         publ.printClassNode=function(n){
-            pprint('<class>',4);
-            pprint('<name>'+n.name+'</name>');
+           this.pprint('<class>',4);
+           this.pprint('<name>'+n.name+'</name>');
             
-            pprint('<description>', 4);
-            pprint(n.description);
-            pprint('</description>', -4);
+           this.pprint('<description>', 4);
+           this.pprint(n.description);
+           this.pprint('</description>', -4);
             
             this.printPublics(n);
 
-            pprint('</class>',-4);
+           this.pprint('</class>',-4);
         };
         
         publ.printPublics=function(n){
@@ -1102,51 +1144,51 @@ Module("lang", "$Revision$", function(mod){
             }
             
             if(n.publics.length>0){
-                pprint('<publics>',4);
+               this.pprint('<publics>',4);
                 if(classes.length > 0){
-                    pprint('<classes>', 4);
+                   this.pprint('<classes>', 4);
                     for(var i=0;i<classes.length;i++){
                         this.printClassNode(classes[i]);
                     }
-                    pprint('<classes>', -4);
+                   this.pprint('</classes>', -4);
                 }
                 
                 if(methods.length > 0){
-                    pprint('<methods>', 4);
+                   this.pprint('<methods>', 4);
                     for(var i=0;i<methods.length;i++){
                         this.printMethodNode(methods[i]);
                     }
-                    pprint('<methods>', -4);
+                   this.pprint('</methods>', -4);
                 }
                 
                 if(props.length > 0){
-                    pprint('<properties>', 4);
+                   this.pprint('<properties>', 4);
                     for(var i=0;i<props.length;i++){
                         this.printPropertyNode(props[i]);
                     }
-                    pprint('<properties>', -4);
+                   this.pprint('</properties>', -4);
                 }
-                pprint('</publics>',-4);
+               this.pprint('</publics>',-4);
             }
         };
         
         publ.printPropertyNode=function(n){
-            pprint('<property>',4);
-            pprint('<name>' + n.name + '</name>');
-            pprint('<description>', 4);
-            pprint(n.description);
-            pprint('</description>', -4);
-            pprint('</property>',-4);
+           this.pprint('<property>',4);
+           this.pprint('<name>' + n.name + '</name>');
+           this.pprint('<description>', 4);
+           this.pprint(n.description);
+           this.pprint('</description>', -4);
+           this.pprint('</property>',-4);
             
         };
         
         publ.printMethodNode=function(n){
-            pprint('<method>',4);
-            pprint('<name>' + n.name + '(' + n.parameters.join(', ') +  ')</name>');
-            pprint('<description>', 4);
-            pprint(n.description);
-            pprint('</description>', -4);
-            pprint('</method>',-4);
+           this.pprint('<method>',4);
+           this.pprint('<name>' + n.name + '(' + n.parameters.join(', ') +  ')</name>');
+           this.pprint('<description>', 4);
+           this.pprint(n.description);
+           this.pprint('</description>', -4);
+           this.pprint('</method>',-4);
         };
     });
        
@@ -1175,10 +1217,8 @@ Module("lang", "$Revision$", function(mod){
         iter(filenames, function(fname){
             fname=jsolait.baseURI + '/' + fname;
             var s = jsolait.loadURI(fname);
-           print(s.encode('uri'));
-        
+            
             var p = new mod.Parser(s, gn);
-                
             try{
                 p.parseStatements(p.next());
             }catch(e){
@@ -1187,8 +1227,7 @@ Module("lang", "$Revision$", function(mod){
             } 
         });
         
-        var dp = new mod.DocParser();
-        dp.printGlobalNode(gn);
+        
     };
 });
 

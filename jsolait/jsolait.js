@@ -104,10 +104,6 @@ Class=function(name, superClass, mixinClass, classScope){
         return "[class %s]".format(NewClass.__name__);
     };
     
-    NewClass.isSubclassOf=function(cls){
-        return this.prototype instanceof cls;
-    };
-    
    //see if the super class can create prototypes. (creating an object without calling __init__())
     if(superClass.__createProto__!==undefined){
         NewClass.prototype = superClass.__createProto__();
@@ -395,7 +391,7 @@ Module("jsolait", "$Revision$", function(mod){
             s.__sourceURI__ = uri;
             return s;
         }else{
-             throw new mod.LoadFileFailed(uri, e);
+             throw new mod.LoadURIFailed(uri,new mod.Exception("Server did not respond with 200"));
         }
     };
     
@@ -404,7 +400,7 @@ Module("jsolait", "$Revision$", function(mod){
     **/
     mod.LoadURIFailed=Class(mod.Exception, function(publ, supr){
         /**
-            Initializes a new ImportFailed Exception.
+            Initializes a new LoadURIFailed Exception.
             @param name      The name of the module.
             @param sourceURI  The uri jsolait tried to load the file from
             @param trace      The error cousing this Exception.
@@ -434,12 +430,12 @@ Module("jsolait", "$Revision$", function(mod){
         }else{
             var src,modPath;
             //check if jsolait already knows the path of the module
-            if(mod.knownModuleURIs[name]){
+            if(mod.knownModuleURIs[name] != undefined){
                 modPath = mod.knownModuleURIs[name].format(mod);
                 try{//to load the source of the module
                     src = mod.loadURI(modPath);
                 }catch(e){
-                    throw new mod.ImportFailed(name, modPath, e);
+                    throw new mod.ImportFailed(name, [modPath], e);
                 }
             }
             
@@ -451,25 +447,20 @@ Module("jsolait", "$Revision$", function(mod){
                         src = mod.loadURI(modPath);
                         break;
                     }catch(e){
-                        if(e instanceof mod.LoadURIFailed){
-                            failedURIs.push(e.sourceURI);
-                        }else{
-                            throw e;
-                        }
+                        failedURIs.push(e.sourceURI);
                     }
                 }
                 if(src == null){
-                    throw new mod.ImportFailed(name, failedURIs, e);
+                    throw new mod.ImportFailed(name, failedURIs);
                 }
             }
-            
-            
+                        
             try{//interpret the script
                 src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
                 var f=new Function("",src); //todo should it use globalEval ?
                 f();
             }catch(e){
-                throw new mod.ImportFailed(name, src.__sourceURI__, e);
+                throw new mod.ImportFailed(name, [src.__sourceURI__], e);
             }
             
             return mod.modules[name]; 
