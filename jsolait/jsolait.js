@@ -568,16 +568,16 @@ Module("jsolait", "$Revision$", function(mod){
             percision:
                .x     Where x is the percision for floating point numbers and the lenght for 0 padding for integers.
             typeOfValue:
-                d    Signed integer decimal.  	 
-                i     Signed integer decimal. 	 
-                b    Unsigned binary.                       //This does not exist in python!
-                o    Unsigned octal. 	
-                u    Unsigned decimal. 	 
-                x    Unsigned hexidecimal (lowercase). 	
+                d   Signed integer decimal.  	 
+                i   Signed integer decimal. 	 
+                b   Unsigned binary.                       //This does not exist in python!
+                o   Unsigned octal. 	
+                u   Unsigned decimal. 	 
+                x   Unsigned hexidecimal (lowercase). 	
                 X   Unsigned hexidecimal (uppercase). 	
                 e   Floating point exponential format (lowercase). 	 
                 E   Floating point exponential format (uppercase). 	 
-                f    Floating point decimal format. 	 
+                f   Floating point decimal format. 	 
                 F   Floating point decimal format. 	 
                 c   Single character (accepts byte or single character string). 	 
                 s   String (converts any object using object.toString()). 	
@@ -598,7 +598,7 @@ Module("jsolait", "$Revision$", function(mod){
         }else{
             throw new mod.Exception("Unsupported formating string.");
         }
-        var rslt ="";
+        var rslt="";
         var s;
         var obj;
         var cnt=0;
@@ -609,6 +609,19 @@ Module("jsolait", "$Revision$", function(mod){
             s=sf[i];
             if(s == "%%"){
                 s = "%";
+            }else if(s=="%s"){ //making %s faster
+                if(cnt>=arguments.length){
+                    throw new mod.Exception("Not enough arguments for format string.");
+                }else{
+                    obj=arguments[cnt];
+                    cnt++;
+                }
+                if (obj === null){
+                    obj = "null";
+                }else if(obj===undefined){
+                    obj = "undefined";
+                }
+                s=obj.toString();
             }else if(s.slice(0,1) == "%"){
                 frmt = new FormatSpecifier(s);//get the formating object
                 if(frmt.key){//an object was given as formating value
