@@ -19,11 +19,12 @@
 
 /**
     Iterator module providing iteration services.
-    There are two main functions iter and fora for iterating over iterable objects.
-    An iterable object is an object which has an iterator function which returns an Iterator object.
-    iter iterates over the object synchronously calling a callback for each item.
-    fora does the same but in an asynchronous matter.
+    There is one global function iter() which can be used to iterate over iterable objects synchronously or
+    if given a callback asynchronously.
+    An iterable object is an object which has an iterator function (__iter__) which returns an Iterator object.
+    
     The Range class is there to create an iterable object over a range of numbers.
+    
     @creator                 Jan-Klaas Kollhof
     @created                2004-12-08
     @lastchangedby       $LastChangedBy$
@@ -376,7 +377,7 @@ Module("iter", "$Revision$", function(mod){
         
         print("for on Array + iter \t" + testing.timeExec(100,function(){
             var s='';
-            for(var item= (i=r.__iter__()).next(); item!==undefined; item=i.next()){
+            for(i=r.__iter__(); item=i.next() !==undefined;){
                 s+= item;
                 task();
             }

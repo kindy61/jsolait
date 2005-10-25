@@ -20,6 +20,7 @@
 
 /**
     A module providing Sets.
+    
     @creator                 Jan-Klaas Kollhof
     @created                2005-03-11
     @lastchangedby       $LastChangedBy$
@@ -42,32 +43,43 @@ Module("sets", "$Revision$", function(mod){
         };
     });
     
+    /**
+        The Set class.
+        Items in a class must be Strings, Numbers, Objects that return a unique string representation or
+        Objects implementing a __hash__ method. (All objects created from jsolait classes have a __hash__ function.
+    **/
     mod.Set=Class(function(publ, supr){
         /**
             Initializes a Set instance.
-            @param itearatable=[]  A String or an Array of which the elements will be added to the set.
+            @param elem*   An element which is added to the set or an Array, String or iterable object of which the elements are added to the set.
         **/
-        publ.__init__=function(iterable){
+        publ.__init__=function(elem){
+            
             this.items = {};
-            if(iterable === undefined){
-                iterable = [];
-            }
-            if(iterable.constructor == String){
-                iterable = iterable.split("");
-            }
-            //todo do iterable impl
-            /*
-            if(iterable.__iter__){
-                var i=iterable.__iter__();
-                var item;
-                while(item=i.next()!==undefined){
-                    this.add(item);
+            var elems =[];
+            
+            if(arguments.length > 1){
+               elems=arguments;
+            }else if(arguments.length == 1){
+                elems = arguments[0];
+                if(elems instanceof Array){
+                }else if(typeof elems == "string"){
+                    elems=elems.split("");
+                }else if(elems.__iter__){
+                    var i=iterable.__iter__();
+                    var item;
+                    while(item=i.next()!==undefined){
+                        this.add(item);
+                    }
+                    return;
+                }else{
+                    throw new mod.Exception("Array,String or iterable object expected but found %s".format(elems));
                 }
-            }else{*/
-                for(var i=0;i<iterable.length;i++){
-                    this.add(iterable[i]);
-                }
-            //}
+            }
+            
+            for(var i=0;i<elems.length;i++){
+                this.add(elems[i]);
+            }
         };
         
         /**
@@ -222,6 +234,7 @@ Module("sets", "$Revision$", function(mod){
             }
             return ns;
         };
+               
         
         /**
             Creates a new set containing elements from the set and setObj but no elements present in both(newSet = (set - setObj) | (setObj - set)).

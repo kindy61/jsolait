@@ -34,7 +34,7 @@ Module("lang", "$Revision$", function(mod){
         s=s.slice(startEndChar.length);
         var rs=startEndChar;
         var p= s.indexOf(startEndChar);
-        while(p >= 0){
+        while(p >= 0){ 
             if(s.charAt(p-1) == "\\"){
                 rs+=s.slice(0,p+1);                            
                 s=s.slice(p+1); 
