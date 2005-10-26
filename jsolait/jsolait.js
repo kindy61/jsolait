@@ -125,12 +125,10 @@ Class=function(name, superClass, mixinClass, classScope){
             };
             //todo
             NewClass.prototype.__hash__=function(){
-                if(NewClass.__objcnt__){
-                    NewClass.__objcnt__ ++;
-                }else{
-                    NewClass.__objcnt__ = 1;
+                if(this.__id__==null){
+                    this.__id__ = '#auto#' +  Class.hashCount++
                 }
-                return NewClass.__objcnt__;
+                return this.__id__;
             };
             break;
         case Array:
@@ -181,7 +179,7 @@ Class=function(name, superClass, mixinClass, classScope){
     
     return NewClass;
 };    
-
+Class.hashCount=0;
 Class.toString = function(){
     return "[object Class]";
 };
