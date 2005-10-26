@@ -126,7 +126,7 @@ Class=function(name, superClass, mixinClass, classScope){
             //todo
             NewClass.prototype.__hash__=function(){
                 if(this.__id__==null){
-                    this.__id__ = '#auto#' +  Class.hashCount++
+                    this.__id__ = '#auto#' +  (Class.hashCount++);
                 }
                 return this.__id__;
             };
