@@ -272,9 +272,9 @@ Module.Exception=Class("Exception", function(publ){
         var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
         if(this.trace){
             if(this.trace.toTraceString){
-                s+='\n\n'+ this.trace.toTraceString(indent + 8);
+                s+=('\n\nbecause:\n'+ this.trace.toTraceString(indent + 4));
             }else{
-                s+=(this.trace +'\n').indent(indent);
+                s+=(this.trace +'\n').indent(indent+4);
             }
         }
         return s;
@@ -406,7 +406,7 @@ Module("jsolait", "$Revision$", function(mod){
             @param trace      The error cousing this Exception.
         **/
         publ.__init__=function(sourceURI, trace){
-            supr.__init__.call(this, "Failed to load file: '%s'".format(sourceURI), trace);
+            supr.__init__.call(this, "Failed to load file: '%s'".format(sourceURI.indent(2)), trace);
             this.sourceURI = sourceURI;
         };
         ///The path paths jsolait tried to load the file from.
@@ -456,11 +456,12 @@ Module("jsolait", "$Revision$", function(mod){
             }
                         
             try{//interpret the script
+                var srcURI = src.__sourceURI__;
                 src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
                 var f=new Function("",src); //todo should it use globalEval ?
                 f();
             }catch(e){
-                throw new mod.ImportFailed(name, [src.__sourceURI__], e);
+                throw new mod.ImportFailed(name, [srcURI], e);
             }
             
             return mod.modules[name]; 
@@ -479,7 +480,7 @@ Module("jsolait", "$Revision$", function(mod){
             @param trace      The error cousing this Exception.
         **/
         publ.__init__=function(moduleName, moduleURIs, trace){
-            supr.__init__.call(this, "Failed to import module: '%s' from:\n%s".format(moduleName, moduleURIs.join(',\n')), trace);
+            supr.__init__.call(this, "Failed to import module: '%s' from:\n%s".format(moduleName, moduleURIs.join(',\n').indent(2)), trace);
             this.moduleName = moduleName;
             this.moduleURIs = moduleURIs;
         };
@@ -754,19 +755,19 @@ Module("jsolait", "$Revision$", function(mod){
         var out=[];
         var s=this.split('\n');
         for(var i=0;i<s.length;i++){
-            var pr='';
-            for(var k=0;k<indent;k++){
-                pr +=' ';
-            }  
-            out.push(pr + s[i]);
+            out.push(' '.mul(indent) + s[i]);
         }
         return out.join('\n');
     };
+    
+    String.prototype.mul=function(l){
+        var a=new Array(l+1);
+        return a.join(this);
+    }
     
     ///Tests the module.
     mod.test=function(){
         
     };
 });
-
 
