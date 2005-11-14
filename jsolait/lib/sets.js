@@ -90,7 +90,7 @@ Module("sets", "$Revision$", function(mod){
         publ.add=function(item){
             var h;
             if(item.__hash__){
-                h='#' +item.__hash__();
+                h='@' +item.__hash__();
             }else{
                 h='#' +item;
             }
@@ -109,7 +109,7 @@ Module("sets", "$Revision$", function(mod){
         publ.remove=function(item){
             var h;
             if(item.__hash__){
-                h='#' +item.__hash__();
+                h='@' +item.__hash__();
             }else{
                 h='#' +item;
             }
@@ -130,7 +130,7 @@ Module("sets", "$Revision$", function(mod){
         publ.discard=function(item){
             var h;
             if(item.__hash__){
-                h='#' +item.__hash__();
+                h='@' +item.__hash__();
             }else{
                 h='#' +item;
             }
@@ -147,7 +147,7 @@ Module("sets", "$Revision$", function(mod){
         publ.contains=function(item){
             var h;
             if(item.__hash__){
-                h='#' +item.__hash__();
+                h='@' +item.__hash__();
             }else{
                 h='#' +item;
             }

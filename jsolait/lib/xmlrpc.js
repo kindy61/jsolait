@@ -502,7 +502,7 @@ Module("xmlrpc","$Revision$", function(mod){
         then the remote method will be called asynchronously. 
         The results and errors are passed to the callback.
     */
-    mod.XMLRPCMethod =Class(Function, function(publ){
+    mod.XMLRPCMethod =Class(function(publ){
         var postData = function(url, user, pass, data, callback){
             if(callback == null){
                 var rslt = urllib.postURL(url, user, pass, data, [["Content-Type", "text/xml"]]);

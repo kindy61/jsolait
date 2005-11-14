@@ -91,6 +91,7 @@ Module("iter", "$Revision$", function(mod){
                 return this.current;
             }
         };
+        
     });
     
     Range = mod.Range;
@@ -157,7 +158,7 @@ Module("iter", "$Revision$", function(mod){
     /**
         Iteration class for handling iteration steps and callbacks.
     */
-    mod.Iteration = Class(function(publ, supr){
+    mod.Iteration = Class(function(publ,supr){
         /**
             Initializes an Iteration object.
             @param iterable An itaratable object.
@@ -298,6 +299,8 @@ Module("iter", "$Revision$", function(mod){
       
     
     mod.__main__=function(){
+        
+        
         var  testing = imprt('testing');
         var task=function(){
             var s='';
@@ -310,7 +313,7 @@ Module("iter", "$Revision$", function(mod){
         for(var i=0;i<100;i++){
             r[i] = i;
         }
-        
+                       
         print("for loop \t\t\t" + testing.timeExec(100,function(){
             var s='';
             for(var i=0;i<100;i++){

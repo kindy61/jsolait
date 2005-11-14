@@ -124,7 +124,7 @@ Module("jsonrpc","$Revision$", function(mod){
         then the remote method will be called asynchronously. 
         The results and errors are passed to the callback.
     */
-    mod.JSONRPCMethod =Class(Function, function(publ){
+    mod.JSONRPCMethod =Class(function(publ){
         
         var postData = function(url, user, pass, data, callback){
             if(callback == null){//todo ===undefined

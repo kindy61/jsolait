@@ -34,14 +34,13 @@
     @param name="anonymous"  The name of the new class.
                                             If the created class is a public member of a module then 
                                             the __name__ property of that class is automatically set by Module().
-    @param superClass=Object    The class to inherit from (super class).
-    @param mixinClass(*)           The mixin classes.
+    @param bases *                  The base classes.
     @param classScope(-1)        A function which is executed for class construction.
                                             As 1st parameter it will get the new class' protptype for 
                                             overrideing or extending the super class. As 2nd parameter it will get
                                             the super class' wrapper for calling inherited methods.
 **/
-Class=function(name, superClass, mixinClass, classScope){
+Class=function(name, bases, classScope){
     var args=[];
     for(var i=0;i<arguments.length;i++){
         args[i] = arguments[i];
@@ -55,138 +54,174 @@ Class=function(name, superClass, mixinClass, classScope){
     }else{
         name="anonymous";
     }
-    //the next arg should be the superclass
-    if(args.length > 0){
-        superClass = args.shift();
-    }else{
-        superClass = Object;
-    }
-    var mixinClasses=args;
+    //the rest of the arguments should be base classses
+    var bases = args;
     
-    //this is the constructor for the new objects created from the new class.
-    //if and only if it is NOT used for prototyping/subclassing the __init__ method of the newly created object will be called.
-//todo: this breaks mozilla's implementation of instanceof which returns true for every jsolait object and any jsolait class
-//a workaround would be using new Function    
-    var NewClass = function(calledBy){
-        if(calledBy !== Class){
-            //simulate Array and Function subclassing
-            if(NewClass.prototype instanceof Array || NewClass.prototype instanceof Function){
-                var rslt;
-                if(NewClass.prototype instanceof Array){
-                    rslt=[];
-                }else{
-                    rslt = function(){
-                        return rslt.__call__.apply(rslt, arguments);
+    //set up the 'public static' fields of the class
+    var statc={__isArray__ : false,
+                     __name__ : name,
+                     __bases__: bases,
+                     __hashCount__:0,
+                     __str__ : function(){
+                            return "[class %s]".format(this.__name__);
+                        }
                     };
-                }
-                //transfer all properties defined in teh class to the new object(as it is empty)
-                for(var n in NewClass.prototype){
-                    rslt[n] = NewClass.prototype[n];
-                }
-                //these props are not copied in the above loop
-                rslt.constructor = NewClass;
-                rslt.toString = NewClass.prototype.toString;
-                    
-                rslt.__init__.apply(rslt,arguments);
-                return rslt;
+
+    var baseProtos=[];//stores the prototypes of all the base classes
+    var proto; //the prototype to use for the new class
+    if(bases.length==0){//use Object as base
+        proto={};
+        proto.__str__ = function(){
+            return "[%s %s]".format(this.__class__.prototype.__call__ === undefined ? 'object' : 'callable', this.__class__.__name__);
+        };
+        //because toString is not apearing in a for in loop we will just use __str__ and always assign it to toString
+        //this makes prototype creatin a bit simpler
+        proto.toString=proto.__str__;
+        statc.__bases__=[Object];
+    }else{ //inherit from all base classes
+        //inheritance is done by 
+        var baseProto;
+        for(var i=0;i<bases.length;i++){
+            var baseClass = bases[i];
+            //remember the base prototypes
+            baseProtos.push(baseClass.prototype);
+            if(baseClass.__proto__ !== undefined){
+                baseProto = baseClass.__proto__();
             }else{
-                //todo should a constructor be able to return something?
-                this.__init__.apply(this, arguments);
+                baseProto = new baseClass(Class);
             }
-        }
-    };
-    //This will create a new prototype object of the new class.
-    NewClass.__createProto__ = function(){
-        return new NewClass(Class);
-    };
-    //setting class properties for the new class.
-    NewClass.__super__ = superClass;
-    NewClass.__name__= name; 
-    NewClass.toString = function(){
-        return "[class %s]".format(NewClass.__name__);
-    };
-    
-   //see if the super class can create prototypes. (creating an object without calling __init__())
-    if(superClass.__createProto__!==undefined){
-        NewClass.prototype = superClass.__createProto__();
-    }else{//just create an object of the super class
-        NewClass.prototype = new superClass();
-    }
-    //reset the constructor for new objects to the actual constructor.
-    NewClass.prototype.constructor = NewClass;
-    
-    
-    //make sure the new class has an __init__ method if it inherits from Object, Array or Function
-    switch(superClass){
-        case Object:
-            NewClass.prototype.__init__=function(){};    
-            NewClass.prototype.toString = function(){
-                return "[object %s]".format(this.constructor.__name__);
-            };
-            //todo
-            NewClass.prototype.__hash__=function(){
-                if(this.__id__==null){
-                    this.__id__ = '#auto#' +  (Class.hashCount++);
-                }
-                return this.__id__;
-            };
-            break;
-        case Array:
-            //immitate a call to new Array()
-            NewClass.prototype.__init__=function(){
-                if (arguments.length==0){
-                }else if(arguments.lengt==1){
-                    this.length=arguments[0];
-                }else{
-                    for(var i=0;i<arguments.length;i++){
-                        this.push(arguments[i]);
+            statc.__isArray__ = statc.__isArray__ || baseClass.__isArray__;
+            
+            if(i==0){//for the first base class just use it's proto as the final proto
+                proto = baseProto;
+            }else{//for all others extend(do not override) the final proto with the properties in the baseProto
+                for(var key in baseProto){
+                    if(proto[key] === undefined){
+                        proto[key] = baseProto[key];
                     }
                 }
-            };    
-            break;
-        case Function:
-            //Subclasses of Function do not impl. Function's default behavior
-            //as this would not make much sense, we allow subclassing of functions so people can create callable objects
-            NewClass.prototype.__init__=function(){};
-            //needs to be overwritten by users
-            NewClass.prototype.__call__=function(){};
-            NewClass.prototype.toString=function(){
-                return "[callable %s]".format(this.constructor.__name__);
-                //todo: return Function.prototype.toString.call(this);
-            };
-            break;
-    }
-    
-    //mixin classes overwrite props/methods of the new class
-    for(var i=0;i<mixinClasses.length;i++){
-        var mixin = mixinClasses[i].prototype;
-        for(var n in mixin){
-            if(n != "__init__"){
-                NewClass.prototype[n] = mixin[n];
+            }
+            //extend the new class' static interface
+            for(var key in baseClass){
+                if(statc[key] === undefined){
+                    statc[key] = baseClass[key];
+                }
             }
         }
+        //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?) 
+        //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
+        proto.toString=proto.__str__;
+    }
+    //make sure all jsolait objects have a hash method
+    if(proto.__hash__ === undefined){
+        proto.__hash__=function(){
+            if(this.__id__ === undefined){
+                this.__id__ = Class.__hashCount__++;
+            }
+            return this.__id__;
+        };
+    }
+        
+    //todo: run the class scope as scope(publ, [statc,] baseClassProto1, ... ) 
+    //publ represents the new class' prototype, statc the public static fields of the class(class properties)
+    if(classScope.length>baseProtos.length+1){
+        classScope.apply(this,[proto,statc].concat(baseProtos));
+    }else{
+        classScope.apply(this,[proto].concat(baseProtos));
+    }
+        
+    //allthough a single constructor would suffice for generating normal objects, Arrays and callables,
+    //we use 3 different ones. This will minimize the code inside the constructor and therefore
+    //minimize object construction time
+    if(proto.__call__){
+        //if the callable interface is implemented we need a class constructor 
+        //which generates a function upon construction
+        var NewClass = function(calledBy){
+            if(calledBy !== Class){
+                var rslt = function(){
+                    return rslt.__call__.apply(rslt, arguments);
+                };
+                var proto=arguments.callee.prototype;
+                for(var n in proto){
+                    rslt[n] = proto[n];
+                }
+                rslt.constructor = arguments.callee;
+                rslt.toString = proto.__str__;
+                if(rslt.__init__){
+                    rslt.__init__.apply(rslt, arguments);
+                }
+                return rslt;
+            }
+        };
+    }else if(statc.__isArray__){
+        //Since we cannot inherit from Array directly we take the same approach as with the callable above
+        //and just have a constructor which creates an Array 
+        var NewClass = function(calledBy){
+            if(calledBy !== Class){
+                rslt=[];
+                var proto=arguments.callee.prototype;
+                for(var n in proto){
+                    rslt[n] = proto[n];
+                }
+                rslt.constructor = proto;
+                rslt.toString = proto.__str__;
+                if(rslt.__init__){
+                    rslt.__init__.apply(rslt, arguments);
+                }else{//implement Array's defaul behavior
+                    if(arguments.lengt==1){
+                        rslt.length=arguments[0];
+                    }else{
+                        for(var i=0;i<arguments.length;i++){
+                            rslt.push(arguments[i]);
+                        }
+                    }
+                }
+                return rslt;
+            }
+        };
+    }else{
+        //this is a 'normal' object constructor which does nothing but call the __init__ method 
+        //unless it does not exsit or the constructor was used for prototyping
+        var NewClass = function(calledBy){
+            if(calledBy !== Class){
+                if(this.__init__){
+                    this.__init__.apply(this, arguments);
+                }    
+            }
+        };
     }
     
-    //execute the scope of the class
-    switch(classScope.length){
-        case 3: //publ, statc, supr  
-            classScope(NewClass.prototype, NewClass, superClass.prototype);
-            break;
-        default://publ, supr
-            classScope(NewClass.prototype, superClass.prototype);
-            break;
+    //reset the constructor for new objects to the actual constructor.
+    proto.constructor = NewClass;
+    proto.__class__= NewClass;//no, it is not needed, just like __str__ is not, but it is nicer than constructor
+    
+    //this is where the inheritance realy happens
+    NewClass.prototype = proto;
+    
+    //apply all the static fileds
+    for(var key in statc){
+        NewClass[key] = statc[key];
     }
+    NewClass.toString=statc.__str__;
     
     return NewClass;
 };    
-Class.hashCount=0;
+Class.__hashCount__=0;
+
 Class.toString = function(){
     return "[object Class]";
 };
 
-Class.__createProto__=function(){ 
-    throw "Can't use Class as a super class.";
+Class.__proto__=function(){ 
+    throw "Can't use Class as a base class.";
 };
+
+Array.__isArray__=true;
+Array.__str__=Array.toString=function(){return "[class Array]";};
+Array.__proto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
+Object.__str__=Object.toString=function(){return "[class Object]";};
+Function.__proto__ = function(){ throw "Cannot inherit from Function. implement the callabel interface instead using YourClass::__call__.";};
+
 
 
 /**
@@ -234,8 +269,8 @@ Module.toString=function(){
     return "[object Module]";
 };
 
-Module.__createProto__=function(){ 
-    throw "Can't use Module as a super class.";
+Module.__proto__=function(){ 
+    throw "Can't use Module as a base class.";
 };
 
     
@@ -257,7 +292,7 @@ Module.Exception=Class("Exception", function(publ){
     };
     
     
-    publ.toString=function(){
+    publ.__str__=function(){
         var s = "%s %s".format(this.name, this.module);
         return s;
     };
@@ -763,7 +798,7 @@ Module("jsolait", "$Revision$", function(mod){
     String.prototype.mul=function(l){
         var a=new Array(l+1);
         return a.join(this);
-    }
+    };
     
     ///Tests the module.
     mod.test=function(){
