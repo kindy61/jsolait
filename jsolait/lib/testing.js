@@ -27,7 +27,8 @@
 **/
 
 Module("testing", "$Revision$", function(mod){
-    
+     
+    mod.minProfileTime=500;
     /**
         Returns the average time used for executing a function.
         @param repeat   How often the function should be executed.
@@ -46,18 +47,42 @@ Module("testing", "$Revision$", function(mod){
         return ((new Date()).getTime()-t) / (repeat+1);
     };
     
+    mod.profile=function(min,fn){
+        if(arguments.length==1){
+            fn=min;
+            min=mod.minProfileTime;
+        }
+        var args = [];
+        for(var i=2;i<arguments.length;i++){
+            args.push(arguments[i]);
+        }
+        var cnt=0;
+        var t1=(new Date()).getTime();
+        t2=t1;
+        while(t2-t1<min){
+            cnt++;
+            fn.apply(null, args);    
+            t2=(new Date()).getTime();
+        }
+        return (t2-t1) / cnt;
+    };
+    
+    
     mod.Test=Class(function(publ,supr){
         publ.__init__=function(testScope){
             this.testScope=testScope;
         };
         
         publ.run=function(){
+            this.failed=false;
+            this.error=null;
             this.startTime=(new Date()).getTime();
             try{
                 this.testScope();
             }catch(e){
                 if(e instanceof mod.AssertFailed){
                     this.error = e;
+                    this.failed=true;
                 }else{
                     throw new mod.Exception("Failed to run test.", e);
                 }
@@ -73,7 +98,8 @@ Module("testing", "$Revision$", function(mod){
                 return "Test completed in %s ms".format(this.duration);
             }
         };
-        
+        publ.failed=false;
+        publ.error;
         publ.startTime;
         publ.endTime;
         publ.duration;
@@ -195,8 +221,8 @@ Module("testing", "$Revision$", function(mod){
         mod.assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(value));
     };
     
-    mod.fail=function(){
-        
+    mod.fail=function(comment){
+        throw new mod.AssertFailed(comment, "Fail was called");
     };
         
     mod.objectKeys=function(obj){

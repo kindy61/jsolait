@@ -22,10 +22,11 @@
     The main jsolait script.
     It provides the core functionalities  for creating classes, modules and for importing modules.
     
+    @author Jan-Klaas Kollhof
     @version 2.0
-    $LastChangedBy$
-    $Date$
-    $Revision$
+    @lastchangedby $LastChangedBy$
+    @lastchangeddate $Date$
+    @revision $Revision$
 **/
 
 
@@ -45,28 +46,30 @@ Class=function(name, bases, classScope){
     for(var i=0;i<arguments.length;i++){
         args[i] = arguments[i];
     }
-    //last arg should be a classScope
+
     classScope = args.pop();
     
-    //first arg is the class' name if it is a string
     if((args.length>0) && (typeof args[0] =='string')){
         name=args.shift();
     }else{
         name="anonymous";
     }
-    //the rest of the arguments should be base classses
+    
     var bases = args;
     
     //set up the 'public static' fields of the class
-    var statc={__isArray__ : false,
+    var __class__={__isArray__ : false,
                      __name__ : name,
                      __bases__: bases,
-                     __hashCount__:0,
+                     __id__: Class.__idcount__++,
+                     __hash__: function(){
+                        return this.__id__;
+                     },
                      __str__ : function(){
                             return "[class %s]".format(this.__name__);
                         }
                     };
-
+    
     var baseProtos=[];//stores the prototypes of all the base classes
     var proto; //the prototype to use for the new class
     if(bases.length==0){//use Object as base
@@ -77,7 +80,7 @@ Class=function(name, bases, classScope){
         //because toString is not apearing in a for in loop we will just use __str__ and always assign it to toString
         //this makes prototype creatin a bit simpler
         proto.toString=proto.__str__;
-        statc.__bases__=[Object];
+        __class__.__bases__=[Object];
     }else{ //inherit from all base classes
         //inheritance is done by 
         var baseProto;
@@ -86,11 +89,11 @@ Class=function(name, bases, classScope){
             //remember the base prototypes
             baseProtos.push(baseClass.prototype);
             if(baseClass.__proto__ !== undefined){
-                baseProto = baseClass.__proto__();
+                baseProto = baseClass.__proto__(bases);
             }else{
                 baseProto = new baseClass(Class);
             }
-            statc.__isArray__ = statc.__isArray__ || baseClass.__isArray__;
+            __class__.__isArray__ = __class__.__isArray__ || baseClass.__isArray__;
             
             if(i==0){//for the first base class just use it's proto as the final proto
                 proto = baseProto;
@@ -103,8 +106,8 @@ Class=function(name, bases, classScope){
             }
             //extend the new class' static interface
             for(var key in baseClass){
-                if(statc[key] === undefined){
-                    statc[key] = baseClass[key];
+                if(__class__[key] === undefined){
+                    __class__[key] = baseClass[key];
                 }
             }
         }
@@ -116,16 +119,18 @@ Class=function(name, bases, classScope){
     if(proto.__hash__ === undefined){
         proto.__hash__=function(){
             if(this.__id__ === undefined){
-                this.__id__ = Class.__hashCount__++;
+                this.__id__ = Class.__idcount__++;
             }
             return this.__id__;
         };
     }
-        
-    //todo: run the class scope as scope(publ, [statc,] baseClassProto1, ... ) 
-    //publ represents the new class' prototype, statc the public static fields of the class(class properties)
-    if(classScope.length>baseProtos.length+1){
-        classScope.apply(this,[proto,statc].concat(baseProtos));
+    proto.__class__=__class__;
+  
+    var privId = '__priv__' + __class__.__id__;
+    
+    //run teh class setup function provided as classScope
+    if(classScope.length-1 > baseProtos.length){
+        classScope.apply(this,[proto, privId].concat(baseProtos));
     }else{
         classScope.apply(this,[proto].concat(baseProtos));
     }
@@ -141,6 +146,10 @@ Class=function(name, bases, classScope){
                 var rslt = function(){
                     return rslt.__call__.apply(rslt, arguments);
                 };
+                
+                var privId='__priv__' + arguments.callee.__id__;
+                rslt[privId]={};
+                
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -153,12 +162,16 @@ Class=function(name, bases, classScope){
                 return rslt;
             }
         };
-    }else if(statc.__isArray__){
+    }else if(__class__.__isArray__){
         //Since we cannot inherit from Array directly we take the same approach as with the callable above
         //and just have a constructor which creates an Array 
         var NewClass = function(calledBy){
             if(calledBy !== Class){
                 rslt=[];
+                
+                var privId='__priv__' + arguments.callee.__id__;
+                rslt[privId]={};
+                
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -185,6 +198,8 @@ Class=function(name, bases, classScope){
         var NewClass = function(calledBy){
             if(calledBy !== Class){
                 if(this.__init__){
+                    var privId='__priv__' + arguments.callee.__id__;
+                    this[privId] = {};
                     this.__init__.apply(this, arguments);
                 }    
             }
@@ -199,15 +214,14 @@ Class=function(name, bases, classScope){
     NewClass.prototype = proto;
     
     //apply all the static fileds
-    for(var key in statc){
-        NewClass[key] = statc[key];
+    for(var key in __class__){
+        NewClass[key] = __class__[key];
     }
-    NewClass.toString=statc.__str__;
+    NewClass.toString=__class__.__str__;
     
     return NewClass;
 };    
-Class.__hashCount__=0;
-
+Class.__idcount__=0;
 Class.toString = function(){
     return "[object Class]";
 };
