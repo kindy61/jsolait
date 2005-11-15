@@ -88,8 +88,8 @@ Class=function(name, bases, classScope){
             var baseClass = bases[i];
             //remember the base prototypes
             baseProtos.push(baseClass.prototype);
-            if(baseClass.__proto__ !== undefined){
-                baseProto = baseClass.__proto__(bases);
+            if(baseClass.__createProto__ !== undefined){
+                baseProto = baseClass.__createProto__(bases);
             }else{
                 baseProto = new baseClass(Class);
             }
@@ -104,9 +104,10 @@ Class=function(name, bases, classScope){
                     }
                 }
             }
-            //extend the new class' static interface
+            //extend the new class' static interface 
+            //todo: any props that should not be copied
             for(var key in baseClass){
-                if(__class__[key] === undefined){
+                if((key != 'prototype') && (__class__[key] === undefined)){
                     __class__[key] = baseClass[key];
                 }
             }
@@ -197,9 +198,9 @@ Class=function(name, bases, classScope){
         //unless it does not exsit or the constructor was used for prototyping
         var NewClass = function(calledBy){
             if(calledBy !== Class){
+                var privId='__priv__' + arguments.callee.__id__;
+                this[privId] = {};
                 if(this.__init__){
-                    var privId='__priv__' + arguments.callee.__id__;
-                    this[privId] = {};
                     this.__init__.apply(this, arguments);
                 }    
             }
@@ -226,15 +227,15 @@ Class.toString = function(){
     return "[object Class]";
 };
 
-Class.__proto__=function(){ 
+Class.__createProto__=function(){ 
     throw "Can't use Class as a base class.";
 };
 
 Array.__isArray__=true;
 Array.__str__=Array.toString=function(){return "[class Array]";};
-Array.__proto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
+Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
 Object.__str__=Object.toString=function(){return "[class Object]";};
-Function.__proto__ = function(){ throw "Cannot inherit from Function. implement the callabel interface instead using YourClass::__call__.";};
+Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callabel interface instead using YourClass::__call__.";};
 
 
 
@@ -283,7 +284,7 @@ Module.toString=function(){
     return "[object Module]";
 };
 
-Module.__proto__=function(){ 
+Module.__createProto__=function(){ 
     throw "Can't use Module as a base class.";
 };
 
