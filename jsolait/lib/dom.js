@@ -1,32 +1,32 @@
 /*
     Copyright (c) 2005 Jan-Klaas Kollhof
-    
+
     This file is part of the JavaScript o lait library(jsolait).
-    
+
     jsolait is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation; either version 2.1 of the License, or
     (at your option) any later version.
-    
+
     This software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
-    
+
     You should have received a copy of the GNU Lesser General Public License
     along with this software; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /**
     Module providing DOM implementations.
-    
+
     @author                  Jan-Klaas Kollhof
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
 Module("dom", "$Revision$", function(mod){
     var sets=imprt("sets");
-    
+
     /**
         Event class.
     **/
@@ -34,8 +34,8 @@ Module("dom", "$Revision$", function(mod){
         ///The event type.
         publ.type=null;
     });
-    
-    
+
+
     /**
         An EventTarget implementation.
     **/
@@ -51,7 +51,11 @@ Module("dom", "$Revision$", function(mod){
             if(this.eventListeners[evt.type]){
                 var l = this.eventListeners[evt.type].items;
                 for(var h in l){
-                    l[h].handleEvent(evt);
+                    if(typeof l == 'function'){
+                        l(evt);
+                    }else{
+                        l[h].handleEvent(evt);
+                    }
                 }
             }
         };
@@ -79,7 +83,7 @@ Module("dom", "$Revision$", function(mod){
             }
         };
     });
-    
+
     /**
         An EventListener wrapper.
         It forwards all events to handler methods using the evt.type as the name for the method.
@@ -92,11 +96,11 @@ Module("dom", "$Revision$", function(mod){
         **/
         publ.handleEvent=function(evt){
             if(this[evt.type]){
-                this[evt.type](evt);
+                this['handleEvent_' + evt.type](evt);
             }
         };
     });
-    
+
     /**
         A combination of an EventTarget and a EventListener.
     **/
