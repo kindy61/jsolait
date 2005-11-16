@@ -1,18 +1,18 @@
 /*
   Copyright (c) 2005 Jan-Klaas Kollhof
-  
+
   This file is part of the JavaScript o lait library(jsolait).
-  
+
   jsolait is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as published by
   the Free Software Foundation; either version 2.1 of the License, or
   (at your option) any later version.
- 
+
   This software is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Lesser General Public License for more details.
- 
+
   You should have received a copy of the GNU Lesser General Public License
   along with this software; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -42,7 +42,7 @@ Module("jsonrpc","$Revision$", function(mod){
          ///The status returned by the server.
         publ.status;
     });
-    
+
     /**
         Thrown if an JSON-RPC response is not well formed.
     */
@@ -73,12 +73,12 @@ Module("jsonrpc","$Revision$", function(mod){
             supr.__init__.call(this, err,trace);
         };
     });
-    
-    
+
+
     /**
         Marshalls an object to JSON.(Converts an object into JSON conforming source.)
         It just calls the toJSON function of the objcect.
-        So, to customize serialization of objects one just needs to specify/override the toXmlRpc method 
+        So, to customize serialization of objects one just needs to specify/override the toXmlRpc method
         which should return an xml string conforming with XML-RPC spec.
         @param obj    The object to marshall
         @return         An xml representation of the object.
@@ -98,9 +98,9 @@ Module("jsonrpc","$Revision$", function(mod){
             return "{" + v.join(", ") + "}";
         }
     };
-    
+
     /**
-        Unmarshalls a JSON source to a JavaScript object. 
+        Unmarshalls a JSON source to a JavaScript object.
         @param source    The source  to unmarshall.
         @return         The JavaScript object created.
     */
@@ -118,14 +118,14 @@ Module("jsonrpc","$Revision$", function(mod){
         Calling the created method will result in a JSON-RPC call to the service.
         The return value of this call will be the return value of the RPC call.
         RPC-Errors will be raised as Exceptions.
-        
+
         Asynchronous operation:
-        If the last parameter passed to the method is an JSONRPCAsyncCallback object, 
-        then the remote method will be called asynchronously. 
+        If the last parameter passed to the method is an JSONRPCAsyncCallback object,
+        then the remote method will be called asynchronously.
         The results and errors are passed to the callback.
     */
     mod.JSONRPCMethod =Class(function(publ){
-        
+
         var postData = function(url, user, pass, data, callback){
             if(callback == null){//todo ===undefined
                 var rslt = urllib.postURL(url, user, pass, data, [["Content-Type", "text/plain"]]);
@@ -134,7 +134,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 return urllib.postURL(url, user, pass, data, [["Content-Type", "text/plain"]], callback);
             }
         };
-        
+
         var handleResponse=function(resp){
             var status=null;
             try{//see if the server responded with a response code 200 OK.
@@ -142,8 +142,8 @@ Module("jsonrpc","$Revision$", function(mod){
             }catch(e){
             }
             if(status == 200){
-                var respTxt = ""; 
-                try{                 
+                var respTxt = "";
+                try{
                     respTxt=resp.responseText;
                 }catch(e){
                 }
@@ -161,7 +161,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 throw new mod.InvalidServerResponse(status);
             }
         };
-        
+
         var jsonRequest = function(id, methodName, args){
             var p = [mod.marshall(id), mod.marshall(methodName), mod.marshall(args)];
             return '{"id":' + p[0] + ', "method":' + p[1] + ', "params":' + p[2] + "}";
@@ -179,14 +179,14 @@ Module("jsonrpc","$Revision$", function(mod){
             this.user = user;
             this.password=pass;
         };
-         
+
         publ.__call__=function(){
             var args=new Array();
             for(var i=0;i<arguments.length;i++){
                 args.push(arguments[i]);
             }
             //sync or async call
-            if(!(arguments[arguments.length-1] instanceof Function)){
+            if(typeof arguments[arguments.length-1] !='function'){
                 var data=jsonRequest("httpReq", this.methodName, args);
                 var resp = postData(this.url, this.user, this.password, data);
                 return handleResponse(resp);
@@ -219,8 +219,8 @@ Module("jsonrpc","$Revision$", function(mod){
             this.user = user;
             this.password = pass;
         };
-        
-        /** 
+
+        /**
             Sends the call as a notification which does not have a response.
             Call this as if you would call the method itself. Callbacks are ignored.
         */
@@ -232,7 +232,7 @@ Module("jsonrpc","$Revision$", function(mod){
             var data=jsonRequest(null, this.methodName, args);
             postData(this.url, this.user, this.password, data, function(resp){});
         };
-        
+
         ///The name of the remote method.
         publ.methodName;
         ///The url of the remote service containing the method.
@@ -242,7 +242,7 @@ Module("jsonrpc","$Revision$", function(mod){
         ///The password used for HTTP authorization.
         publ.password;
     });
-    
+
     /**
         Creates proxy objects which resemble the remote service.
         Method calls of this proxy will result in calls to the service.
@@ -254,7 +254,7 @@ Module("jsonrpc","$Revision$", function(mod){
             ServerProxy("url", ["methodName1",...])
             ServerProxy("url", ["methodName1",...], "user", "pass")
             ServerProxy("url", "user", "pass")
-            
+
             @param url                     The url of the service.
             @param methodNames      Array of names of methods that can be called on the server.
             @param user=null             The user name to use for HTTP authentication.
@@ -266,7 +266,7 @@ Module("jsonrpc","$Revision$", function(mod){
             this._password = pass;
             this._addMethodNames(methodNames);
         };
-        
+
         /**
             Adds new JSONRPCMethods to the proxy server which can then be invoked.
             @param methodNames   Array of names of methods that can be called on the server.
@@ -294,7 +294,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 }
             }
         };
-        
+
         /**
             Sets username and password for HTTP Authentication for all methods of this service.
             @param user    The user name.
@@ -307,7 +307,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 this._methods[i].setAuthentication(user, pass);
             }
         };
-        
+
         ///The url of the service to resemble.
         publ._url;
         ///The user used for HTTP authentication.
@@ -317,10 +317,10 @@ Module("jsonrpc","$Revision$", function(mod){
         ///All methods.
         publ._methods=new Array();
     });
-    
+
     ///@deprecated  Use ServiceProxy instead.
     mod.ServerProxy= mod.ServiceProxy;
-    
+
     /**
         Converts a String to JSON.
     */
@@ -329,21 +329,21 @@ Module("jsonrpc","$Revision$", function(mod){
         s = s.replace(/(\n)/g,"\\n");
         return s;
     };
-    
+
     /**
         Converts a Number to JSON.
     */
     Number.prototype.toJSON = function(){
         return this.toString();
     };
-    
+
     /**
         Converts a Boolean to JSON.
     */
     Boolean.prototype.toJSON = function(){
         return this.toString();
     };
-    
+
     /**
         Converts a Date to JSON.
         Date representation is not defined in JSON.
@@ -359,12 +359,12 @@ Module("jsonrpc","$Revision$", function(mod){
         var h = padd(this.getUTCHours(), "00");
         var min = padd(this.getUTCMinutes(), "00");
         var s = padd(this.getUTCSeconds(), "00");
-        
+
         var isodate = y +  m  + d + "T" + h +  ":" + min + ":" + s;
-        
+
         return '{"jsonclass":["sys.ISODate", ["' + isodate + '"]]}';
     };
-    
+
     /**
         Converts an Array to JSON.
     */

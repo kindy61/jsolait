@@ -1,18 +1,18 @@
 /*
   Copyright (c) 2003 Jan-Klaas Kollhof
-  
+
   This file is part of the JavaScript o lait library(jsolait).
-  
+
   jsolait is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as published by
   the Free Software Foundation; either version 2.1 of the License, or
   (at your option) any later version.
- 
+
   This software is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Lesser General Public License for more details.
- 
+
   You should have received a copy of the GNU Lesser General Public License
   along with this software; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,7 +38,7 @@ Module("urllib","$Revision$", function(mod){
             supr.__init__.call(this,  "Could not create an HTTP request object", trace);
         };
     });
-    
+
     /**
         Thrown if an HTTP request could not be opened.
     */
@@ -51,7 +51,7 @@ Module("urllib","$Revision$", function(mod){
             supr.__init__.call(this,  "Opening of HTTP request failed.", trace);
         };
     });
-    
+
     /**
         Thrown is arequest could not be sent to the server.
     */
@@ -64,7 +64,7 @@ Module("urllib","$Revision$", function(mod){
             supr.__init__.call(this,  "Sending of HTTP request failed.", trace);
         };
     });
-    
+
     /**
         Mimics the HTTPRequest object using Adobe's SVG Viewer's postURL and getURL.
         It can only process asyncronous connection and the only header that's supported is 'Content-Type'.
@@ -136,11 +136,11 @@ Module("urllib","$Revision$", function(mod){
             }
         };
     });
-    
+
     /**
         Creates an HTTP request object for retreiving files.
         @return  HTTP request object.
-    */    
+    */
     var getHTTP=function() {
         var obj;
         try{ //to get the mozilla httprequest object
@@ -153,7 +153,7 @@ Module("urllib","$Revision$", function(mod){
                     obj=new ActiveXObject("Msxml2.XMLHTTP");
                 }catch(e){
                     try{// to get the old MS HTTP request object
-                        obj = new ActiveXObject("microsoft.XMLHTTP"); 
+                        obj = new ActiveXObject("microsoft.XMLHTTP");
                     }catch(e){
                         try{//to create the ASV request object.
                             obj = new ASVRequest();
@@ -161,7 +161,7 @@ Module("urllib","$Revision$", function(mod){
                             throw new mod.NoHTTPRequestObject("Neither Mozilla, IE nor ASV found. Can't do HTTP request without them.");
                         }
                     }
-                }    
+                }
             }
         }
         return obj;
@@ -172,21 +172,21 @@ Module("urllib","$Revision$", function(mod){
         simple:
             sendRequest("get", "url")
             sendRequest("post", "url", "data")
-        
+
         with headers:
             sendRequest("get", "url", [["headername","value"]])
             sendRequest("post", "url", "data", [["headername","value"]])
-        
+
         with user information:
             sendRequest("get", "url", "user", "pass")
             sendRequest("post", "url", "user", "pass", "data")
-        
+
         with headers and user information:
             sendRequest("get", "url", "user", "pass", [["headername","value"]])
             sendRequest("post", "url", "user", "pass", "data", [["headername","value"]])
-        
+
         To make the request asynchronous just add a callback function as the last argument to the calls above.
- 
+
         @param type              Type of connection (GET, POST, ...).
         @param url                 The URL to retrieve.
         @param user=null        The username for auth.
@@ -199,7 +199,7 @@ Module("urllib","$Revision$", function(mod){
     mod.sendRequest=function(type, url, user, pass, data, headers, callback){
         var async=false;
         //check if the last argument is a function and treat it as callback;
-        if(arguments[arguments.length-1]  instanceof Function){
+        if(typeof arguments[arguments.length-1]  == 'function'){
             var async=true;
             callback = arguments[arguments.length-1];
         }
@@ -237,18 +237,18 @@ Module("urllib","$Revision$", function(mod){
         //set headers
         for(var i=0;i< headers.length;i++){
             try{//opera 8b does not support setRequestHeader todo:
-                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);    
+                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
             }catch(e){
             }
         }
-        
+
         if(async){//set up a callback
             xmlhttp.onreadystatechange=function(){
                 if (xmlhttp.readyState==4) {
                     callback(xmlhttp);
                     xmlhttp = null; //help IE with garbage collection
                 }else if (xmlhttp.readyState==2){
-                    //status property should be available (MS IXMLHTTPRequest documentation) 
+                    //status property should be available (MS IXMLHTTPRequest documentation)
                     //in Mozilla it is not if the request failed(server not reachable)
                     //in IE it is not available at all ?!
                     try{//see if it is mozilla otherwise don't care.
@@ -260,15 +260,15 @@ Module("urllib","$Revision$", function(mod){
                             xmlhttp = null;
                         }
                     }catch(e){
-                        
+
                     }
                 }
             };
         }
-        
+
         try{
             xmlhttp.send(data);
-        }catch(e){            
+        }catch(e){
             if(async){
                 callback(xmlhttp, e);
                 xmlhttp=null;
@@ -289,7 +289,7 @@ Module("urllib","$Revision$", function(mod){
         @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
         @return                     HTTP request object.
     */
-    mod.getURL=function(url, user, pass, headers, callback) { 
+    mod.getURL=function(url, user, pass, headers, callback) {
         var a=["GET"];
         for(var i=0;i<arguments.length;i++){
             a.push(arguments[i]);
@@ -308,7 +308,7 @@ Module("urllib","$Revision$", function(mod){
         @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
         @return                     HTTP request object.
     */
-    mod.postURL=function(url, user, pass, data, headers, callback) { 
+    mod.postURL=function(url, user, pass, data, headers, callback) {
         var a= ["POST"];
         for(var i=0;i<arguments.length;i++){
             a.push(arguments[i]);

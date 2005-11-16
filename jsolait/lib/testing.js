@@ -94,7 +94,7 @@ Module("testing", "$Revision$", function(mod){
             try{
                 this.testScope();
             }catch(e){
-                if(e instanceof mod.AssertFailed){
+                if(e.constructor == mod.AssertFailed){
                     this.error = e;
                     this.failed=true;
                 }else{
