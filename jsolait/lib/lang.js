@@ -49,7 +49,7 @@ Module("lang", "$Revision$", function(mod){
     var extractSLComment=function(s){
         var p = s.search(/\n/);
         if(p>=0){
-            return s.slice(0,p+1);
+            return s.slice(0,p);
         }else{
             return s;
         }

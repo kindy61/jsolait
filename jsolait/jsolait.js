@@ -371,24 +371,30 @@ Module("jsolait", "$Revision$", function(mod){
     mod.modules={};
             
     ///The paths of  the modules that come with jsolait.
-    mod.knownModuleURIs={codecs:"%(baseURI)s/lib/codecs.js",
-                                    crypto:"%(baseURI)s/lib/crypto.js",
-                                    dom:"%(baseURI)s/lib/dom.js",
-                                    forms:"%(baseURI)s/lib/forms.js",
-                                    iter:"%(baseURI)s/lib/iter.js",
-                                    jsonrpc:"%(baseURI)s/lib/jsonrpc.js",
-                                    lang:"%(baseURI)s/lib/lang.js",
-                                    sets:"%(baseURI)s/lib/sets.js",
-                                    testing:"%(baseURI)s/lib/testing.js",
-                                    urllib:"%(baseURI)s/lib/urllib.js",
-                                    xml:"%(baseURI)s/lib/xml.js",
-                                    xmlrpc:"%(baseURI)s/lib/xmlrpc.js"};
+    //do not edit the following lines, it will be replaced by the build script
+    /*@moduleURIs begin*/
+    mod.knownModuleURIs={"codecs":"%(baseURI)s/lib/codecs.js",
+                                        "crypto":"%(baseURI)s/lib/crypto.js",
+                                        "dom":"%(baseURI)s/lib/dom.js",
+                                        "forms":"%(baseURI)s/lib/forms.js",
+                                        "iter":"%(baseURI)s/lib/iter.js",
+                                        "jsonrpc":"%(baseURI)s/lib/jsonrpc.js",
+                                        "lang":"%(baseURI)s/lib/lang.js",
+                                        "sets":"%(baseURI)s/lib/sets.js",
+                                        "testing":"%(baseURI)s/lib/testing.js",
+                                        "urllib":"%(baseURI)s/lib/urllib.js",
+                                        "xml":"%(baseURI)s/lib/xml.js",
+                                        "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"}; 
+    /*@moduleURIs end*/    
     
     ///The base URIs to search for modules in. They may contain StringFormating symbols e.g '%(baseURI)s/lib'
     mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
-    
+       
     ///The location where jsolait is installed.
-    mod.baseURI = "./jsolait";
+    //do not edit the following lines, it will be replaced by the build script
+    /*@baseURI begin*/
+    mod.baseURI="./jsolait";
+    /*@baseURI end*/
     
     /**
         Creates an HTTP request object for retreiving files.
