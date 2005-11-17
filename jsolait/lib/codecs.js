@@ -1,18 +1,18 @@
 /*
     Copyright (c) 2004-2005 Jan-Klaas Kollhof
-    
+
     This file is part of the JavaScript o lait library(jsolait).
-    
+
     jsolait is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation; either version 2.1 of the License, or
     (at your option) any later version.
-    
+
     This software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
-    
+
     You should have received a copy of the GNU Lesser General Public License
     along with this software; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -54,7 +54,7 @@ Module("codecs", "$Revision$", function(mod){
         }
         return c;
     };
-    
+
     /**
         Decodes an encoded string.
         Parameters but the codec parameter are forwardet to the codec.
@@ -72,7 +72,7 @@ Module("codecs", "$Revision$", function(mod){
             throw new mod.Exception("Decoder '%s' not found.".format(codec));
         }
     };
-    
+
     /**
         Encodes a string.
         Parameters but the codec parameter are forwardet to the codec.
@@ -90,7 +90,7 @@ Module("codecs", "$Revision$", function(mod){
             throw new mod.Exception("Ecnoder '%s' not found.".format(codec));
         }
     };
-    
+
     /**
         Decodes a Base64 encoded string to a byte string.
     **/
@@ -118,7 +118,7 @@ Module("codecs", "$Revision$", function(mod){
              throw new mod.Exception("String length must be divisible by 4.");
          }
     };
-    
+
     /**
         Encodes a string using Base64.
     **/
@@ -144,7 +144,7 @@ Module("codecs", "$Revision$", function(mod){
             var rslt=new Array(s.length / 3);
             var ri=0;
             for(var i=0;i<s.length; i+=3){
-                sbin=((s.charCodeAt(i) & 0xff) << 16) | ((s.charCodeAt(i+1) & 0xff ) << 8) | (s.charCodeAt(i+2) & 0xff);    
+                sbin=((s.charCodeAt(i) & 0xff) << 16) | ((s.charCodeAt(i+1) & 0xff ) << 8) | (s.charCodeAt(i+2) & 0xff);
                 rslt[ri] = (base64[(sbin >> 18) & 0x3f] + base64[(sbin >> 12) & 0x3f] + base64[(sbin >>6) & 0x3f] + base64[sbin & 0x3f]);
                 ri++;
             }
@@ -161,11 +161,14 @@ Module("codecs", "$Revision$", function(mod){
     String.prototype.decode_uri=function(){
         return decodeURIComponent(this);
     };
-    
+
     /**
         Encodes a URI using encodeURIComponent.
     **/
     String.prototype.encode_uri=function(){
         return encodeURIComponent(this);
     };
+
+    mod.__main__=function(){
+    }
 });

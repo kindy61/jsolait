@@ -1,20 +1,20 @@
 /*
   Copyright (c) 2004 Jan-Klaas Kollhof
- 
+
   This is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
- 
+
   This software is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
- 
+
   You should have received a copy of the GNU General Public License
   along with this software; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- 
+
 */
 
 /**
@@ -22,16 +22,16 @@
     There is one global function iter() which can be used to iterate over iterable objects synchronously or
     if given a callback asynchronously.
     An iterable object is an object which has an iterator function (__iter__) which returns an Iterator object.
-    
+
     The Range class is there to create an iterable object over a range of numbers.
-    
+
     @creator                 Jan-Klaas Kollhof
     @created                2004-12-08
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
 Module("iter", "$Revision$", function(mod){
-        
+
     /**
         Base class for Iterators.
     */
@@ -50,7 +50,7 @@ Module("iter", "$Revision$", function(mod){
             return this;
         };
     });
-    
+
     /**
         A simple range class to iterate over a range of numbers.
     */
@@ -81,7 +81,7 @@ Module("iter", "$Revision$", function(mod){
             }
             this.current=this.start - this.step;
         };
-        
+
         publ.next = function(){
             if(this.current + this.step > this.end){
                 this.current=this.start;
@@ -91,11 +91,11 @@ Module("iter", "$Revision$", function(mod){
                 return this.current;
             }
         };
-        
+
     });
-    
+
     Range = mod.Range;
-    
+
     /**
         Iterator for Arrays.
     */
@@ -113,7 +113,7 @@ Module("iter", "$Revision$", function(mod){
             }
         };
     });
-    
+
     /**
         Iterator for Objects.
     */
@@ -124,10 +124,10 @@ Module("iter", "$Revision$", function(mod){
             for(var n in obj){
                 this.keys.push(n);
             }
-            
+
             this.index = -1;
         };
-        
+
         publ.next = function(){
             this.index += 1;
             if(this.index >= this.keys.length){
@@ -143,18 +143,18 @@ Module("iter", "$Revision$", function(mod){
             }
         };
     });
-    
+
     Array.prototype.__iter__ = function(){
         return new mod.ArrayItereator(this);
     };
-        
+
     /**
         Interface of a IterationCallback.
         @param item The item returned by the iterator for the current step.
         @param iteration The Iteration object handling the iteration.
     */
     mod.IterationCallback = function(item, iteration){};
-    
+
     /**
         Iteration class for handling iteration steps and callbacks.
     */
@@ -173,10 +173,10 @@ Module("iter", "$Revision$", function(mod){
             }else{
                 this.iterator = new mod.ObjectIterator(iterable);
             }
-            
+
             this.callback = callback;
         };
-        
+
         ///Resumes a stoped iteration.
         publ.resume = function(){
             this.doStop = false;
@@ -191,18 +191,18 @@ Module("iter", "$Revision$", function(mod){
                 }
             }
         };
-        
+
         ///Stops an iteration
         publ.stop = function(){
             this.doStop = true;
         };
-        
-        ///Starts/resumes an iteration        
+
+        ///Starts/resumes an iteration
         publ.start = function(){
             this.resume();
         };
     });
-    
+
     /**
         Class for handling asynchronous iterations.
     */
@@ -211,7 +211,7 @@ Module("iter", "$Revision$", function(mod){
             Initializes an AsyncIteration object.
             @param iterable An itaratable object.
             @param interval The time in ms betwen each step.
-            @param thisObj 
+            @param thisObj
             @param callback An IterationCallback object.
         */
         publ.__init__=function(iterable, interval, thisObj, callback){
@@ -226,15 +226,15 @@ Module("iter", "$Revision$", function(mod){
             this.callback = callback;
             this.isRunning = false;
         };
-        
+
         publ.stop=function(){
             if(this.isRunning){
                 this.isRunning = false;
-                clearTimeout(this.timeout);    
+                clearTimeout(this.timeout);
                 delete iter.iterations[this.id];
             }
         };
-        
+
         publ.resume = function(){
             if(this.isRunning == false){
                 this.isRunning = true;
@@ -248,7 +248,7 @@ Module("iter", "$Revision$", function(mod){
                 this.timeout = setTimeout("iter.handleAsyncStep('" + this.id + "')", this.interval);
             }
         };
-    
+
         publ.handleAsyncStep = function(){
             if(this.isRunning){
                 tem=this.iterator.next();
@@ -262,8 +262,8 @@ Module("iter", "$Revision$", function(mod){
             }
         };
     });
-    
-    
+
+
     /**
         Iterates over an iterable object and calls a callback for each item.
         @param iterable          The iterable object.
@@ -281,14 +281,14 @@ Module("iter", "$Revision$", function(mod){
             thisObj=null;
         }
         if(delay >-1){
-            var it = new mod.AsyncIteration(iterable, delay, thisObj, cb);      
+            var it = new mod.AsyncIteration(iterable, delay, thisObj, cb);
         }else{
             var it = new mod.Iteration(iterable, thisObj, cb);
         }
         it.start();
         return it;
     };
-    
+
     iter.handleAsyncStep = function(id){
         if(iter.iterations[id]){
            iter.iterations[id].handleAsyncStep();
@@ -296,11 +296,11 @@ Module("iter", "$Revision$", function(mod){
     };
     ///Helper object containing all async. iteration objects.
     iter.iterations = {};
-      
-    
+
+
     mod.__main__=function(){
-        
-        
+
+
         var  testing = imprt('testing');
         var task=function(){
             var s='';
@@ -308,77 +308,77 @@ Module("iter", "$Revision$", function(mod){
                 s+=i;
             }
         };
-        
+
         r = [];
         for(var i=0;i<100;i++){
             r[i] = i;
         }
-                       
-        print("for loop \t\t\t" + testing.timeExec(100,function(){
+
+        print("for loop \t\t\t" + testing.profile(function(){
             var s='';
             for(var i=0;i<100;i++){
                 s+=r[i];
                 task();
             }
         }));
-        
-        print("Range iter \t\t" + testing.timeExec(100,function(){
+
+        print("Range iter \t\t" + testing.profile(function(){
             var s='';
             iter(new mod.Range(100), function(item,i){
                 s+=r[item];
                 task();
             });
         }));
-        
-        print("Array iter \t\t\t" + testing.timeExec(100,function(){
+
+        print("Array iter \t\t\t" + testing.profile(function(){
             var s='';
             iter(r , function(item,i){
                 s+=item;
                 task();
             });
-            
+
         }));
-        
-        print("for in on Array \t\t" + testing.timeExec(100,function(){
+
+        print("for in on Array \t\t" + testing.profile(function(){
             var s='';
             for(var i in r){
                 s+=r[i];
                 task();
             }
         }));
-        
+
         r = [];
         for(var i=0;i<100;i++){
             r["k"+i] = i;
         }
-        
-        print("for in  on as.Array \t" + testing.timeExec(100,function(){
+
+        print("for in  on as.Array \t" + testing.profile(function(){
             var s='';
             for(var i in r){
                 s+=r[i];
                 task();
             }
         }));
-        
+
         r = {};
         for(var i=0;i<100;i++){
             r["k"+i] = i;
         }
-        
-        print("for in on dictionary \t" + testing.timeExec(100,function(){
+
+        print("for in on dictionary \t" + testing.profile(function(){
             var s='';
             for(var i in r){
                 s+=r[i];
                 task();
             }
         }));
-        
+
         r = [];
         for(var i=0;i<100;i++){
             r[i] = i;
         }
-        
-        print("for on Array + iter \t" + testing.timeExec(100,function(){
+
+        print("for on Array + iter \t" + testing.profile(function(){
             var s='';
             for(i=r.__iter__(); item=i.next() !==undefined;){
                 s+= item;

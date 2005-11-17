@@ -1,18 +1,18 @@
 /*
     Copyright (c) 2003-2005 Jan-Klaas Kollhof
-    
+
     This file is part of the JavaScript O Lait library(jsolait).
-    
+
     jsolait is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation; either version 2.1 of the License, or
     (at your option) any later version.
-    
+
     This software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
-    
+
     You should have received a copy of the GNU Lesser General Public License
     along with this software; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -21,7 +21,7 @@
 /**
     The main jsolait script.
     It provides the core functionalities  for creating classes, modules and for importing modules.
-    
+
     @author Jan-Klaas Kollhof
     @version 2.0
     @lastchangedby $LastChangedBy$
@@ -33,11 +33,11 @@
 /**
     Creates a new class object which inherits from superClass.
     @param name="anonymous"  The name of the new class.
-                                            If the created class is a public member of a module then 
+                                            If the created class is a public member of a module then
                                             the __name__ property of that class is automatically set by Module().
     @param bases *                  The base classes.
     @param classScope(-1)        A function which is executed for class construction.
-                                            As 1st parameter it will get the new class' protptype for 
+                                            As 1st parameter it will get the new class' protptype for
                                             overrideing or extending the super class. As 2nd parameter it will get
                                             the super class' wrapper for calling inherited methods.
 **/
@@ -48,20 +48,21 @@ Class=function(name, bases, classScope){
     }
 
     classScope = args.pop();
-    
+    var classID =  Class.__idcount__++;
+
     if((args.length>0) && (typeof args[0] =='string')){
         name=args.shift();
     }else{
-        name="anonymous";
+        name="anonymous" + classID;
     }
-    
+
     var bases = args;
-    
+
     //set up the 'public static' fields of the class
     var __class__={__isArray__ : false,
                      __name__ : name,
                      __bases__: bases,
-                     __id__: Class.__idcount__++,
+                     __id__:classID,
                      __hash__: function(){
                         return this.__id__;
                      },
@@ -69,7 +70,7 @@ Class=function(name, bases, classScope){
                             return "[class %s]".format(this.__name__);
                         }
                     };
-    
+
     var baseProtos=[];//stores the prototypes of all the base classes
     var proto; //the prototype to use for the new class
     if(bases.length==0){//use Object as base
@@ -82,7 +83,7 @@ Class=function(name, bases, classScope){
         proto.toString=proto.__str__;
         __class__.__bases__=[Object];
     }else{ //inherit from all base classes
-        //inheritance is done by 
+        //inheritance is done by
         var baseProto;
         for(var i=0;i<bases.length;i++){
             var baseClass = bases[i];
@@ -94,7 +95,7 @@ Class=function(name, bases, classScope){
                 baseProto = new baseClass(Class);
             }
             __class__.__isArray__ = __class__.__isArray__ || baseClass.__isArray__;
-            
+
             if(i==0){//for the first base class just use it's proto as the final proto
                 proto = baseProto;
             }else{//for all others extend(do not override) the final proto with the properties in the baseProto
@@ -104,7 +105,7 @@ Class=function(name, bases, classScope){
                     }
                 }
             }
-            //extend the new class' static interface 
+            //extend the new class' static interface
             //todo: any props that should not be copied
             for(var key in baseClass){
                 if((key != 'prototype') && (__class__[key] === undefined)){
@@ -112,7 +113,7 @@ Class=function(name, bases, classScope){
                 }
             }
         }
-        //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?) 
+        //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
         //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
         proto.toString=proto.__str__;
     }
@@ -126,31 +127,31 @@ Class=function(name, bases, classScope){
         };
     }
     proto.__class__=__class__;
-  
+
     var privId = '__priv__' + __class__.__id__;
-    
+
     //run teh class setup function provided as classScope
     if(classScope.length-1 > baseProtos.length){
         classScope.apply(this,[proto, privId].concat(baseProtos));
     }else{
         classScope.apply(this,[proto].concat(baseProtos));
     }
-        
+
     //allthough a single constructor would suffice for generating normal objects, Arrays and callables,
     //we use 3 different ones. This will minimize the code inside the constructor and therefore
     //minimize object construction time
     if(proto.__call__){
-        //if the callable interface is implemented we need a class constructor 
+        //if the callable interface is implemented we need a class constructor
         //which generates a function upon construction
         var NewClass = function(calledBy){
             if(calledBy !== Class){
                 var rslt = function(){
                     return rslt.__call__.apply(rslt, arguments);
                 };
-                
+
                 var privId='__priv__' + arguments.callee.__id__;
                 rslt[privId]={};
-                
+
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -165,14 +166,14 @@ Class=function(name, bases, classScope){
         };
     }else if(__class__.__isArray__){
         //Since we cannot inherit from Array directly we take the same approach as with the callable above
-        //and just have a constructor which creates an Array 
+        //and just have a constructor which creates an Array
         var NewClass = function(calledBy){
             if(calledBy !== Class){
                 rslt=[];
-                
+
                 var privId='__priv__' + arguments.callee.__id__;
                 rslt[privId]={};
-                
+
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -194,7 +195,7 @@ Class=function(name, bases, classScope){
             }
         };
     }else{
-        //this is a 'normal' object constructor which does nothing but call the __init__ method 
+        //this is a 'normal' object constructor which does nothing but call the __init__ method
         //unless it does not exsit or the constructor was used for prototyping
         var NewClass = function(calledBy){
             if(calledBy !== Class){
@@ -202,32 +203,32 @@ Class=function(name, bases, classScope){
                 this[privId] = {};
                 if(this.__init__){
                     this.__init__.apply(this, arguments);
-                }    
+                }
             }
         };
     }
-    
+
     //reset the constructor for new objects to the actual constructor.
     proto.constructor = NewClass;
     proto.__class__= NewClass;//no, it is not needed, just like __str__ is not, but it is nicer than constructor
-    
+
     //this is where the inheritance realy happens
     NewClass.prototype = proto;
-    
+
     //apply all the static fileds
     for(var key in __class__){
         NewClass[key] = __class__[key];
     }
     NewClass.toString=__class__.__str__;
-    
+
     return NewClass;
-};    
+};
 Class.__idcount__=0;
 Class.toString = function(){
     return "[object Class]";
 };
 
-Class.__createProto__=function(){ 
+Class.__createProto__=function(){
     throw "Can't use Class as a base class.";
 };
 
@@ -244,7 +245,7 @@ Function.__createProto__ = function(){ throw "Cannot inherit from Function. impl
     @param name              The name of the module.
     @param version            The version of a module.
     @param moduleScope    A function which is executed for module creation.
-                                     As 1st parameter it will get the module variable.                          
+                                     As 1st parameter it will get the module variable.
                                      The imported modules(imports) will be passed to the moduleScope starting with the 2nd parameter.
 **/
 Module=function(name, version, moduleScope){
@@ -252,23 +253,23 @@ Module=function(name, version, moduleScope){
     newMod.name = name;
     newMod.version = version;
     newMod.__sourceURI__ = Module.currentURI;
-    
+
     newMod.toString=function(){
         //todo:SVN adaption
-        return "[module '%s' version: %s]".format(this.name, this.version);
+        return "[module '%s' version: %s]".format(this.name, (this.version+'').replace(/\$Revision:\s(\d+) \$/, "rev.$1"));
     };
 
     //give a module it's own exception class which makes debugging easier
     newMod.Exception=Class(Module.Exception, function(publ, supr){
         publ.module = newMod;
     });
-    
+
     try{//to execute the scope of the module
         moduleScope.call(newMod, newMod);
     }catch(e){
         throw new Module.ModuleScopeExecFailed(newMod, e);
     }
-    
+
     //set __name__  for methods and classes
     for(var n in newMod){
         var obj = newMod[n];
@@ -284,11 +285,11 @@ Module.toString=function(){
     return "[object Module]";
 };
 
-Module.__createProto__=function(){ 
+Module.__createProto__=function(){
     throw "Can't use Module as a base class.";
 };
 
-    
+
 /**
     Base class for all module-Exceptions.
     This class should not be instaciated directly but rather
@@ -305,8 +306,8 @@ Module.Exception=Class("Exception", function(publ){
         this.message = ''+msg;
         this.trace = trace;
     };
-    
-    
+
+
     publ.__str__=function(){
         var s = "%s %s".format(this.name, this.module);
         return s;
@@ -317,7 +318,7 @@ Module.Exception=Class("Exception", function(publ){
     **/
     publ.toTraceString=function(indent){
         indent = indent==null ? 0 : indent;
-        
+
         //todo:use  constructor.__name__
         var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
         if(this.trace){
@@ -329,9 +330,9 @@ Module.Exception=Class("Exception", function(publ){
         }
         return s;
     };
-    
-   
-    
+
+
+
     ///The name of the Exception.
     publ.name;//todo is that needed?
     ///The error message.
@@ -339,7 +340,7 @@ Module.Exception=Class("Exception", function(publ){
     ///The module the Exception belongs to.
     publ.module="jsolait";
     ///The error which caused the Exception or undefined.
-    publ.trace;      
+    publ.trace;
 });
 
 /**
@@ -358,18 +359,19 @@ Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, fu
     ///The module that could not be createed.
     publ.module;
 });
- 
-    
+
+
 /**
-    
+
     @author                 Jan-Klaas Kollhof
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
 Module("jsolait", "$Revision$", function(mod){
     jsolait=mod;
+
     mod.modules={};
-            
+
     ///The paths of  the modules that come with jsolait.
     //do not edit the following lines, it will be replaced by the build script
     /*@moduleURIs begin*/
@@ -384,18 +386,18 @@ Module("jsolait", "$Revision$", function(mod){
                                         "testing":"%(baseURI)s/lib/testing.js",
                                         "urllib":"%(baseURI)s/lib/urllib.js",
                                         "xml":"%(baseURI)s/lib/xml.js",
-                                        "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"}; 
-    /*@moduleURIs end*/    
-    
+                                        "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"};
+    /*@moduleURIs end*/
+
     ///The base URIs to search for modules in. They may contain StringFormating symbols e.g '%(baseURI)s/lib'
     mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
-       
+
     ///The location where jsolait is installed.
     //do not edit the following lines, it will be replaced by the build script
     /*@baseURI begin*/
     mod.baseURI="./jsolait";
     /*@baseURI end*/
-    
+
     /**
         Creates an HTTP request object for retreiving files.
         @return HTTP request object.
@@ -412,16 +414,16 @@ Module("jsolait", "$Revision$", function(mod){
                     obj=new ActiveXObject("Msxml2.XMLHTTP");
                 }catch(e){
                     try{// to get the old MS HTTP request object
-                        obj = new ActiveXObject("microsoft.XMLHTTP"); 
+                        obj = new ActiveXObject("microsoft.XMLHTTP");
                     }catch(e){
                         throw new mod.Exception("Unable to get an HTTP request object.");
                     }
-                }    
+                }
             }
         }
         return obj;
     };
-    
+
     /**
         Retrieves a file given its URL.
         @param uri             The uri to load.
@@ -436,7 +438,7 @@ Module("jsolait", "$Revision$", function(mod){
             var xmlhttp= getHTTP();
             xmlhttp.open("GET", uri, false);
             for(var i=0;i< headers.length;i++){
-                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);    
+                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
             }
             xmlhttp.send("");
         }catch(e){
@@ -450,7 +452,7 @@ Module("jsolait", "$Revision$", function(mod){
              throw new mod.LoadURIFailed(uri,new mod.Exception("Server did not respond with 200"));
         }
     };
-    
+
     /**
         Thrown when a file could not be loaded.
     **/
@@ -468,13 +470,13 @@ Module("jsolait", "$Revision$", function(mod){
         ///The path paths jsolait tried to load the file from.
         publ.sourceURI;
     });
-    
-    
+
+
      /**
        Imports a module given its name(someModule.someSubModule).
        A module's file location is determined by treating each module name as a directory.
        Only the last one is assumed to point to a file.
-       If the module's URL is not known (i.e the module name was not found in jsolait.knownModuleURIs) 
+       If the module's URL is not known (i.e the module name was not found in jsolait.knownModuleURIs)
        then it will be searched using all URIs found in jsolait.moduleSearchURIs.
        @param name   The name of the module to load.
        @return           The module object.
@@ -494,7 +496,7 @@ Module("jsolait", "$Revision$", function(mod){
                     throw new mod.ImportFailed(name, [modPath], e);
                 }
             }
-            
+
             if(src == null){//go through the search paths and try loading the module
                 var failedURIs=[];
                 for(var i=0;i<mod.moduleSearchURIs.length; i++){
@@ -510,7 +512,7 @@ Module("jsolait", "$Revision$", function(mod){
                     throw new mod.ImportFailed(name, failedURIs);
                 }
             }
-                        
+
             try{//interpret the script
                 var srcURI = src.__sourceURI__;
                 src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
@@ -519,12 +521,12 @@ Module("jsolait", "$Revision$", function(mod){
             }catch(e){
                 throw new mod.ImportFailed(name, [srcURI], e);
             }
-            
-            return mod.modules[name]; 
+
+            return mod.modules[name];
         }
     };
-    
-    
+
+
     /**
         Thrown when a module could not be found.
     **/
@@ -545,7 +547,7 @@ Module("jsolait", "$Revision$", function(mod){
         ///The URIs or a list of paths jsolait tried to load the modules from.
         publ.moduleURIs;
     });
-    
+
     /**
         Imports a module given its name.
         Modules must have registered themselfes before they can be imported.
@@ -555,22 +557,22 @@ Module("jsolait", "$Revision$", function(mod){
     imprt = function(name){
         return mod.__imprt__(name);
     };
-    
+
     mod.__registerModule__=function(modObj, modName){
         if(modName != 'jsolait'){
             return mod.modules[modName] = modObj;
         }
     };
-       
+
     mod.registerModule=function(modObj, modName){
         modName = modName===undefined?modObj.name : modName;
         return mod.__registerModule__(modObj, modName);
     };
 
 
-//---------------------------------------------------String Format -------------------------------------------------------    
+//---------------------------------------------------String Format -------------------------------------------------------
     /**
-        Creates a format specifier object. 
+        Creates a format specifier object.
     **/
     var FormatSpecifier=function(s){
         var s = s.match(/%(\(\w+\)){0,1}([ 0-]){0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}(.)/);
@@ -581,7 +583,7 @@ Module("jsolait", "$Revision$", function(mod){
         }
         this.paddingFlag = s[2];
         if(this.paddingFlag==""){
-            this.paddingFlag =" "; 
+            this.paddingFlag =" ";
         }
         this.signed=(s[3] == "+");
         this.minLength = parseInt(s[4]);
@@ -602,16 +604,16 @@ Module("jsolait", "$Revision$", function(mod){
         This is an implementation of  python's % operator for strings and is similar to sprintf from C.
         Usage:
             resultString = formatString.format(value1, v2, ...);
-        
+
         Each formatString can contain any number of formatting specifiers which are
         replaced with the formated values.
-        
-        specifier([...]-items are optional): 
+
+        specifier([...]-items are optional):
             "%[(key)][flag][sign][min][percision]typeOfValue"
-            
-            (key)  If specified the 1st argument is treated as an object/associative array and the formating values 
+
+            (key)  If specified the 1st argument is treated as an object/associative array and the formating values
                      are retrieved from that object using the key.
-                
+
             flag:
                 0      Use 0s for padding.
                 -      Left justify result, padding it with spaces.
@@ -619,29 +621,29 @@ Module("jsolait", "$Revision$", function(mod){
             sign:
                 +      Numeric values will contain a +|- infront of the number.
             min:
-                l      The string will be padded with the padding character until it has a minimum length of l. 
+                l      The string will be padded with the padding character until it has a minimum length of l.
             percision:
                .x     Where x is the percision for floating point numbers and the lenght for 0 padding for integers.
             typeOfValue:
-                d   Signed integer decimal.  	 
-                i   Signed integer decimal. 	 
+                d   Signed integer decimal.
+                i   Signed integer decimal.
                 b   Unsigned binary.                       //This does not exist in python!
-                o   Unsigned octal. 	
-                u   Unsigned decimal. 	 
-                x   Unsigned hexidecimal (lowercase). 	
-                X   Unsigned hexidecimal (uppercase). 	
-                e   Floating point exponential format (lowercase). 	 
-                E   Floating point exponential format (uppercase). 	 
-                f   Floating point decimal format. 	 
-                F   Floating point decimal format. 	 
-                c   Single character (accepts byte or single character string). 	 
-                s   String (converts any object using object.toString()). 	
+                o   Unsigned octal.
+                u   Unsigned decimal.
+                x   Unsigned hexidecimal (lowercase).
+                X   Unsigned hexidecimal (uppercase).
+                e   Floating point exponential format (lowercase).
+                E   Floating point exponential format (uppercase).
+                f   Floating point decimal format.
+                F   Floating point decimal format.
+                c   Single character (accepts byte or single character string).
+                s   String (converts any object using object.toString()).
         Examples:
             "%02d".format(8) == "08"
             "%05.2f".format(1.234) == "01.23"
             "123 in binary is: %08b".format(123) == "123 in binary is: 01111011"
-            
-        @param *  Each parameter is treated as a formating value. 
+
+        @param *  Each parameter is treated as a formating value.
         @return The formated String.
     **/
     String.prototype.format=function(){
@@ -659,7 +661,7 @@ Module("jsolait", "$Revision$", function(mod){
         var cnt=0;
         var frmt;
         var sign="";
-        
+
         for(var i=0;i<sf.length;i++){
             s=sf[i];
             if(s == "%%"){
@@ -693,7 +695,7 @@ Module("jsolait", "$Revision$", function(mod){
                         cnt++;
                     }
                 }
-                    
+
                 if(frmt.type == "s"){//String
                     if (obj === null){
                         obj = "null";
@@ -701,7 +703,7 @@ Module("jsolait", "$Revision$", function(mod){
                         obj = "undefined";
                     }
                     s=obj.toString().pad(frmt.paddingFlag, frmt.minLength);
-                    
+
                 }else if(frmt.type == "c"){//Character
                     if(frmt.paddingFlag == "0"){
                         frmt.paddingFlag=" ";//padding only spaces
@@ -723,7 +725,7 @@ Module("jsolait", "$Revision$", function(mod){
                         obj = -obj;
                         sign = "-"; //negative signs are always needed
                     }else if(frmt.signed){
-                        sign = "+"; // if sign is always wanted add it 
+                        sign = "+"; // if sign is always wanted add it
                     }else{
                         sign = "";
                     }
@@ -781,12 +783,12 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return rslt;
     };
-    
+
     /**
         Padds a String with a character to have a minimum length.
-        
+
         @param flag   "-":      to padd with " " and left justify the string.
-                            Other: the character to use for padding. 
+                            Other: the character to use for padding.
         @param len    The minimum length of the resulting string.
     **/
     String.prototype.pad = function(flag, len){
@@ -806,7 +808,7 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return s;
     };
-    
+
     String.prototype.indent=function(indent){
         var out=[];
         var s=this.split('\n');
@@ -815,15 +817,12 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return out.join('\n');
     };
-    
+
     String.prototype.mul=function(l){
         var a=new Array(l+1);
         return a.join(this);
     };
-    
-    ///Tests the module.
-    mod.test=function(){
-        
-    };
+
 });
+
 
