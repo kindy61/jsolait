@@ -502,7 +502,8 @@ Module("jsolait", "$Revision$", function(mod){
         }catch(e){
             throw new mod.LoadURIFailed(uri, e);
         }
-        if(xmlhttp.status == 200 || xmlhttp.status == 0){
+        //todo: the status checking needs testing
+        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null){
             var s= new String(xmlhttp.responseText);
             s.__sourceURI__ = uri;
             return s;
