@@ -80,7 +80,12 @@ Module("testing", "$Revision$", function(mod){
         Provides a test task.
     **/
     mod.Test=Class(function(publ,supr){
-        publ.__init__=function(testScope){
+        publ.__init__=function(name, testScope){
+            if(testScope === undefined){
+                testScope=name;
+                name = 'anonymous';
+            }
+            this.name = name;
             this.testScope=testScope;
         };
 
@@ -110,9 +115,9 @@ Module("testing", "$Revision$", function(mod){
         **/
         publ.report=function(){
             if(this.error){
-                return "Test has failed after %s ms due to:\n\n%s".format(this.duration, this.error.toTraceString().indent(4));
+                return "Test %s has failed after %s ms due to:\n\n%s".format(this.name, this.duration, this.error.toTraceString().indent(4));
             }else{
-                return "Test completed in %s ms".format(this.duration);
+                return "Test %s completed in %s ms".format( this.name, this.duration);
             }
         };
         publ.failed=false;

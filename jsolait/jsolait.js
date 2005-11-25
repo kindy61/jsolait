@@ -152,7 +152,7 @@ Class=function(name, bases, classScope){
                 for(var n in proto){
                     rslt[n] = proto[n];
                 }
-                rslt.constructor = arguments.callee;
+                rslt.constructor = proto.__class__;
                 rslt.toString = proto.__str__;
                 if(rslt.__init__){
                     rslt.__init__.apply(rslt, arguments);
@@ -174,7 +174,7 @@ Class=function(name, bases, classScope){
                 for(var n in proto){
                     rslt[n] = proto[n];
                 }
-                rslt.constructor = proto;
+                rslt.constructor = proto.__class__;
                 rslt.toString = proto.__str__;
                 if(rslt.__init__){
                     rslt.__init__.apply(rslt, arguments);
@@ -223,11 +223,82 @@ Class.__idcount__=0;
 Class.__str__=Class.toString = function(){return "[object Class]";};
 Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
 
+Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
+Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
 Array.__isArray__=true;
 Array.__str__=Array.toString=function(){return "[class Array]";};
-Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
 Object.__str__=Object.toString=function(){return "[class Object]";};
-Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
+Number.__str__ =Number.toString=function(){return "[class Number]";};
+String.__str__ =String.toString=function(){return "[class String]";};
+
+/**
+    Returns a string representation of an object.
+    The difference to 
+    @param obj  The object to return a string repr. of.
+    @return A string repr. the object.
+**/
+str = function(obj){
+    return "" + obj;
+};
+
+/**
+    Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
+    
+    It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
+    Internaly it first checks using instanceof if that fails it uses isinstance(obj.constructor, cls).
+    There are some differences between using isinstance and instanceof.
+    i.e. 
+    (123 instanceof Number) == false;
+    isinstance(123, Number) == true;
+    ('abc' instanceof String) == false;
+    isinstance('abc', String) == true;
+       
+    @param obj   The object to test.
+    @param cls     The class to test against.
+    @return True if the object is an instance of cls. False otherwise.
+**/
+isinstance=function(obj, cls){
+    if(obj instanceof cls){
+        return true;
+    }else{
+        return issubclass(obj.constructor, cls);
+    }
+};
+
+/**
+    Returns is a cls is a direct or indirect subclass of another.
+    
+    A class is always a subclass of itself and Object is the base for all classes.
+    A class is a subclass of baseclass if it's prototype is an instance of baseclass.
+    A class is a subclass of baseclass if any of it's __bases__ is a subclass of baseclass.
+    If there are no __bases__ defined there is no way to findout about inheritance besides 
+    the prototype chain which was checked by instanceof before, so false is returned.
+    
+    @param cls  The class to test.
+    @param baseclass  The assumed superclass.
+    @return True if cls is a subclass of baseclass otherwise false.
+**/
+issubclass=function(cls, baseclass){
+    if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
+        return true;
+    }else{
+        var bases = cls.__bases__;
+        if(bases != null){
+            for(var i=0;i<bases.length;i++){
+                if(bases[i] === baseclass){
+                    return true;
+                }
+            }
+            for(var i=0;i<bases.length;i++){
+                if(issubclass(bases[i], baseclass)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
 
 /**
     Creates a new module and registers it.
@@ -296,19 +367,19 @@ Module.Exception=Class("Exception", function(publ){
         this.trace = trace;
     };
 
-
     publ.__str__=function(){
-        var s = "%s %s".format(this.name, this.module);
-        return s;
+        return this.toTraceString();
     };
+    
     /**
         Returns the complete trace of the exception.
+        @param indent=0  The indention to use for each line.
         @return The error trace.
     **/
     publ.toTraceString=function(indent){
         indent = indent==null ? 0 : indent;
 
-        //todo:use  constructor.__name__
+        //todo:use  constructor.__name__?
         var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
         if(this.trace){
             if(this.trace.toTraceString){
@@ -319,8 +390,6 @@ Module.Exception=Class("Exception", function(publ){
         }
         return s;
     };
-
-
 
     ///The name of the Exception.
     publ.name;//todo is that needed?
@@ -781,15 +850,14 @@ Module("jsolait", "$Revision$", function(mod){
         @param len    The minimum length of the resulting string.
     **/
     String.prototype.pad = function(flag, len){
-        var s = "";
+        
         if(flag == "-"){
             var c = " ";
         }else{
-            var c = flag;
+            var c ='' + flag;
         }
-        for(var i=0;i<len-this.length;i++){
-            s += c;
-        }
+        var s = c.mul(len-this.length);
+        
         if(flag == "-"){
             s = this + s;
         }else{
@@ -797,7 +865,12 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return s;
     };
-
+    
+    /**
+        Indents each line of a String.
+        @param indent   The number of spaces to use for indention.
+        @return The indented string.
+    **/
     String.prototype.indent=function(indent){
         var out=[];
         var s=this.split('\n');
@@ -806,8 +879,14 @@ Module("jsolait", "$Revision$", function(mod){
         }
         return out.join('\n');
     };
-
+    
+    /**
+        Multiplies a string.
+        @param l The multiplier.
+        @return A string.
+    **/
     String.prototype.mul=function(l){
+        l = (l < 0 )? 0: l;
         var a=new Array(l+1);
         return a.join(this);
     };
