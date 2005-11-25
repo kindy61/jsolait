@@ -60,15 +60,15 @@ Class=function(name, bases, classScope){
 
     //set up the 'public static' fields of the class
     var __class__={__isArray__ : false,
-                     __name__ : name,
-                     __bases__: bases,
-                     __id__:classID,
-                     __hash__: function(){
-                        return this.__id__;
-                     },
-                     __str__ : function(){
+                         __name__ : name,
+                         __bases__: bases,
+                         __id__:classID,
+                         __hash__: function(){
+                            return this.__id__;
+                         },
+                         __str__ : function(){
                             return "[class %s]".format(this.__name__);
-                        }
+                         }
                     };
 
     var baseProtos=[];//stores the prototypes of all the base classes
@@ -78,12 +78,8 @@ Class=function(name, bases, classScope){
         proto.__str__ = function(){
             return "[%s %s]".format(this.__class__.prototype.__call__ === undefined ? 'object' : 'callable', this.__class__.__name__);
         };
-        //because toString is not apearing in a for in loop we will just use __str__ and always assign it to toString
-        //this makes prototype creatin a bit simpler
-        proto.toString=proto.__str__;
         __class__.__bases__=[Object];
     }else{ //inherit from all base classes
-        //inheritance is done by
         var baseProto;
         for(var i=0;i<bases.length;i++){
             var baseClass = bases[i];
@@ -113,9 +109,6 @@ Class=function(name, bases, classScope){
                 }
             }
         }
-        //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
-        //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
-        proto.toString=proto.__str__;
     }
     //make sure all jsolait objects have a hash method
     if(proto.__hash__ === undefined){
@@ -128,15 +121,18 @@ Class=function(name, bases, classScope){
     }
     proto.__class__=__class__;
 
-    var privId = '__priv__' + __class__.__id__;
-
-    //run teh class setup function provided as classScope
+    //run the class setup function provided as classScope
     if(classScope.length-1 > baseProtos.length){
+        var privId = '__priv__' + __class__.__id__;
         classScope.apply(this,[proto, privId].concat(baseProtos));
     }else{
         classScope.apply(this,[proto].concat(baseProtos));
     }
-
+    
+    //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
+    //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
+    proto.toString=proto.__str__;
+        
     //allthough a single constructor would suffice for generating normal objects, Arrays and callables,
     //we use 3 different ones. This will minimize the code inside the constructor and therefore
     //minimize object construction time
@@ -211,7 +207,7 @@ Class=function(name, bases, classScope){
     //reset the constructor for new objects to the actual constructor.
     proto.constructor = NewClass;
     proto.__class__= NewClass;//no, it is not needed, just like __str__ is not, but it is nicer than constructor
-
+        
     //this is where the inheritance realy happens
     NewClass.prototype = proto;
 
@@ -224,21 +220,14 @@ Class=function(name, bases, classScope){
     return NewClass;
 };
 Class.__idcount__=0;
-Class.toString = function(){
-    return "[object Class]";
-};
-
-Class.__createProto__=function(){
-    throw "Can't use Class as a base class.";
-};
+Class.__str__=Class.toString = function(){return "[object Class]";};
+Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
 
 Array.__isArray__=true;
 Array.__str__=Array.toString=function(){return "[class Array]";};
 Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
 Object.__str__=Object.toString=function(){return "[class Object]";};
-Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callabel interface instead using YourClass::__call__.";};
-
-
+Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
 
 /**
     Creates a new module and registers it.
@@ -369,7 +358,7 @@ Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, fu
 **/
 Module("jsolait", "$Revision$", function(mod){
     jsolait=mod;
-
+    
     mod.modules={};
 
     ///The paths of  the modules that come with jsolait.
