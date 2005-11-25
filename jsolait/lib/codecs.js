@@ -170,5 +170,5 @@ Module("codecs", "$Revision$", function(mod){
     };
 
     mod.__main__=function(){
-    }
+    };
 });
