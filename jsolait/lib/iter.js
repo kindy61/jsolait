@@ -352,7 +352,7 @@ Module("iter", "$Revision$", function(mod){
             r["k"+i] = i;
         }
 
-        print("for in  on as.Array \t" + testing.profile(function(){
+        print("for in  on assoc. Array \t" + testing.profile(function(){
             var s='';
             for(var i in r){
                 s+=r[i];

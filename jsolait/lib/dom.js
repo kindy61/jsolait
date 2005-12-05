@@ -95,7 +95,7 @@ Module("dom", "$Revision$", function(mod){
             @param  evt  The event to handle.
         **/
         publ.handleEvent=function(evt){
-            if(this[evt.type]){
+            if(this['handleEvent_' +evt.type]){
                 this['handleEvent_' + evt.type](evt);
             }
         };
