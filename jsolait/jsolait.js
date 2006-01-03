@@ -35,13 +35,13 @@
     @param name="anonymous"  The name of the new class.
                                             If the created class is a public member of a module then
                                             the __name__ property of that class is automatically set by Module().
-    @param bases *                  The base classes.
+    @param base1 *                  The base classes (not an array but one argument per base class).
     @param classScope(-1)        A function which is executed for class construction.
                                             As 1st parameter it will get the new class' protptype for
                                             overrideing or extending the super class. As 2nd parameter it will get
                                             the super class' wrapper for calling inherited methods.
 **/
-Class=function(name, bases, classScope){
+Class=function(name, base1, classScope){
     var args=[];
     for(var i=0;i<arguments.length;i++){
         args[i] = arguments[i];
@@ -145,9 +145,6 @@ Class=function(name, bases, classScope){
                     return rslt.__call__.apply(rslt, arguments);
                 };
 
-                var privId='__priv__' + arguments.callee.__id__;
-                rslt[privId]={};
-
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -167,9 +164,6 @@ Class=function(name, bases, classScope){
             if(calledBy !== Class){
                 rslt=[];
 
-                var privId='__priv__' + arguments.callee.__id__;
-                rslt[privId]={};
-
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -178,8 +172,8 @@ Class=function(name, bases, classScope){
                 rslt.toString = proto.__str__;
                 if(rslt.__init__){
                     rslt.__init__.apply(rslt, arguments);
-                }else{//implement Array's defaul behavior
-                    if(arguments.lengt==1){
+                }else{//implement Array's default behavior
+                    if(arguments.length==1){
                         rslt.length=arguments[0];
                     }else{
                         for(var i=0;i<arguments.length;i++){
@@ -195,8 +189,6 @@ Class=function(name, bases, classScope){
         //unless it does not exsit or the constructor was used for prototyping
         var NewClass = function(calledBy){
             if(calledBy !== Class){
-                var privId='__priv__' + arguments.callee.__id__;
-                this[privId] = {};
                 if(this.__init__){
                     this.__init__.apply(this, arguments);
                 }
@@ -447,8 +439,12 @@ Module("jsolait", "$Revision$", function(mod){
                                         "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"};
     /*@moduleURIs end*/
 
-    ///The base URIs to search for modules in. They may contain StringFormating symbols e.g '%(baseURI)s/lib'
-    mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
+    /**
+        The base URIs to search for modules in. 
+        each item will be formated using moduleSearchURIs[i].format(jsolait) so,
+        they may contain StringFormating symbols e.g '%(baseURI)s/lib'
+    **/
+    mod.moduleSearchURIs = ["."];
 
     ///The location where jsolait is installed.
     //do not edit the following lines, it will be replaced by the build script
@@ -575,7 +571,7 @@ Module("jsolait", "$Revision$", function(mod){
             try{//interpret the script
                 var srcURI = src.__sourceURI__;
                 src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
-                var f=new Function("",src); //todo should it use globalEval ?
+                var f=new Function("",src);
                 f();
             }catch(e){
                 throw new mod.ImportFailed(name, [srcURI], e);
