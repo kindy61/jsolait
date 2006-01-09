@@ -94,7 +94,7 @@ Class=function(name, base1, classScope){
 
             if(i==0){//for the first base class just use it's proto as the final proto
                 proto = baseProto;
-            }else{//for all others extend(do not override) the final proto with the properties in the baseProto
+            }else{//for all others extend(do not overwrite) the final proto with the properties in the baseProto
                 for(var key in baseProto){
                     if(proto[key] === undefined){
                         proto[key] = baseProto[key];
@@ -144,7 +144,8 @@ Class=function(name, base1, classScope){
                 var rslt = function(){
                     return rslt.__call__.apply(rslt, arguments);
                 };
-
+                
+                //this will only work for the current class but not create any priv objects for any base class 
                 var proto=arguments.callee.prototype;
                 for(var n in proto){
                     rslt[n] = proto[n];
@@ -183,7 +184,7 @@ Class=function(name, base1, classScope){
                 }
                 return rslt;
             }
-        };
+        }; 
     }else{
         //this is a 'normal' object constructor which does nothing but call the __init__ method
         //unless it does not exsit or the constructor was used for prototyping
@@ -195,6 +196,7 @@ Class=function(name, base1, classScope){
             }
         };
     }
+    
 
     //reset the constructor for new objects to the actual constructor.
     proto.constructor = NewClass;
@@ -439,6 +441,7 @@ Module("jsolait", "$Revision$", function(mod){
                                         "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"};
     /*@moduleURIs end*/
 
+    
     /**
         The base URIs to search for modules in. 
         each item will be formated using moduleSearchURIs[i].format(jsolait) so,
@@ -542,20 +545,26 @@ Module("jsolait", "$Revision$", function(mod){
             return mod.modules[name];
         }else{
             var src,modPath;
+            
+            name = name.split('.');
+                         
             //check if jsolait already knows the path of the module
-            if(mod.knownModuleURIs[name] != undefined){
-                modPath = mod.knownModuleURIs[name].format(mod);
+            if(mod.knownModuleURIs[name[0]] != undefined){
+                modPath = mod.knownModuleURIs[name[0]].format(mod);
+                if(name.length>1){
+                    modPath = "%s%s.js".format(modPath, name.slice(1).join('/'));
+                }
                 try{//to load the source of the module
                     src = mod.loadURI(modPath);
                 }catch(e){
                     throw new mod.ImportFailed(name, [modPath], e);
                 }
             }
-
+            
             if(src == null){//go through the search paths and try loading the module
                 var failedURIs=[];
                 for(var i=0;i<mod.moduleSearchURIs.length; i++){
-                    modPath = "%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.split(".").join("/"));
+                    modPath = "%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/"));
                     try{
                         src = mod.loadURI(modPath);
                         break;
@@ -564,7 +573,7 @@ Module("jsolait", "$Revision$", function(mod){
                     }
                 }
                 if(src == null){
-                    throw new mod.ImportFailed(name, failedURIs);
+                    throw new mod.ImportFailed(name.join('.'), failedURIs);
                 }
             }
 
@@ -574,10 +583,10 @@ Module("jsolait", "$Revision$", function(mod){
                 var f=new Function("",src);
                 f();
             }catch(e){
-                throw new mod.ImportFailed(name, [srcURI], e);
+                throw new mod.ImportFailed(name.join('.'), [srcURI], e);
             }
 
-            return mod.modules[name];
+            return mod.modules[name.join('.')];
         }
     };
 

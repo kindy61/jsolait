@@ -231,33 +231,29 @@ Module("iter", "$Revision$", function(mod){
             if(this.isRunning){
                 this.isRunning = false;
                 clearTimeout(this.timeout);
-                delete iter.iterations[this.id];
+                delete iter.iterations[this.__hash__()];
             }
         };
 
         publ.resume = function(){
             if(this.isRunning == false){
                 this.isRunning = true;
-                var id=0;//find unused id
-                while(iter.iterations[id]!==undefined){
-                    this.id++;
-                }
-                this.id = "" + id;
-                iter.iterations[this.id] = this;
+                var id = this.__hash__();
+                iter.iterations[id] = this;
                 //let the iteration be handled using a timer
-                this.timeout = setTimeout("iter.handleAsyncStep('" + this.id + "')", this.interval);
+                this.timeout = setTimeout("iter.handleAsyncStep('" + id + "')", this.interval);
             }
         };
 
         publ.handleAsyncStep = function(){
             if(this.isRunning){
-                tem=this.iterator.next();
+                var item=this.iterator.next();
                 if(item === undefined){
                     this.stop();
                 }else{
                     //let the callback handle the item
                     this.callback.call(this.thisObj==null?this : this.thisObj,  item, this);
-                    this.timeout = setTimeout("iter.handleAsyncStep('" + this.id + "')", this.interval);
+                    this.timeout = setTimeout("iter.handleAsyncStep('" + this.__hash__()+ "')", this.interval);
                 }
             }
         };

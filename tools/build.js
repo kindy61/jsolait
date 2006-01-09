@@ -58,10 +58,14 @@ Module("build", "0.0.1", function(mod){
                             mods.push('"' + modName + '":"%(baseURI)s/'+libFolder+'/' + modName + '.js"');
                          }
                     }    
+                    var sfe=new Enumerator(fldr.SubFolders);
+                    for (;!sfe.atEnd(); sfe.moveNext()){
+                        var f = sfe.item();
+                        mods.push('"' + f.name  + '":"%(baseURI)s/'+libFolder+'/' + f.name + '/"');
+                    }
                 }
             }
-            
-            
+
             modDirs='mod.knownModuleURIs={' + mods.join(',') + '};';
             s=s.join(modDirs);
         }else{
