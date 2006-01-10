@@ -115,9 +115,9 @@ Module("testing", "$Revision$", function(mod){
         **/
         publ.report=function(){
             if(this.error){
-                return "Test %s has failed after %s ms due to:\n\n%s".format(this.name, this.duration, this.error.toTraceString().indent(4));
+                return "Test '%s' has failed after %s ms due to:\n\n%s".format(this.name, this.duration, this.error.toTraceString().indent(4));
             }else{
-                return "Test %s completed in %s ms".format( this.name, this.duration);
+                return "Test '%s' completed in %s ms".format( this.name, this.duration);
             }
         };
         publ.failed=false;
@@ -129,10 +129,15 @@ Module("testing", "$Revision$", function(mod){
 
     /**
         Runs a test on the given function.
+        @param name='anonymous' The name for the test.
         @param testScope  A function to test.
     **/
-    mod.test=function(testScope){
-        var t= new mod.Test(testScope);
+    mod.test=function(name, testScope){
+        if(arguments.length == 1){
+            testScope = name;
+            name = 'anonymous';
+        }
+        var t= new mod.Test(name, testScope);
         t.run();
         return t.report();
     };
@@ -276,7 +281,7 @@ Module("testing", "$Revision$", function(mod){
     };
 
     mod.__main__=function(){
-        print(mod.test(function(){
+        print(mod.test('assertion test', function(){
             mod.assert(true);
             mod.assertTrue(true);
             mod.assertFalse(false);

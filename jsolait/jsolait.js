@@ -62,7 +62,7 @@ Class=function(name, base1, classScope){
     var __class__={__isArray__ : false,
                          __name__ : name,
                          __bases__: bases,
-                         __id__:classID,
+                         __id__: '@' + classID,
                          __hash__: function(){
                             return this.__id__;
                          },
@@ -114,7 +114,7 @@ Class=function(name, base1, classScope){
     if(proto.__hash__ === undefined){
         proto.__hash__=function(){
             if(this.__id__ === undefined){
-                this.__id__ = Class.__idcount__++;
+                this.__id__ = '@' + (Class.__idcount__++);
             }
             return this.__id__;
         };
@@ -196,7 +196,6 @@ Class=function(name, base1, classScope){
             }
         };
     }
-    
 
     //reset the constructor for new objects to the actual constructor.
     proto.constructor = NewClass;
@@ -236,6 +235,52 @@ str = function(obj){
 };
 
 /**
+    Returns a hash value for an object.
+    The same object will always return the same hash. 
+    Most objects are hashable. The following steps are taken to find a hash value:
+    If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
+    If the obj has a __hash__ method the return value of that method will be returned.(all jsolait objects have a __hash__ method which sets an __id__ property)
+    If the obj is a String  the string prefixed with $ is returned.
+    If the obj is a Number the number prefixed with a # is returned as a string.
+    All other objects are not safely hashable and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
+    
+    @param obj The object to hash.
+    @param forceId=false if true it forces hash() to set an __id__ property onto a non hashable object, making it hashable.
+    @return A String containing a hash value for the obj.
+**/
+hash = function(obj, forceId){
+    if(obj.__id__){
+        return obj.__id__;
+    }else  if(obj.__hash__){
+        return obj.__hash__();
+    }else if(obj instanceof String || typeof obj == 'string'){
+        return '$' + obj;
+    }else if(obj instanceof Number || typeof obj == 'number'){
+        return '#' + obj;
+    }else if(forceId){
+        obj.__id__ = '@' + (Class.__idcount__++);
+        return obj.__id__;
+    }else{
+        throw new jsolait.Exception('Objec cannot be hashed: %s'.format(obj));
+    };
+};
+
+/**
+    Returns a bound method.
+    A bound method is a function which is bound to a specific object.
+    Calling the bound method will call the given function with the this-object inside that function's scope being the object specified.
+    
+    @param obj  The object the function should be bound to.
+    @param fn   A function object the obj will be bound to.
+    @return A method which when run executes the function with the this-object being the obj specified.
+**/
+bind = function(obj, fn){
+    return function(){
+        return fn.apply(obj, arguments);
+    };
+};
+
+/**
     Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
     
     It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
@@ -260,7 +305,7 @@ isinstance=function(obj, cls){
 };
 
 /**
-    Returns is a cls is a direct or indirect subclass of another.
+    Returns if a cls is a direct or indirect subclass of another.
     
     A class is always a subclass of itself and Object is the base for all classes.
     A class is a subclass of baseclass if it's prototype is an instance of baseclass.
@@ -303,27 +348,14 @@ issubclass=function(cls, baseclass){
                                      The imported modules(imports) will be passed to the moduleScope starting with the 2nd parameter.
 **/
 Module=function(name, version, moduleScope){
-    var newMod = {};
-    newMod.name = name;
-    newMod.version = version;
-    newMod.__sourceURI__ = Module.currentURI;
-
-    newMod.toString=function(){
-        //todo:SVN adaption
-        return "[module '%s' version: %s]".format(this.name, (this.version+'').replace(/\$Revision:\s(\d+) \$/, "rev.$1"));
-    };
-
-    //give a module it's own exception class which makes debugging easier
-    newMod.Exception=Class(Module.Exception, function(publ, supr){
-        publ.module = newMod;
-    });
-
+    var newMod = new Module.ModuleClass(name, version, Module.currentURI);
+    
     try{//to execute the scope of the module
         moduleScope.call(newMod, newMod);
     }catch(e){
         throw new Module.ModuleScopeExecFailed(newMod, e);
     }
-
+    
     //set __name__  for methods and classes
     for(var n in newMod){
         var obj = newMod[n];
@@ -331,9 +363,31 @@ Module=function(name, version, moduleScope){
             obj.__name__ = n;
         }
     }
+    
     jsolait.registerModule(newMod);
     return newMod;
 };
+
+Module.ModuleClass=Class(function(publ){
+    publ.name;
+    publ.version;
+    publ.__sourceURI__;
+    publ.Exception;
+    
+    publ.__init__=function(name,version,sourceURI){
+        this.name=name;
+        this.version=version;
+        this.__sourceURI__ = sourceURI;
+        this.Exception = Class(Module.Exception, function(){});
+        this.Exception.prototype.module = this;
+    };
+    
+    publ.__str__=function(){
+        //todo:SVN adaption
+        return "[module '%s' version: %s]".format(this.name, (this.version+'').replace(/\$Revision:\s(\d+) \$/, "rev.$1"));
+    };
+});
+
 
 Module.toString=function(){
     return "[object Module]";

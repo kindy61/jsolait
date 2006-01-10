@@ -84,17 +84,11 @@ Module("sets", "$Revision$", function(mod){
 
         /**
             Adds an item to the set if it does not exist yet.
-            @param item The item to add.
+            @param item  A hashable item to add.
             @return        The item added.
         **/
         publ.add=function(item){
-            var h;
-            if(item.__hash__){
-                h='@' +item.__hash__();
-            }else{
-                h='#' +item;
-            }
-            this.items[h] = item;
+            this.items[hash(item)] = item;
             return item;
         };
 
@@ -107,12 +101,7 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.remove=function(item){
-            var h;
-            if(item.__hash__){
-                h='@' +item.__hash__();
-            }else{
-                h='#' +item;
-            }
+            var h = hash(item);
             if(this.items[h] === undefined){
                 throw new mod.ItemNotFoundInSet(this, item);
             }else{
@@ -128,12 +117,7 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.discard=function(item){
-            var h;
-            if(item.__hash__){
-                h='@' +item.__hash__();
-            }else{
-                h='#' +item;
-            }
+            var h = hash(item);
             item = this.items[h];
             delete this.items[h];
             return item;
@@ -145,13 +129,7 @@ Module("sets", "$Revision$", function(mod){
             @return        True if the item is found in the set, false otherwise.
         **/
         publ.contains=function(item){
-            var h;
-            if(item.__hash__){
-                h='@' +item.__hash__();
-            }else{
-                h='#' +item;
-            }
-            return (this.items[h] !== undefined);
+            return (this.items[hash(item)] !== undefined);
         };
         /**
             Returns wether or not the set is a sub set of another set.
@@ -345,7 +323,7 @@ Module("sets", "$Revision$", function(mod){
         var s2=new mod.Set("3456789");
         var testing=imprt('testing');
 
-        print(testing.test(function(){
+        print(testing.test('sets', function(){
             testing.assertEquals("checking %s | %s".format(s1, s2),
                                         new mod.Set("0123456789"), s1.union(s2));
 
