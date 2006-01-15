@@ -262,7 +262,7 @@ hash = function(obj, forceId){
         return obj.__id__;
     }else{
         throw new jsolait.Exception('Objec cannot be hashed: %s'.format(obj));
-    };
+    }
 };
 
 /**
