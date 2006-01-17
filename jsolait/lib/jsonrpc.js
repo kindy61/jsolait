@@ -210,6 +210,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 });
             }
         };
+        
         /**
             Sets username and password for HTTP Authentication.
             @param user    The user name.
@@ -320,7 +321,11 @@ Module("jsonrpc","$Revision$", function(mod){
 
     ///@deprecated  Use ServiceProxy instead.
     mod.ServerProxy= mod.ServiceProxy;
-
+    
+    
+  
+    
+    
     /**
         Converts a String to JSON.
     */
