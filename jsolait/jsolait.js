@@ -249,7 +249,7 @@ str = function(obj){
     @return A String containing a hash value for the obj.
 **/
 hash = function(obj, forceId){
-    if(obj.__id__){
+    if(obj.__id__ != null){
         return obj.__id__;
     }else  if(obj.__hash__){
         return obj.__hash__();
