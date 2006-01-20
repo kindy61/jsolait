@@ -249,7 +249,9 @@ Module("xml","$Revision$", function(mod){
                 s+=nsprefix + node.localName+'="' + node.value + '"';
                 break;
             case DOCUMENT_NODE:
-                s+=this.node2XML(node.documentElement, nsPrefixMap);
+                if(node.documentElement != null){
+                    s+=this.node2XML(node.documentElement, nsPrefixMap);
+                }
                 break;
             case ELEMENT_NODE:
                 s+="<" + node.tagName;
