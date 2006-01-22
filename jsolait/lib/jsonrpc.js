@@ -210,7 +210,6 @@ Module("jsonrpc","$Revision$", function(mod){
                 });
             }
         };
-        
         /**
             Sets username and password for HTTP Authentication.
             @param user    The user name.
@@ -250,11 +249,11 @@ Module("jsonrpc","$Revision$", function(mod){
     */
     mod.ServiceProxy=Class(function(publ){
         /**
-            Initializes a new ServerProxy.
+            Initializes a new ServiceProxy.
             The arguments are interpreted as shown in the examples:
-            ServerProxy("url", ["methodName1",...])
-            ServerProxy("url", ["methodName1",...], "user", "pass")
-            ServerProxy("url", "user", "pass")
+            ServiceProxy("url", ["methodName1",...])
+            ServiceProxy("url", ["methodName1",...], "user", "pass")
+            ServiceProxy("url", "user", "pass")
 
             @param url                     The url of the service.
             @param methodNames      Array of names of methods that can be called on the server.
@@ -319,11 +318,241 @@ Module("jsonrpc","$Revision$", function(mod){
         publ._methods=new Array();
     });
 
-    ///@deprecated  Use ServiceProxy instead.
-    mod.ServerProxy= mod.ServiceProxy;
+    
+
+    mod.NotificationReceiver = Class(function(publ,supr){
+         publ.__init__ = function(url){
+            this._url = url;
+            var req = new XMLHttpRequest()
+            req.multipart = true;
+            var self = this;
+            req.open('POST', url, true)
+            req.onload = function(evt){
+                self._handleData(evt.target.responseText);
+            }
+            req.send('');
+        };
+        
+        
+        publ._handleData = function(data){
+            var f = new Function('','return ' + data);
+            var o = f();
+            if(this[o.method]){
+                this[o.method].apply(this, o.params);
+            }
+         };
+    });
     
     
-  
+    mod.HTTPConnection=Class(function(publ,supr){
+        publ.__init__=function(url, datahandler){
+            this.url = url;
+            this.datahandler = datahandler;
+        };
+        
+        publ.send = function(data){
+            var datahandler = this.datahandler;
+            urllib.postURL(this.url, data, function(req){
+                datahandler(req.responseText);
+            });
+        }
+    });
+    
+    mod.ContinousHTTPConnection=Class(function(publ,supr){
+        
+         publ.__init__=function(url, datahandler){
+            this.url = url;
+            this.datahandler = datahandler;
+            this.queue=[];
+            this.isWaitingForResponse=false;
+            this.isWaitingForServer=false;
+            this.processQueue();
+        };
+        
+        publ.send = function(data){
+            this.queue.push(data);
+            this.processQueue();
+        };
+        
+        publ.waitForServer=function(){
+            this.isWaitingForServer=true;
+            var self=this;
+            this.currentRequest= urllib.postURL(this.url, "", function(req){
+                self.isWaitingForServer=false;
+                self.processData(req.responseText);
+            });
+        };
+        
+        publ.processData = function(data){
+            if(data!=''){
+                this.datahandler(data);
+            }
+            this.processQueue();
+        };
+                
+        publ.sendAndWaitResponse=function(data){
+            this.isWaitingForResponse=true;
+            var self = this;
+            this.currReq = urllib.postURL(this.url, data, function(req){
+                self.isWaitingForResponse = false;
+                self.processData(req.responseText);
+            });
+        };
+        
+        publ.processQueue = function(){
+            if((this.queue.length > 0) && (! this.isWaitingForResponse)){
+                var data =this.queue.join("");
+                this.queue=[];
+                this.sendAndWaitResponse(data);            
+            }
+            
+            if((! this.isWaitingForServer) && (! this.isWaitingForResponse)){
+                this.waitForServer();
+            }
+        };
+    });
+    
+    
+    mod.RPCMethod=Class(function(publ,supr){
+        publ.__init__=function(name,proxy){
+            this.name = name;
+            this.proxy = proxy;
+        };
+        
+        publ.__call__=function(){
+            var args=new Array();
+            for(var i=0;i<arguments.length;i++){
+                args.push(arguments[i]);
+            }
+            if(typeof args[args.length-1] == "function"){
+                var callback = args.pop();
+                return this.proxy._sendRequest(this.name, args, callback);
+            }else{
+                return this.proxy._sendNotification(this.name, args);
+            };
+        };
+    })
+    
+    mod.ServiceProxy2=Class(function(publ,supr){
+        publ.__init__ = function(serviceurl, methodNames, localService){
+            this._url = serviceurl;            
+            var c = new mod.ContinousHTTPConnection(this._url, bind(this, this._handleData));
+            this._attachMethods(methodNames);
+            this._localService = localService == null ? {}:localService;
+            this._pendingRequests={};
+        };
+        
+        
+        /**
+            Adds new JSONRPCMethods to the proxy server which can then be invoked.
+            @param methodNames   Array of names of methods that can be called on the server.
+        */
+        publ._attachMethods = function(methodNames){
+            for(var i=0;i<methodNames.length;i++){
+                var obj = this;
+                //setup obj.childobj...method
+                var names = methodNames[i].split(".");
+                for(var n=0;n<names.length-1;n++){
+                    var name = names[n];
+                    if(obj[name]){
+                        obj = obj[name];
+                    }else{
+                        obj[name]  = new Object();
+                        obj = obj[name];
+                    }
+                }
+                var name = names[names.length-1];
+                if(obj[name]){
+                }else{
+                    var mth = new mod.RPCMethod(methodNames[i], this);
+                    obj[name] = mth;
+                }
+            }
+        };
+        
+        publ._handleData = function(data){
+            var d = 'return [' + data.replace(/\n/g, ",") + ']';
+            try{
+                f=new Function('',d);
+                var messages = f();
+            }catch(e){
+                throw new mod.MalformedJSONRpc("The JSON-RPC data is not parsable",  data, e);
+            }
+            
+            for(var i=0;i<messages.length;i++){
+                if(messages[i].method != null  && messages[i].params != null && messages[i].id !=null){
+                    this._handleInvokation(messages[i].method, messages[i].params, messages[i].id);
+                }else if(messages[i].method != null  && messages[i].params != null && messages[i].id == null){
+                    this._handleNotification(messages[i].result, messages[i].error);
+                }else if(messages[i].id != null){
+                    this._handleResponse(messages[i].result, messages[i].error, messages[i].id);
+                }else{
+                    throw new mod.MalformedJSONRpc("The JSON-RPC message does not contain appropriate properties", d);
+                }
+            }
+        };
+        
+        publ._handleResponse=function(result, err, id){
+            var r = this._pendingRequests[id];
+            if(r){
+                delete this._pendingRequests[id];
+                r.handleResponse(result, err);
+            }
+        };
+        
+        publ._handleInvokation=function(method, params, id){
+            if(this._localService[method]){
+                var rslt = this._localService[method].apply(this._localService, params);
+                if(isinstanceof(rslt, mod.DelayedResponse)){
+                    rslt.id=id;
+                }else{
+                    this._sendResponse(rslt, null, id);
+                }
+            }else{
+                this._sendResponse(null, "Method Not Found", id);
+            };
+        };
+        
+        publ._handleNotification=function(method, params){
+             if(this._localService[method]){
+                this._localService[method].apply(this._localService, params);
+            }
+        };
+        
+        publ._sendData = function(data){
+            print(data)
+        };
+        
+        publ._sendRequest=function(method, params, callback){
+            var r = new PendingRequest(callback);
+            this._pendingRequests[hash(r)] = r;
+            var data = mod.marshall({method:method, params:params, id:hash(r)});
+            this._sendData(data);
+            return r;
+        };
+        
+        publ._sendNotification=function(method, params){
+            var data = mod.marshall({method:method, params:params, id:null});
+            this._sendData(data);
+        };
+        
+        publ._sendResponse=function(result, error, id){
+            var data = mod.marshall({result:result, error:error, id:id});
+            this._sendData(data);
+        };
+        
+    });
+    
+    var PendingRequest=Class(function(publ,supr){
+        publ.__init__=function(callback){
+            this.callback=callback;
+        };
+        
+        publ.handleResponse=function(result, error){
+            this.callback.call(null, result, error);
+        };
+    });
+    
     
     
     /**
@@ -382,6 +611,8 @@ Module("jsonrpc","$Revision$", function(mod){
     };
 
     mod.__main__ = function(){
+       
+   
         print("creating ServiceProxy object using introspection for method construction...\n");
         var s = new mod.ServiceProxy("http://jsolait.net/testj.py",["echo"]);
         print("%s created\n".format(s));
