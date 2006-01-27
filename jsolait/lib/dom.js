@@ -31,8 +31,14 @@ Module("dom", "$Revision$", function(mod){
         Event class.
     **/
     mod.Event=Class(function(publ, supr){
+        publ.__init__=function(type, target){
+            this.type = type;
+            this.target = target;
+        };
         ///The event type.
         publ.type=null;
+        ///The target of the event
+        publ.target=null;
     });
 
 

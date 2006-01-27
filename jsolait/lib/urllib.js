@@ -315,5 +315,20 @@ Module("urllib","$Revision$", function(mod){
         }
         return mod.sendRequest.apply(this,a);
     };
+    
+    
+    /**
+        Returns wether or not the module is usable or not.
+        @return True if the module can make HTTP requests, false otherwise.
+    **/
+    mod.isUsable=function(){
+        try{
+            getHTTP();
+            return true;                
+        }catch(e){
+            return false
+        }
+    };
+    
 });
 
