@@ -556,7 +556,7 @@ Module("jsolait", "$Revision$", function(mod){
             throw new mod.LoadURIFailed(uri, e);
         }
         //todo: the status checking needs testing
-        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null){
+        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
             var s= new String(xmlhttp.responseText);
             s.__sourceURI__ = uri;
             return s;
