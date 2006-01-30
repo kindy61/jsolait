@@ -326,7 +326,7 @@ Module("urllib","$Revision$", function(mod){
             getHTTP();
             return true;                
         }catch(e){
-            return false
+            return false;
         }
     };
     

@@ -323,13 +323,13 @@ Module("jsonrpc","$Revision$", function(mod){
     mod.NotificationReceiver = Class(function(publ,supr){
          publ.__init__ = function(url){
             this._url = url;
-            var req = new XMLHttpRequest()
+            var req = new XMLHttpRequest();
             req.multipart = true;
             var self = this;
-            req.open('POST', url, true)
+            req.open('POST', url, true);
             req.onload = function(evt){
                 self._handleData(evt.target.responseText);
-            }
+            };
             req.send('');
         };
         
@@ -355,7 +355,7 @@ Module("jsonrpc","$Revision$", function(mod){
             urllib.postURL(this.url, data, function(req){
                 datahandler(req.responseText);
             });
-        }
+        };
     });
     
     mod.ContinousHTTPConnection=Class(function(publ,supr){
@@ -429,9 +429,9 @@ Module("jsonrpc","$Revision$", function(mod){
                 return this.proxy._sendRequest(this.name, args, callback);
             }else{
                 return this.proxy._sendNotification(this.name, args);
-            };
+            }
         };
-    })
+    });
     
     mod.ServiceProxy2=Class(function(publ,supr){
         publ.__init__ = function(serviceurl, methodNames, localService){
@@ -471,7 +471,7 @@ Module("jsonrpc","$Revision$", function(mod){
         };
         
         publ._handleData = function(data){
-            var d = 'return [' + data.replace(/\n/g, ",") + ']';
+            var d = 'return [' + data.replace(/\0/g, ",") + ']';
             try{
                 f=new Function('',d);
                 var messages = f();
@@ -510,7 +510,7 @@ Module("jsonrpc","$Revision$", function(mod){
                 }
             }else{
                 this._sendResponse(null, "Method Not Found", id);
-            };
+            }
         };
         
         publ._handleNotification=function(method, params){
@@ -520,7 +520,7 @@ Module("jsonrpc","$Revision$", function(mod){
         };
         
         publ._sendData = function(data){
-            print(data)
+            print(data);
         };
         
         publ._sendRequest=function(method, params, callback){
