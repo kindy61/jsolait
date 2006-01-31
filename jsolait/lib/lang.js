@@ -839,12 +839,12 @@ Module("lang", "$Revision$", function(mod){
             tkn=this.nextNonWhiteSpaceExpect('(');
             tkn=this.nextNonWhiteSpaceExpect('publ');
             tkn=this.nextNonWhiteSpace();
-            if(tkn.value == ','){
-                tkn=this.nextNonWhiteSpaceExpect('supr');
-                tkn=this.nextNonWhiteSpaceExpect(')');
-            }else{
-                this.expect(')', tkn);
+             while(tkn.value == ','){
+                tkn=this.nextNonWhiteSpaceExpect(mod.TokenIdentifier);
+                tkn=this.nextNonWhiteSpace();
             }
+            this.expect(')', tkn);
+            
             tkn=this.nextNonWhiteSpaceExpect('{');
             tkn=this.parseBlock(tkn);
             this.expect(")", tkn);

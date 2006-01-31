@@ -488,6 +488,7 @@ Module("jsolait", "$Revision$", function(mod){
                                         "iter":"%(baseURI)s/lib/iter.js",
                                         "jsonrpc":"%(baseURI)s/lib/jsonrpc.js",
                                         "lang":"%(baseURI)s/lib/lang.js",
+                                        "net":"%(baseURI)s/lib/net",
                                         "sets":"%(baseURI)s/lib/sets.js",
                                         "testing":"%(baseURI)s/lib/testing.js",
                                         "urllib":"%(baseURI)s/lib/urllib.js",
@@ -568,7 +569,7 @@ Module("jsolait", "$Revision$", function(mod){
     /**
         Thrown when a file could not be loaded.
     **/
-    mod.LoadURIFailed=Class(mod.Exception, function(publ, supr){
+    mod.LoadURIFailed=Class(mod.Exception, function(publ, priv,supr){
         /**
             Initializes a new LoadURIFailed Exception.
             @param name      The name of the module.
