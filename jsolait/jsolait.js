@@ -509,7 +509,9 @@ Module("jsolait", "$Revision$", function(mod){
     /*@baseURI begin*/
     mod.baseURI="./jsolait";
     /*@baseURI end*/
-
+    
+    mod.packagesURI = "%(baseURI)s/packages";
+    
     /**
         Creates an HTTP request object for retreiving files.
         @return HTTP request object.
@@ -601,47 +603,54 @@ Module("jsolait", "$Revision$", function(mod){
         }else{
             var src,modPath;
             
-            name = name.split('.');
-                         
-            //check if jsolait already knows the path of the module
-            if(mod.knownModuleURIs[name[0]] != undefined){
-                modPath = mod.knownModuleURIs[name[0]].format(mod);
+            var searchURIs = [];
+            
+            if(mod.knownModuleURIs[name] != undefined){
+                searchURIs.push(mod.knownModuleURIs[name].format(mod));
+            }else{
+                name = name.split('.');
                 if(name.length>1){
-                    modPath = "%s%s.js".format(modPath, name.slice(1).join('/'));
+                    if(mod.knownModuleURIs[name[0]] != undefined){
+                        var uri = mod.knownModuleURIs[name[0]].format(mod);
+                        searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
+                    }
+                    searchURIs.push("%s/%s.js".format(mod.packagesURI.format(mod),name.join('/')));
                 }
-                try{//to load the source of the module
-                    src = mod.loadURI(modPath);
+                
+                for(var i=0;i<mod.moduleSearchURIs.length; i++){
+                    searchURIs.push("%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/")));
+                }
+                name =  name.join(".");
+            }
+            
+            var failedURIs=[];
+            for(var i=0;i<searchURIs.length;i++){
+                try{
+                    src = mod.loadURI(searchURIs[i]);
+                    break;
                 }catch(e){
-                    throw new mod.ImportFailed(name, [modPath], e);
+                    failedURIs.push(e.sourceURI);
                 }
             }
             
-            if(src == null){//go through the search paths and try loading the module
-                var failedURIs=[];
-                for(var i=0;i<mod.moduleSearchURIs.length; i++){
-                    modPath = "%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/"));
-                    try{
-                        src = mod.loadURI(modPath);
-                        break;
-                    }catch(e){
-                        failedURIs.push(e.sourceURI);
-                    }
+            if(src == null){
+                throw new mod.ImportFailed(name, failedURIs);
+            }else{
+                try{//interpret the script
+                    var srcURI = src.__sourceURI__;
+                    src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
+                    var f=new Function("",src);
+                    f();
+                }catch(e){
+                    throw new mod.ImportFailed(name, [srcURI], e);
                 }
-                if(src == null){
-                    throw new mod.ImportFailed(name.join('.'), failedURIs);
+                
+                if(mod.modules[name] != null){
+                    return mod.modules[name];
+                }else{
+                    throw new mod.ImportFailed(name, [srcURI], mod.Exception("Module did not register itself and cannot be imported. " + name));
                 }
             }
-
-            try{//interpret the script
-                var srcURI = src.__sourceURI__;
-                src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
-                var f=new Function("",src);
-                f();
-            }catch(e){
-                throw new mod.ImportFailed(name.join('.'), [srcURI], e);
-            }
-
-            return mod.modules[name.join('.')];
         }
     };
 

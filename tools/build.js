@@ -5,7 +5,7 @@ Module("build", "0.0.1", function(mod){
     mod.docPath = '../build/doc';
     
     mod.jsolaitBaseURI='./jsolait';
-    mod.libFolders=['lib', 'lib3rdparty'];
+    mod.libFolders=['lib'];
     
     var lang = imprt('lang');
     
