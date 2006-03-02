@@ -20,7 +20,7 @@
 
 /**
     The main jsolait script.
-    It provides the core functionalities  for creating classes, modules and for importing modules.
+    It provides the core functionalities for creating classes, modules and for importing modules.
 
     @author Jan-Klaas Kollhof
     @version 2.0
@@ -226,12 +226,46 @@ String.__str__ =String.toString=function(){return "[class String]";};
 
 /**
     Returns a string representation of an object.
-    The difference to 
     @param obj  The object to return a string repr. of.
     @return A string repr. the object.
 **/
-str = function(obj){
-    return "" + obj;
+str = String;
+
+/**
+    Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
+    Objects can cosutumize the the value being returned by repr(obj) by providing a obj.__repr__() method which is called by repr(obj).
+    @param obj  The object to create a repr. String from.
+    @return A representation of the object.
+**/
+repr = function(obj){
+    if(obj == null){
+        return null;
+    }else if(obj.__repr__){
+        return obj.__repr__();
+    }else{
+        switch(typeof obj){
+            case "string":
+                obj = obj.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r");
+                return '"' + obj + '"';
+            case "boolean":case"number":
+                return "" + obj;
+            case "object":
+                var out = [];
+                if(obj == null){
+                    return "null";
+                }else if(obj instanceof Array){
+                    for(var i=0;i<obj.length;i++){
+                        out.push(repr(obj[i]));
+                    }
+                    return "[" + out.join(",") + "]";
+                }else if(obj instanceof Object){
+                    for(var key in obj){
+                        out.push(repr(key) + ":" + repr(obj[key]));
+                    }
+                    return "{" + out.join(",") + "}";
+                }
+        }
+    }
 };
 
 /**
@@ -545,11 +579,9 @@ Module("jsolait", "$Revision$", function(mod){
         @return                 The content of the file.
     */
     mod.loadURI=function(uri, headers) {
-        //if callback is defined then the operation is done async
         headers = (headers !== undefined) ? headers : [];
-        //setup the request
         try{
-            var xmlhttp= getHTTP();
+            var xmlhttp = getHTTP();
             xmlhttp.open("GET", uri, false);
             for(var i=0;i< headers.length;i++){
                 xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
@@ -960,7 +992,6 @@ Module("jsolait", "$Revision$", function(mod){
         var a=new Array(l+1);
         return a.join(this);
     };
-
 });
 
 

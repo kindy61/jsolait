@@ -18,6 +18,14 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+    Module providing functions implementing operators.
+    
+    @creator Jan-Klaas Kollhof
+    @created 2005-12-30
+    @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
+    @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
+**/
 Module("operators", "$Revision: 20 $", function(mod){
 
     lt=function(a, b){

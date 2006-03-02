@@ -114,4 +114,7 @@ Module("net.sockets", "0.0.1", function(mod){
         }
     };
 
+    mod.isReady = function(){
+        return flashSocketProvider != null;
+    };
 });

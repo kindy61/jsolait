@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005 Jan-Klaas Kollhof
+  Copyright (c) 2005-2006 Jan-Klaas Kollhof
 
   This file is part of the JavaScript o lait library(jsolait).
 
@@ -24,7 +24,7 @@
     @created 2005-02-25
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
-*/
+**/
 Module("jsonrpc","$Revision$", function(mod){
     var urllib = imprt("urllib");
     /**
@@ -74,7 +74,7 @@ Module("jsonrpc","$Revision$", function(mod){
         };
     });
 
-
+    
     /**
         Marshalls an object to JSON.(Converts an object into JSON conforming source.)
         It just calls the toJSON function of the objcect.
@@ -412,7 +412,6 @@ Module("jsonrpc","$Revision$", function(mod){
         };
     });
     
-    
     mod.RPCMethod=Class(function(publ,supr){
         publ.__init__=function(name,proxy){
             this.name = name;
@@ -441,7 +440,6 @@ Module("jsonrpc","$Revision$", function(mod){
             this._localService = localService == null ? {}:localService;
             this._pendingRequests={};
         };
-        
         
         /**
             Adds new JSONRPCMethods to the proxy server which can then be invoked.
@@ -553,8 +551,7 @@ Module("jsonrpc","$Revision$", function(mod){
         };
     });
     
-    
-    
+       
     /**
         Converts a String to JSON.
     */
