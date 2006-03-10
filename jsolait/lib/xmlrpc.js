@@ -529,7 +529,7 @@ Module("xmlrpc","$Revision$", function(mod){
                     respTxt=resp.responseText;
                 }catch(e){
                 }
-                if(respDoc == null){
+                if((respDoc == null) || (respDoc.documentElement == null)){
                     if(respTxt == null || respTxt == ""){
                         throw new mod.MalformedXmlRpc("The server responded with an empty document.", "");
                     }else{
