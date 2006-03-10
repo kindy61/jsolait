@@ -757,6 +757,22 @@ Module("jsolait", "$Revision$", function(mod){
         }
         this.type = s[6];
     };
+    
+    var pad=function(s, flag, len){
+        if(flag == "-"){
+            var c = " ";
+        }else{
+            var c ='' + flag;
+        }
+        var rslt = c.mul(len-s.length);
+        
+        if(flag == "-"){
+            rslt = s + rslt;
+        }else{
+            rslt += s;
+        }
+        return rslt;
+    };
 
     /**
         Formats a string replacing formatting specifiers with values provided as arguments
@@ -862,17 +878,17 @@ Module("jsolait", "$Revision$", function(mod){
                     }else if(obj===undefined){
                         obj = "undefined";
                     }
-                    s=obj.toString().pad(frmt.paddingFlag, frmt.minLength);
+                    s=pad(obj.toString(), frmt.paddingFlag, frmt.minLength);
 
                 }else if(frmt.type == "c"){//Character
                     if(frmt.paddingFlag == "0"){
                         frmt.paddingFlag=" ";//padding only spaces
                     }
                     if(typeof obj == "number"){//get the character code
-                        s = String.fromCharCode(obj).pad(frmt.paddingFlag , frmt.minLength) ;
+                        s = pad(String.fromCharCode(obj), frmt.paddingFlag , frmt.minLength);
                     }else if(typeof obj == "string"){
                         if(obj.length == 1){//make sure it's a single character
-                            s=obj.pad(frmt.paddingFlag, frmt.minLength);
+                            s=pad(obj, frmt.paddingFlag, frmt.minLength);
                         }else{
                             throw new mod.Exception("Character of length 1 required.");
                         }
@@ -910,31 +926,31 @@ Module("jsolait", "$Revision$", function(mod){
                             break;
                         case "b"://binary
                             s = obj.toString(2);
-                            s = s.pad("0", frmt.percision);
+                            s = pad(s, "0", frmt.percision);
                             break;
                         case "o"://octal
                             s = obj.toString(8);
-                            s = s.pad("0", frmt.percision);
+                            s = pad(s.pad, "0", frmt.percision);
                             break;
                         case "x"://hexadecimal
                             s = obj.toString(16).toLowerCase();
-                            s = s.pad("0", frmt.percision);
+                            s = pad(s.pad,"0", frmt.percision);
                             break;
                         case "X"://hexadecimal
                             s = obj.toString(16).toUpperCase();
-                            s = s.pad("0", frmt.percision);
+                            s = pad(s.pad,"0", frmt.percision);
                             break;
                         default://integers
                             s = parseInt(obj).toString();
-                            s = s.pad("0", frmt.percision);
+                            s = pad(s.pad, "0", frmt.percision);
                             break;
                     }
                     if(frmt.paddingFlag == "0"){//do 0-padding
                         //make sure that the length of the possible sign is not ignored
-                        s=s.pad("0", frmt.minLength - sign.length);
+                        s=pad(s, "0", frmt.minLength - sign.length);
                     }
                     s=sign + s;//add sign
-                    s=s.pad(frmt.paddingFlag, frmt.minLength);//do padding and justifiing
+                    s=pad(s, frmt.paddingFlag, frmt.minLength);//do padding and justifiing
                 }else{
                     throw new mod.Exception("Number required.");
                 }
