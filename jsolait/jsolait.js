@@ -930,19 +930,19 @@ Module("jsolait", "$Revision$", function(mod){
                             break;
                         case "o"://octal
                             s = obj.toString(8);
-                            s = pad(s.pad, "0", frmt.percision);
+                            s = pad(s, "0", frmt.percision);
                             break;
                         case "x"://hexadecimal
                             s = obj.toString(16).toLowerCase();
-                            s = pad(s.pad,"0", frmt.percision);
+                            s = pad(s,"0", frmt.percision);
                             break;
                         case "X"://hexadecimal
                             s = obj.toString(16).toUpperCase();
-                            s = pad(s.pad,"0", frmt.percision);
+                            s = pad(s,"0", frmt.percision);
                             break;
                         default://integers
                             s = parseInt(obj).toString();
-                            s = pad(s.pad, "0", frmt.percision);
+                            s = pad(s, "0", frmt.percision);
                             break;
                     }
                     if(frmt.paddingFlag == "0"){//do 0-padding
