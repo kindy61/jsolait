@@ -28,7 +28,7 @@
 **/
 Module("operators", "$Revision: 20 $", function(mod){
 
-    lt=function(a, b){
+    mod.lt=function(a, b){
         if((a!=null) && (a.__lt__!==undefined)){
             return a.__lt__(b);
         }else if((b!=null) && (b.__lt__!==undefined)){
@@ -38,7 +38,7 @@ Module("operators", "$Revision: 20 $", function(mod){
         }
     };
 
-    le=function(a, b){
+    mod.le=function(a, b){
         if((a!=null) && (a.__le__!==undefined)){
             return a.__le__(b);
         }else if((b!=null) && (b.__le__!==undefined)){
@@ -48,27 +48,47 @@ Module("operators", "$Revision: 20 $", function(mod){
         }
     };
 
-    eq=function(a, b){
+    mod.eq=function(a, b){
         if((a!=null) && (a.__eq__!==undefined)){
             return a.__eq__(b);
         }else if((b!=null) && (b.__eq__!==undefined)){
             return b.__eq__(a);
         }else{
-            return a===b;
+            return a==b;
         }
     };
-
-    ne=function(a, b){
+    
+    mod.ne=function(a, b){
         if((a!=null) && (a.__ne__!==undefined)){
             return a.__ne__(b);
         }else if((b!=null) && (b.__ne__!==undefined)){
             return b.__ne__(a);
         }else{
-            return a !== b;
+            return a != b;
         }
     };
-
-    ge=function(a, b){
+    
+    mod.is=function(a,b){
+        if((a!=null) && (a.__is__!==undefined)){
+            return a.__is__(b);
+        }else if((b!=null) && (b.__is__!==undefined)){
+            return b.__is__(a);
+        }else{
+            return a===b;
+        }
+    };
+    
+    mod.isnot=function(a,b){
+        if((a!=null) && (a.__isnot__!==undefined)){
+            return a.__isnot__(b);
+        }else if((b!=null) && (b.__isnot__!==undefined)){
+            return b.__isnot__(a);
+        }else{
+            return a!==b;
+        }
+    };
+    
+    mod.ge=function(a, b){
         if((a!=null) && (a.__ge__!==undefined)){
             return a.__ge__(b);
         }else if((b!=null) && (b.__ge__!==undefined)){
@@ -78,7 +98,7 @@ Module("operators", "$Revision: 20 $", function(mod){
         }
     };
 
-    gt=function(a, b){
+    mod.gt=function(a, b){
         if((a!=null) && (a.__gt__!==undefined)){
             return a.__gt__(b);
         }else if((b!=null) && (b.__gt__!==undefined)){
@@ -88,7 +108,7 @@ Module("operators", "$Revision: 20 $", function(mod){
         }
     };
 
-    not=function(a){
+    mod.not=function(a){
         if((a!=null) && (a.__not__!==undefined)){
             return a.__not__();
         }else{

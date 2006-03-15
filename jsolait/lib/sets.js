@@ -51,34 +51,26 @@ Module("sets", "$Revision$", function(mod){
     mod.Set=Class(function(publ, supr){
         /**
             Initializes a Set instance.
-            @param elem*   An element which is added to the set or an Array, String or iterable object of which the elements are added to the set.
+            @param elem*   An element which is added to the set or an iterable object of which the elements are added to the set.
         **/
         publ.__init__=function(elem){
-
             this.items = {};
-            var elems =[];
-
+            
             if(arguments.length > 1){
-               elems=arguments;
-            }else if(arguments.length == 1){
-                elems = arguments[0];
-                if(elems instanceof Array){
-                }else if(typeof elems == "string"){
-                    elems=elems.split("");
-                }else if(elems.__iter__){
-                    var i=iterable.__iter__();
-                    var item;
-                    while(item=i.next()!==undefined){
-                        this.add(item);
-                    }
-                    return;
-                }else{
-                    throw new mod.Exception("Array,String or iterable object expected but found %s".format(elems));
+                for(var i=0;i<arguments.length;i++){
+                    this.add(arguments[i]);
                 }
-            }
-
-            for(var i=0;i<elems.length;i++){
-                this.add(elems[i]);
+            }else if(arguments.length == 1){
+                var elems = arguments[0];
+                if(elems instanceof Array){
+                    for(var i=0;i<elems.length;i++){
+                        this.add(elems[i]);
+                    }
+                }else{//todo needs optimization!
+                    imprt('iter').iter(elems,this, function(item){
+                        this.add(item);
+                    });
+                }
             }
         };
 
@@ -315,39 +307,5 @@ Module("sets", "$Revision$", function(mod){
         };
     });
 
-
-    mod.__main__=function(){
-
-
-        var s1=new mod.Set("0123456");
-        var s2=new mod.Set("3456789");
-        var testing=imprt('testing');
-
-        print(testing.test('sets', function(){
-            testing.assertEquals("checking %s | %s".format(s1, s2),
-                                        new mod.Set("0123456789"), s1.union(s2));
-
-            testing.assertEquals("checking %s | %s".format(s2, s1),
-                                        new mod.Set("0123456789"), s2.union(s1));
-
-            testing.assertEquals("checking %s & %s".format(s1, s2),
-                                         new mod.Set("3456"), s1.intersection(s2));
-
-            testing.assertEquals("checking %s & %s".format(s2, s1),
-                                        new mod.Set("3456"), s2.intersection(s1));
-
-            testing.assertEquals("checking %s - %s".format(s1, s2),
-                                        new mod.Set("012"), s1.difference(s2));
-
-            testing.assertEquals("checking %s - %s".format(s2, s1),
-                                        new mod.Set("789"), s2.difference(s1));
-
-            testing.assertEquals("checking %s ^ %s".format(s1, s2),
-                                        new mod.Set("012789"),s1.symmDifference(s2));
-
-            testing.assertEquals("checking %s ^ %s".format(s2, s1),
-                                        new mod.Set("012789"),s2.symmDifference(s1));
-        }));
-    };
 });
 

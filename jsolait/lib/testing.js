@@ -208,18 +208,36 @@ Module("testing", "$Revision$", function(mod){
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, eq(value1, value2), "Expected %s === %s.".format(value1, value2));
+        mod.assert(comment, ops.eq(value1, value2), "Expected %s == %s.".format(value1, value2));
     };
-
+        
     mod.assertNotEquals=function(comment, value1, value2){
         if(arguments.length==2){
             value2=value1;
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, ne(value1, value2), "Expected %s !== %s.".format(value1, value2));
+        mod.assert(comment, ops.ne(value1, value2), "Expected %s != %s.".format(value1, value2));
     };
 
+    mod.assertIs=function(comment, value1, value2){
+        if(arguments.length==2){
+            value2=value1;
+            value1 = comment;
+            comment ='';
+        }
+        mod.assert(comment, ops.is(value1, value2), "Expected %s === %s.".format(value1, value2));
+    };
+        
+    mod.assertIsNot=function(comment, value1, value2){
+        if(arguments.length==2){
+            value2=value1;
+            value1 = comment;
+            comment ='';
+        }
+        mod.assert(comment, ops.isnot(value1, value2), "Expected %s !== %s.".format(value1, value2));
+    };
+    
     mod.assertNull=function(comment, value){
         if(arguments.length==1){
             value = comment;
@@ -278,32 +296,8 @@ Module("testing", "$Revision$", function(mod){
             keys.push(n);
         }
         return keys;
-    };
+    }; 
 
-    mod.__main__=function(){
-        print(mod.test('assertion test', function(){
-            mod.assert(true);
-            mod.assertTrue(true);
-            mod.assertFalse(false);
-            mod.assertNull(null);
-            mod.assertNotNull(undefined);
-            mod.assertNotNull('');
-            mod.assertNotNull({});
-            mod.assertNotNull(0);
-            mod.assertUndefined(undefined);
-            mod.assertNotUndefined(null);
-            mod.assertNaN(NaN);
-            mod.assertNotNaN(435);
-            mod.assertEquals(1,1);
-            mod.assertEquals("a","a");
-            mod.assertEquals(null,null);
-            mod.assertEquals(undefined,undefined);
-            mod.assertEquals(mod,mod);
-            mod.assertNotEquals(1,2);
-            mod.assertNotEquals(null,undefined);
-            mod.assertNotEquals(mod,{});
-        }));
-    };
 });
 
 
