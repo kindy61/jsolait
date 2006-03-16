@@ -1,4 +1,4 @@
-Module("test", "0.0.1", function(mod){
+Module("test", "$Revision: 44 $", function(mod){
     
     var moduleNames=['testing','core','sets','iter','codecs','crypto','urllib', 'jsonrpc','xmlrpc'];
 
@@ -10,14 +10,13 @@ Module("test", "0.0.1", function(mod){
             
         for(var i=0;i<moduleNames.length;i++){
             var modName= 'test_' + moduleNames[i];
+        
+            var m = imprt(modName);
             try{
-                var m = imprt(modName);
-                try{
-                    m.test(t, logger);
-                }catch(e){
-                    logger.log(e);
-                }
+                m.test(t, logger);
             }catch(e){
+                logger.log(e);
+                throw(e)
             }
         }
     };

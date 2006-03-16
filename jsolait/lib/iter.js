@@ -66,6 +66,7 @@ Module("iter", "$Revision$", function(mod){
         publ.__iterate__=function(thisObj, cb){
             var result;
             thisObj = thisObj==null?this:thisObj;
+            var item;
             while(((item=this.next()) !== undefined) && result===undefined){
                 result=cb.call(thisObj, item, this);
             }
@@ -96,6 +97,7 @@ Module("iter", "$Revision$", function(mod){
         
         publ.__list__ = function(){
             var list = [];
+            var item;
             while((item=this.next()) !== undefined){
                 list.push(item);
             }
