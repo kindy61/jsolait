@@ -273,7 +273,7 @@ Module("iter", "$Revision$", function(mod){
         }else if(iterable.constructor == Object){
             iterator  = new mod.ObjectIterator(iterable);
         }else{
-            throw new mod.Exception("Iterable object does not provide __iter__ method or no Iterator found.")
+            throw new mod.Exception("Iterable object does not provide __iter__ method or no Iterator found.");
         }
         if(arguments.length==1){
             return iterator;

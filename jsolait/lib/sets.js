@@ -51,7 +51,7 @@ Module("sets", "$Revision$", function(mod){
     mod.Set=Class(function(publ, supr){
         /**
             Initializes a Set instance.
-            @param elem*   An element which is added to the set or an iterable object of which the elements are added to the set.
+            @param elem*   An element which is added to the set or an Array object of which the elements are added to the set.
         **/
         publ.__init__=function(elem){
             this.items = {};
@@ -66,10 +66,8 @@ Module("sets", "$Revision$", function(mod){
                     for(var i=0;i<elems.length;i++){
                         this.add(elems[i]);
                     }
-                }else{//todo needs optimization!
-                    imprt('iter').iter(elems,this, function(item){
-                        this.add(item);
-                    });
+                }else{
+                    throw new mod.Exception("expecting an Array object or Set");
                 }
             }
         };
