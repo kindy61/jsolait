@@ -32,6 +32,6 @@ Module("test_sets", "0.0.1", function(mod){
     };
     
     mod.__main__=function(){
-        
+        mod.test(imprt('testing'), {log:print})
     };
 });

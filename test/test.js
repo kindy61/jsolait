@@ -1,6 +1,6 @@
 Module("test", "0.0.1", function(mod){
     
-    var moduleNames=['async','codecs','crypto','dom','forms','iter','jsonrpc','lang','operators','sets','strings','testing','urllib','xml','xmlrpc', 'net.sockets'];
+    var moduleNames=['testing','core','sets','iter','codecs','crypto','urllib', 'jsonrpc','xmlrpc'];
 
     mod.log=function(){
         print.apply(null, arguments);

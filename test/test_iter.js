@@ -66,7 +66,7 @@ Module("test_iter", "0.0.1", function(mod){
     
     
     mod.profile=function(){
-    var iter = imprt('iter').iter;
+        var iter = imprt('iter').iter;
         var filter = imprt('iter').filter;
         
         var  testing = imprt('testing');
@@ -174,4 +174,7 @@ Module("test_iter", "0.0.1", function(mod){
         }));
     
     };
+    mod.__main__=function(){
+        mod.test(imprt('testing'), {log:print})
+    };    
 });

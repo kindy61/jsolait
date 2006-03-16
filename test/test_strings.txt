@@ -1,0 +1,12 @@
+Template (<?=name?>) run at <? out.write(new Date(0)) ?>
+<?for(var i=0;i<10;i++){?>
+    loop <?=i?>
+<?}?>
+------------
+<?if(b){?>
+     b is set <?="? > <?"?>
+     foo
+<?}?>
+------------
+<?for(var i=0;i<10;i++){?><?=i?>,<?}?>
+-----------
