@@ -54,7 +54,7 @@ Module("operators", "$Revision: 20 $", function(mod){
         }else if((b!=null) && (b.__eq__!==undefined)){
             return b.__eq__(a);
         }else{
-            return a==b;
+            return a===b;
         }
     };
     
@@ -64,7 +64,7 @@ Module("operators", "$Revision: 20 $", function(mod){
         }else if((b!=null) && (b.__ne__!==undefined)){
             return b.__ne__(a);
         }else{
-            return a != b;
+            return a !== b;
         }
     };
     
@@ -116,6 +116,33 @@ Module("operators", "$Revision: 20 $", function(mod){
         }
     };
 
+
+    Array.prototype.__eq__ = function(a){
+        if(this.length != a.length){
+            return false;
+        }else{
+            for(var i=0;i<this.length;i++){
+                if(! mod.eq(this[i], a[i])){
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+    
+    Array.prototype.__neq__ = function(a){
+        if(this.length != a.length){
+            return true;
+        }else{
+            for(var i=0;i<this.length;i++){
+                if(mod.neq(this[i], a[i])){
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+    
     mod.__main__=function(){
 
     };

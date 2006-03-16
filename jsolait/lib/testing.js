@@ -167,7 +167,7 @@ Module("testing", "$Revision$", function(mod){
         }
 
         if(value!==true){
-            throw new mod.AssertFailed(comment, failMsg===undefined ? "Expected true but found: %s".format(value) : failMsg);
+            throw new mod.AssertFailed(comment, failMsg===undefined ? "Expected true but found: %s".format(repr(value)) : failMsg);
         }
     };
 
@@ -181,7 +181,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value===true, "Expected true but found: %s".format(value));
+        mod.assert(comment, value===true, "Expected true but found: %s".format(repr(value)));
     };
 
     /**
@@ -194,7 +194,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value===false, "Expected false but found: %s".format(value));
+        mod.assert(comment, value===false, "Expected false but found: %s".format(repr(value)));
     };
 
     /**
@@ -208,7 +208,7 @@ Module("testing", "$Revision$", function(mod){
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, ops.eq(value1, value2), "Expected %s == %s.".format(value1, value2));
+        mod.assert(comment, ops.eq(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
     };
         
     mod.assertNotEquals=function(comment, value1, value2){
@@ -217,7 +217,7 @@ Module("testing", "$Revision$", function(mod){
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, ops.ne(value1, value2), "Expected %s != %s.".format(value1, value2));
+        mod.assert(comment, ops.ne(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
     };
 
     mod.assertIs=function(comment, value1, value2){
@@ -226,7 +226,7 @@ Module("testing", "$Revision$", function(mod){
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, ops.is(value1, value2), "Expected %s === %s.".format(value1, value2));
+        mod.assert(comment, ops.is(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
     };
         
     mod.assertIsNot=function(comment, value1, value2){
@@ -235,7 +235,7 @@ Module("testing", "$Revision$", function(mod){
             value1 = comment;
             comment ='';
         }
-        mod.assert(comment, ops.isnot(value1, value2), "Expected %s !== %s.".format(value1, value2));
+        mod.assert(comment, ops.isnot(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
     };
     
     mod.assertNull=function(comment, value){
@@ -243,7 +243,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value===null, "Expected %s === null.".format(value));
+        mod.assert(comment, value===null, "Expected %s === null.".format(repr(value)));
     };
 
     mod.assertNotNull=function(comment, value){
@@ -251,7 +251,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value !==null, "Expected %s !== null.".format(value));
+        mod.assert(comment, value !==null, "Expected %s !== null.".format(repr(value)));
     };
 
     mod.assertUndefined=function(comment, value){
@@ -259,7 +259,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value===undefined, "Expected %s === undefined.".format(value));
+        mod.assert(comment, value===undefined, "Expected %s === undefined.".format(repr(value)));
     };
 
     mod.assertNotUndefined=function(comment, value){
@@ -267,7 +267,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, value!==undefined, "Expected %s !== undefined".format(value));
+        mod.assert(comment, value!==undefined, "Expected %s !== undefined".format(repr(value)));
     };
 
     mod.assertNaN=function(comment, value){
@@ -275,7 +275,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(value));
+        mod.assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(repr(value)));
     };
 
     mod.assertNotNaN=function(comment, value){
@@ -283,7 +283,7 @@ Module("testing", "$Revision$", function(mod){
             value = comment;
             comment ='';
         }
-        mod.assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(value));
+        mod.assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(repr(value)));
     };
 
     mod.fail=function(comment){
