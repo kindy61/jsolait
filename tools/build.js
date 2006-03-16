@@ -123,6 +123,7 @@ Module("build", "0.0.1", function(mod){
     
     
     mod.__main__=function(){
+        
         this.gn = new lang.GlobalNode();
         try{
             fs.createFolder(mod.buildPath);
@@ -139,6 +140,11 @@ Module("build", "0.0.1", function(mod){
         
         var dp = new lang.DocParser(fs.createTextFile(fs.buildPath(mod.docPath, 'doc.xml')), true);
         dp.printGlobalNode(this.gn);
-    
+        
+        //run unittest
+        
+        var s =mod.__sourceURI__.slice(0,-14) + "test"
+        jsolait.moduleSearchURIs.unshift(s);
+        imprt('test').test(imprt('testing'), {log:print});
     };
 });
