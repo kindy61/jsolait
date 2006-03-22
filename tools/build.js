@@ -121,16 +121,19 @@ Module("build", "0.0.1", function(mod){
         }   
     };
     
+    var createFolders=function(path){
+        var pf = fs.GetParentFolderName(path);
+        if(! fs.FolderExists(pf)){
+            createFolders(pf);
+        }
+        fs.CreateFolder(path);
+    };
     
     mod.__main__=function(){
         
         this.gn = new lang.GlobalNode();
-        try{
-            fs.createFolder(mod.buildPath);
-        }catch(e){
         
-        }
-                       
+        createFolders(mod.buildPath);
         
         mod.buildDir(fs.getFolder(mod.sourcePath), fs.getFolder(mod.buildPath));
         try{
