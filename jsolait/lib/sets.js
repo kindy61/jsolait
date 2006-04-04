@@ -45,8 +45,7 @@ Module("sets", "$Revision$", function(mod){
 
     /**
         The Set class.
-        Items in a class must be Strings, Numbers, Objects that return a unique string representation or
-        Objects implementing a __hash__ method. (All objects created from jsolait classes have a __hash__ function.
+        All Items added to a set must be hashable using jsolait's hash() function.
     **/
     mod.Set=Class(function(publ, supr){
         /**
@@ -126,7 +125,7 @@ Module("sets", "$Revision$", function(mod){
             @param setObj The set to check against.
             @return True if the set is a subset of setObj. False otherwise.
         **/
-        publ.isSubSet = function(setObj){
+        publ.isSubset = function(setObj){
             for(var n in this.items){
                 if(setObj.contains(this.items[n])==false){
                     return false;
@@ -140,8 +139,8 @@ Module("sets", "$Revision$", function(mod){
             @param setObj The set to check against.
             @return True if the set is a super set of setObj. False otherwise.
         **/
-        publ.isSuperSet = function(setObj){
-            return setObj.isSubSet(this);
+        publ.isSuperset = function(setObj){
+            return setObj.isSubset(this);
         };
 
         /**
@@ -150,11 +149,11 @@ Module("sets", "$Revision$", function(mod){
             @return True if the set is equal to setObj. False otherwise.
         **/
         publ.equals=function(setObj){
-            return (this.isSubSet(setObj) && setObj.isSubSet(this));
+            return (this.isSubset(setObj) && setObj.isSubset(this));
         };
 
         publ.__eq__=function(setObj){
-            if(setObj.isSubSet!==undefined){
+            if(setObj.isSubset!==undefined){
                 return this.equals(setObj);
             }else{
                 return false;
@@ -296,7 +295,7 @@ Module("sets", "$Revision$", function(mod){
             return a;
         };
 
-        publ.toString=function(){
+        publ.__str__=function(){
             var items =[];
             for(var n in this.items){
                 items.push(this.items[n]);
@@ -304,6 +303,5 @@ Module("sets", "$Revision$", function(mod){
             return "{"+ items.join(",") + "}";
         };
     });
-
 });
 
