@@ -243,10 +243,14 @@ Module("xml","$Revision$", function(mod){
                 }catch(e){
                     alert(node.namespaceURI + "\n" + e.message);
                 }
-                if(nsprefix + node.localName == "xmlns:xmlns"){
+                var localName = node.localName;
+                if( typeof localName == 'undefined' ){
+                    localName = node.name;
+                }
+                if(nsprefix + localName == "xmlns:xmlns"){
                     nsprefix="";
-                }                
-                s+=nsprefix + node.localName+'="' + node.value + '"';
+                }               
+                s+=nsprefix + localName +'="' + node.value + '"';
                 break;
             case DOCUMENT_NODE:
                 if(node.documentElement != null){
