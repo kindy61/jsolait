@@ -792,8 +792,11 @@ Module("xmlrpc","$Revision$", function(mod){
         var h = padd(this.getUTCHours(), "00");
         var min = padd(this.getUTCMinutes(), "00");
         var s = padd(this.getUTCSeconds(), "00");
+        //Alex suggested to add milliseconds support and send me a patch
+        //Thanks for the great effort, Alex.
+        var ms = padd(this.getUTCMilliseconds(), "000");
 
-        var isodate = y +  m  + d + "T" + h +  ":" + min + ":" + s;
+        var isodate = y +  m  + d + "T" + h +  ":" + min + ":" + s + ":" + ms;
 
         return "<dateTime.iso8601>" + isodate + "</dateTime.iso8601>";
     };
