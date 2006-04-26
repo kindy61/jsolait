@@ -680,7 +680,7 @@ Module("jsolait", "$Revision$", function(mod){
                 if(mod.modules[name] != null){
                     return mod.modules[name];
                 }else{
-                    throw new mod.ImportFailed(name, [srcURI], mod.Exception("Module did not register itself and cannot be imported. " + name));
+                    throw new mod.ImportFailed(name, [srcURI], new mod.Exception("Module did not register itself and cannot be imported. " + name));
                 }
             }
         }
