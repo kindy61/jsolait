@@ -49,10 +49,10 @@ Module("test_core", "0.0.1", function(mod){
         testing.assertEquals("repr({a:1, b:'123', ...)", repr({a:1, b:'b', c:[1,2,3]}), '{"a":1,"b":"b","c":[1,2,3]}'); 
         
         
-        testing.assertEquals("hash()", hash("a"), "$a");
-        testing.assertEquals("hash()", hash("$a"), "$$a");
-        testing.assertEquals("hash()", hash(123), "#123");
-        testing.assertEquals("hash()", hash(mod), mod.__id__);
+        testing.assertEquals("id()", id("a"), "$a");
+        testing.assertEquals("id()", id("$a"), "$$a");
+        testing.assertEquals("id()", id(123), "#123");
+        testing.assertEquals("id()", id(mod), mod.__id__);
         
         logger.log("testing core functions ...");
         

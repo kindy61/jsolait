@@ -470,8 +470,8 @@ Module("jsonrpc","$Revision$", function(mod){
         
         publ._sendRequest=function(method, params, callback){
             var r = new mod.PendingRequest(callback);
-            this._pendingRequests[hash(r)] = r;
-            var data = mod.marshall({method:method, params:params, id:hash(r)});
+            this._pendingRequests[id(r)] = r;
+            var data = mod.marshall({method:method, params:params, id:id(r)});
             this._sendMessage(data);
             return r;
         };

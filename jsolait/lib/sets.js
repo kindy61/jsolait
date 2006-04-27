@@ -45,7 +45,7 @@ Module("sets", "$Revision$", function(mod){
 
     /**
         The Set class.
-        All Items added to a set must be hashable using jsolait's hash() function.
+        All Items added to a set must be id-able using jsolait's id() function.
     **/
     mod.Set=Class(function(publ, supr){
         /**
@@ -77,7 +77,7 @@ Module("sets", "$Revision$", function(mod){
             @return        The item added.
         **/
         publ.add=function(item){
-            this.items[hash(item)] = item;
+            this.items[id(item)] = item;
             return item;
         };
 
@@ -90,7 +90,7 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.remove=function(item){
-            var h = hash(item);
+            var h = id(item);
             if(this.items[h] === undefined){
                 throw new mod.ItemNotFoundInSet(this, item);
             }else{
@@ -106,7 +106,7 @@ Module("sets", "$Revision$", function(mod){
             @return        The item that was removed.
         **/
         publ.discard=function(item){
-            var h = hash(item);
+            var h = id(item);
             item = this.items[h];
             delete this.items[h];
             return item;
@@ -118,7 +118,7 @@ Module("sets", "$Revision$", function(mod){
             @return        True if the item is found in the set, false otherwise.
         **/
         publ.contains=function(item){
-            return (this.items[hash(item)] !== undefined);
+            return (this.items[id(item)] !== undefined);
         };
         /**
             Returns wether or not the set is a sub set of another set.

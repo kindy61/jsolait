@@ -63,9 +63,6 @@ Class=function(name, base1, classScope){
                          __name__ : name,
                          __bases__: bases,
                          __id__: '@' + classID,
-                         __hash__: function(){
-                            return this.__id__;
-                         },
                          __str__ : function(){
                             return "[class %s]".format(this.__name__);
                          }
@@ -110,12 +107,10 @@ Class=function(name, base1, classScope){
             }
         }
     }
-    //make sure all jsolait objects have a hash method
-    if(proto.__hash__ === undefined){
-        proto.__hash__=function(){
-            if(this.__id__ === undefined){
-                this.__id__ = '@' + (Class.__idcount__++);
-            }
+    //make sure all jsolait objects have a id method
+    if(proto.__id__ === undefined){
+        proto.__id__=function(){
+            this.__id__ = '@' + (Class.__idcount__++);
             return this.__id__;
         };
     }
@@ -269,33 +264,39 @@ repr = function(obj){
 };
 
 /**
-    Returns a hash value for an object.
-    The same object will always return the same hash. 
-    Most objects are hashable. The following steps are taken to find a hash value:
+    Returns a unique id for an object.
+    The same object will always return the same id. 
+    Most objects are id-able. The following steps are taken to find an id.
     If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
-    If the obj has a __hash__ method the return value of that method will be returned.(all jsolait objects have a __hash__ method which sets an __id__ property)
+    If the obj has a __id__ method the return value of that method will be returned.(all jsolait objects have a __id__ method which sets an __id__ property)
     If the obj is a String  the string prefixed with $ is returned.
     If the obj is a Number the number prefixed with a # is returned as a string.
-    All other objects are not safely hashable and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
+    All other objects are not safely id-able and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
     
-    @param obj The object to hash.
-    @param forceId=false if true it forces hash() to set an __id__ property onto a non hashable object, making it hashable.
-    @return A String containing a hash value for the obj.
+    @param obj The object to get the id for.
+    @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
+    @return A String containing a id value for the obj.
 **/
-hash = function(obj, forceId){
-    if(obj.__id__ != null){
-        return obj.__id__;
-    }else  if(obj.__hash__){
-        return obj.__hash__();
-    }else if(obj instanceof String || typeof obj == 'string'){
-        return '$' + obj;
-    }else if(obj instanceof Number || typeof obj == 'number'){
-        return '#' + obj;
-    }else if(forceId){
-        obj.__id__ = '@' + (Class.__idcount__++);
-        return obj.__id__;
-    }else{
-        throw new jsolait.Exception('Objec cannot be hashed: %s'.format(obj));
+id = function(obj, forceId){
+    switch(typeof obj.__id__){
+        
+        case "undefined":
+            if(obj instanceof String || typeof obj == 'string'){
+                return '$' + obj;
+            }else if(obj instanceof Number || typeof obj == 'number'){
+                return '#' + obj;
+            }else if(forceId){
+                obj.__id__ = '@' + (Class.__idcount__++);
+                return obj.__id__;
+            }else{
+                throw new jsolait.Exception('Objec cannot be IDed: %s'.format(obj));
+            }
+        
+        case "function":
+            return obj.__id__();
+        
+        default: //string
+            return obj.__id__;
     }
 };
 
