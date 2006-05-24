@@ -66,7 +66,7 @@ Module("sets", "$Revision$", function(mod){
                         this.add(elems[i]);
                     }
                 }else{
-                    throw new mod.Exception("expecting an Array object or Set");
+                    throw new mod.Exception("Expecting an Array object or multiple arguments");
                 }
             }
         };
@@ -80,8 +80,6 @@ Module("sets", "$Revision$", function(mod){
             this.items[id(item)] = item;
             return item;
         };
-
-
 
         /**
             Removes an item from the set raising

@@ -75,6 +75,8 @@ Module("dom", "$Revision$", function(mod){
             if(this.eventListeners[evtType]===undefined){
                 this.eventListeners[evtType] = new sets.Set();
             }
+            //make sure the listener has an id that the set can use
+            id(listener, true);
             this.eventListeners[evtType].add(listener);
         };
         /**
