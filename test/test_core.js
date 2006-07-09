@@ -42,6 +42,7 @@ Module("test_core", "0.0.1", function(mod){
         testing.assertEquals("String::indent()", " abcde\n fghij".indent(4), "     abcde\n     fghij");
         testing.assertEquals("String::mul()", "abc".mul(4), "abcabcabcabc");
         
+        logger.log("testing core functions ...");
         
         testing.assertEquals("repr(String)", repr("Hello JSON, '\" \\  \n \t \r"), '"Hello JSON, \'\\" \\\\  \\n 	 \\r"'); 
         testing.assertEquals("repr([])", repr([1,2,3,4,5]), '[1,2,3,4,5]'); 
@@ -54,7 +55,10 @@ Module("test_core", "0.0.1", function(mod){
         testing.assertEquals("id()", id(123), "#123");
         testing.assertEquals("id()", id(mod), mod.__id__);
         
-        logger.log("testing core functions ...");
+        
+        testing.assertTrue("isinstance('a', String)", isinstance("a", String))
+        testing.assertTrue("isinstance([], Array)", isinstance([], Array))
+        testing.assertTrue("isinstance(1, Number)", isinstance(1, Number))
         
         var f = bind({x:1}, function(){
             return this.x;
