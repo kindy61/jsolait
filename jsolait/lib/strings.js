@@ -1,5 +1,5 @@
 /**
-    Module providing String manipulation functionality (String templates, Fast writable Strings, ...).
+    Module providing String functionality (String templates, Fast writable Strings, ...).
     
     @creator Jan-Klaas Kollhof
     @created 2006-03-01
@@ -7,6 +7,51 @@
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
 Module("strings","$Revision: 43$", function(mod){
+   
+   mod.WordNumberStringSplitter = Class(function(publ,priv,supr){
+        publ.__init__=function(s){
+            this.s=s;
+        };
+        
+        publ.next=function(){
+            if(this.s.length==0){
+                return;
+            }
+            var m = this.s.match(/^(\s*[0-9]+\s*)/);
+            
+            if(m){
+                this.s=this.s.slice(m[1].length);
+                return Number(m[1]);
+            }else{
+                m = this.s.match(/^([^0-9]+)/);
+                if(m){
+                    this.s=this.s.slice(m[1].length);
+                    return m[1].replace(" ","")
+                }else{
+                    return;
+                }
+            }
+        };
+    });
+   
+    mod.naturalCompare=function(a, b){
+        var asplitter=new mod.WordNumberStringSplitter(a);
+        var bsplitter=new mod.WordNumberStringSplitter(b);
+        
+        while(true){
+            var x = asplitter.next();
+            var y = bsplitter.next();
+            if(x<y){
+                return -1;
+            }else if(x>y){
+                return 1;
+            }else if(x == null && y == null){
+                return 0;
+            }
+        }
+    };
+     
+    
     /**
         Fast writable String. 
         Use it when you need a writable stream to generate a large String.

@@ -8,6 +8,7 @@ Module("test_iter", "0.0.1", function(mod){
         var filter = imprt('iter').filter;
         var map = imprt('iter').map;
         var list = imprt('iter').list;
+        var zip = imprt('iter').zip;
         
         
         var a=[0,1,2,3,4,5,6,7,8,9];
@@ -62,16 +63,25 @@ Module("test_iter", "0.0.1", function(mod){
             return item + 2;
         });
         t.assertEquals('map(range(0,20), item + 2)  == 2 .. 22', n.join(","), a.join(","));
+        
+        
+        var a=[1,2,3,4,5];
+        var b=[5,4,3,2];
+        var r = map(zip(a,b), function(a,b){
+            return a + ':' + b;
+        });
+        t.assertEquals('zip([1,2,3,4,5], [5,4,3,2])', r.join(","), "1:5,2:4,3:3,4:2")
     };
     
     
     mod.profile=function(){
         var iter = imprt('iter').iter;
         var filter = imprt('iter').filter;
+        var range = imprt('iter').range;
         
         var  testing = imprt('testing');
         
-        mod.__test__(testing);
+       
         
         var task=function(){
             var s='';
@@ -95,7 +105,7 @@ Module("test_iter", "0.0.1", function(mod){
 
         print("Range iter \t\t" + testing.profile(function(){
             var s=[];
-            iter(mod.range(0,99), function(item,i){
+            iter(range(0,99), function(item,i){
                 s.push(r[item]);
                 task();
             });
@@ -172,6 +182,9 @@ Module("test_iter", "0.0.1", function(mod){
                 task();
             });
         }));
+    
+        
+        
     
     };
     mod.__main__=function(){

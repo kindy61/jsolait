@@ -68,7 +68,12 @@ Module("iter", "$Revision$", function(mod){
             thisObj = thisObj==null?this:thisObj;
             var item;
             while(((item=this.next()) !== undefined) && result===undefined){
-                result=cb.call(thisObj, item, this);
+                if(item.__tupleResult__){
+                    item.push(this);
+                    result=cb.apply(thisObj, item);
+                }else{
+                    result=cb.call(thisObj, item, this);
+                }
             }
             return result;
         };
@@ -76,9 +81,15 @@ Module("iter", "$Revision$", function(mod){
         publ.__filter__ = function(thisObj, cb){
             var result=[];
             thisObj = thisObj==null?this:thisObj;
-            var item;
+            var item, doKeep;
             while((item=this.next()) !== undefined){
-                if(cb.call(thisObj, item, this)){
+                if(item.__tupleResult__){
+                    item.push(this);
+                    doKeep=cb.apply(thisObj, item);
+                }else{
+                    doKeep=cb.call(thisObj, item, this);
+                }
+                if(doKeep){
                     result.push(item);
                 }
             }
@@ -88,9 +99,15 @@ Module("iter", "$Revision$", function(mod){
         publ.__map__ = function(thisObj, cb){
             var result=[];
             thisObj = thisObj==null?this:thisObj;
-            var  item;
+            var  item, mapedItem;
             while((item=this.next()) !== undefined){
-                result.push(cb.call(thisObj, item, this));
+                if(item.__tupleResult__){
+                    item.push(this);
+                    mapedItem=cb.apply(thisObj, item);
+                }else{
+                    mapedItem=cb.call(thisObj, item, this);
+                }
+                result.push(mapedItem);
             }
             return result;
         };
@@ -338,6 +355,45 @@ Module("iter", "$Revision$", function(mod){
     **/    
     mod.list=function(iterable){
         return mod.iter(iterable).__list__();
+    };
+    
+    /**
+        An itereator that iterates over a number of given iterators.
+        use zip() to create a Zipper.
+    **/
+    mod.Zipper = Class(mod.Iterator, function(publ,priv,supr){
+        
+        publ.__init__=function(iterators){
+            this.iterators = iterators;
+        };
+        
+        publ.next=function(){
+            var r =[];
+            r.__tupleResult__ = true;
+            var item;
+            for(var i=0;i<this.iterators.length;i++){
+                item=this.iterators[i].next();
+                if(item === undefined){
+                    return undefined;
+                }else{
+                    r.push(item);
+                }
+            }
+            return r;
+        };
+    });
+    
+    /**
+        Creates an iterator which iterates over the iterable objects given simultanously.
+        @param iterable*  Any number of iterable objects.
+        @return a Zipper iterator.
+    **/
+    mod.zip = function(iterable){
+        var iterators =[];
+        for(var i=0;i<arguments.length;i++){
+            iterators.push(mod.iter(arguments[i]));
+        }
+        return new mod.Zipper(iterators);
     };
 
 });
