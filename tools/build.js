@@ -121,25 +121,54 @@ Module("build", "0.0.1", function(mod){
         }   
     };
     
-    var createFolders=function(path){
-        var pf = fs.GetParentFolderName(path);
-        if(! fs.FolderExists(pf)){
-            createFolders(pf);
-        }
-        fs.CreateFolder(path);
+    var clearDir=function(folder){
+        var sfe = new Enumerator(folder.Files);
+        var f;
+        for (;!sfe.atEnd(); sfe.moveNext()){
+             f = sfe.item();
+             f.Delete();
+        }   
+        
+        var sfe = new Enumerator(folder.SubFolders);
+        var f;
+        for (;!sfe.atEnd(); sfe.moveNext()){
+             f = sfe.item();
+             f.Delete();
+        }   
     };
     
-    mod.__main__=function(){
+    var createFolders=function(path){
+        if(! fs.FolderExists(path)){
+            var pf = fs.GetParentFolderName(path);
+            if(! fs.FolderExists(pf)){
+                createFolders(pf);
+            }
+            fs.CreateFolder(path);
+        }
+    };
+    
+    mod.__main__=function(args){
+                
+        if(args){
+            if(args.buildPath){
+                mod.buildPath=args.buildPath;
+            }
+             if(args.docPath){
+                mod.docPath=args.docPath;
+            }
+        }
         
         this.gn = new lang.GlobalNode();
         
         createFolders(mod.buildPath);
+        createFolders(mod.docPath);
+        
+        clearDir(fs.getFolder(mod.buildPath));
+        clearDir(fs.getFolder(mod.docPath));
+                      
         
         mod.buildDir(fs.getFolder(mod.sourcePath), fs.getFolder(mod.buildPath));
-        try{
-            fs.createFolder(mod.docPath);
-        }catch(e){
-        }
+
         
         var dp = new lang.DocParser(fs.createTextFile(fs.buildPath(mod.docPath, 'doc.xml')), true);
         dp.printGlobalNode(this.gn);

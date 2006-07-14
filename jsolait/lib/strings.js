@@ -26,7 +26,7 @@ Module("strings","$Revision: 43$", function(mod){
                 m = this.s.match(/^([^0-9]+)/);
                 if(m){
                     this.s=this.s.slice(m[1].length);
-                    return m[1].replace(" ","")
+                    return m[1].replace(" ","");
                 }else{
                     return;
                 }

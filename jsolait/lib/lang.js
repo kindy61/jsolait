@@ -1054,6 +1054,15 @@ Module("lang", "$Revision$", function(mod){
     });
     
    
+    var xmlText=function(s){
+        s=str(s);
+        s= s.replace(/&/g,'&amp;');
+        s= s.replace(/</g,'&th;');
+        s= s.replace(/>/g,'&gt;');
+        return s;
+    };
+   
+   
     mod.DocParser=Class(function(publ,supr){
         publ.__init__=function(file){
             this.file=file;
@@ -1103,11 +1112,11 @@ Module("lang", "$Revision$", function(mod){
         
         publ.printModuleNode=function(n){
            this.pprint('<module>',4);
-           this.pprint('<name>'+n.name+'</name>');
+           this.pprint('<name>'+ xmlText(n.name)+'</name>');
            this.pprint('<description>', 4);
-           this.pprint(n.description);
+           this.pprint(xmlText(n.description));
            this.pprint('</description>', -4);
-           this.pprint('<dependencies>'+n.dependencies+'</dependencies>');
+           this.pprint('<dependencies>'+xmlText(n.dependencies)+'</dependencies>');
             
             this.printPublics(n);
             
@@ -1116,10 +1125,10 @@ Module("lang", "$Revision$", function(mod){
         
         publ.printClassNode=function(n){
            this.pprint('<class>',4);
-           this.pprint('<name>'+n.name+'</name>');
+           this.pprint('<name>'+xmlText(n.name)+'</name>');
             
            this.pprint('<description>', 4);
-           this.pprint(n.description);
+           this.pprint(xmlText(n.description));
            this.pprint('</description>', -4);
             
             this.printPublics(n);
@@ -1174,9 +1183,9 @@ Module("lang", "$Revision$", function(mod){
         
         publ.printPropertyNode=function(n){
            this.pprint('<property>',4);
-           this.pprint('<name>' + n.name + '</name>');
+           this.pprint('<name>' + xmlText(n.name )+ '</name>');
            this.pprint('<description>', 4);
-           this.pprint(n.description);
+           this.pprint(xmlText(n.description));
            this.pprint('</description>', -4);
            this.pprint('</property>',-4);
             
@@ -1184,9 +1193,9 @@ Module("lang", "$Revision$", function(mod){
         
         publ.printMethodNode=function(n){
            this.pprint('<method>',4);
-           this.pprint('<name>' + n.name + '(' + n.parameters.join(', ') +  ')</name>');
+           this.pprint('<name>' + xmlText(n.name + '(' + n.parameters.join(', ') )+  ')</name>');
            this.pprint('<description>', 4);
-           this.pprint(n.description);
+           this.pprint(xmlText(n.description));
            this.pprint('</description>', -4);
            this.pprint('</method>',-4);
         };

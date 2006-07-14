@@ -26,7 +26,7 @@
     <runtime>
         <named name="compile" helpstring="Specifies to run a the lang.parser on it." many="false" required="0" />
         <unnamed name="filename" helpstring="The scriptfiles to run." many="false" required="1" />
-        <named name="script arguments" helpstring="Specifies arguments to pass to the module/script being run" many="false" required="0" />
+        <named name="script-args" helpstring="Specifies arguments to pass to the module/script being run. This may be text or a JSON encoded object" many="false" required="0" />
     </runtime>
     
     <script language="JavaScript" src="./jsolait.js" />
@@ -158,8 +158,22 @@
                     if(modl.__sourceURI__.toLowerCase() == fileName.toLowerCase()){
                         if(modl.__main__){
                             //todo find arguments
+                            if(WScript.arguments.named.exists("script-args")){
+                                var args = WScript.arguments.named.Item("script-args");
+                                switch(args.slice(0,1)){
+                                    case "{": case "'":  case "[":  case '"':
+                                        break;
+                                    default:
+                                        args = repr(args);
+                                }
+                                f=new Function( "return " + args);
+                                args = [f()];
+                            }else{
+                                var args =[];
+                            }
+                            
                             try{
-                                modl.__main__.call(modl,[]);
+                                modl.__main__.apply(modl,args);
                             }catch(e){
                                 throw new mod.Exception("runing %s  __main__()  failed\n".format(modl),e)
                             }
