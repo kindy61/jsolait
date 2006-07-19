@@ -1,557 +1,294 @@
-/*
-    Copyright (c) 2003-2005 Jan-Klaas Kollhof
-
-    This file is part of the JavaScript O Lait library(jsolait).
-
-    jsolait is free software; you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 2.1 of the License, or
-    (at your option) any later version.
-
-    This software is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-/**
-    The main jsolait script.
-    It provides the core functionalities for creating classes, modules and for importing modules.
-
-    @author Jan-Klaas Kollhof
-    @version 2.0
-    @lastchangedby $LastChangedBy$
-    @lastchangeddate $Date$
-    @revision $Revision$
-**/
-
-
-/**
-    Creates a new class object which inherits from superClass.
-    @param name="anonymous"  The name of the new class.
-                                            If the created class is a public member of a module then
-                                            the __name__ property of that class is automatically set by Module().
-    @param base1 *                  The base classes (not an array but one argument per base class).
-    @param classScope(-1)        A function which is executed for class construction.
-                                            As 1st parameter it will get the new class' protptype for
-                                            overrideing or extending the super class. As 2nd parameter it will get
-                                            the super class' wrapper for calling inherited methods.
-**/
-Class=function(name, base1, classScope){
-    var args=[];
-    for(var i=0;i<arguments.length;i++){
-        args[i] = arguments[i];
-    }
-
-    classScope = args.pop();
-    var classID =  Class.__idcount__++;
-
-    if((args.length>0) && (typeof args[0] =='string')){
-        name=args.shift();
-    }else{
-        name="anonymous" + classID;
-    }
-
-    var bases = args;
-
-    //set up the 'public static' fields of the class
-    var __class__={__isArray__ : false,
-                         __name__ : name,
-                         __bases__: bases,
-                         __id__: '@' + classID,
-                         __str__ : function(){
-                            return "[class %s]".format(this.__name__);
-                         }
-                    };
-
-    var baseProtos=[];//stores the prototypes of all the base classes
-    var proto; //the prototype to use for the new class
-    if(bases.length==0){//use Object as base
-        proto={};
-        proto.__str__ = function(){
-            return "[%s %s]".format(this.__class__.prototype.__call__ === undefined ? 'object' : 'callable', this.__class__.__name__);
-        };
-        __class__.__bases__=[Object];
-    }else{ //inherit from all base classes
-        var baseProto;
-        for(var i=0;i<bases.length;i++){
-            var baseClass = bases[i];
-            //remember the base prototypes
-            baseProtos.push(baseClass.prototype);
-            if(baseClass.__createProto__ !== undefined){
-                baseProto = baseClass.__createProto__(bases);
-            }else{
-                baseProto = new baseClass(Class);
-            }
-            __class__.__isArray__ = __class__.__isArray__ || baseClass.__isArray__;
-
-            if(i==0){//for the first base class just use it's proto as the final proto
-                proto = baseProto;
-            }else{//for all others extend(do not overwrite) the final proto with the properties in the baseProto
-                for(var key in baseProto){
-                    if(proto[key] === undefined){
-                        proto[key] = baseProto[key];
-                    }
-                }
-            }
-            //extend the new class' static interface
-            //todo: any props that should not be copied
-            for(var key in baseClass){
-                if((key != 'prototype') && (__class__[key] === undefined)){
-                    __class__[key] = baseClass[key];
-                }
-            }
-        }
-    }
-    //make sure all jsolait objects have a id method
-    if(proto.__id__ === undefined){
-        proto.__id__=function(){
-            this.__id__ = '@' + (Class.__idcount__++);
-            return this.__id__;
-        };
-    }
-    proto.__class__=__class__;
-
-    //run the class setup function provided as classScope
-    if(classScope.length-1 > baseProtos.length){
-        var privId = '__priv__' + __class__.__id__;
-        classScope.apply(this,[proto, privId].concat(baseProtos));
-    }else{
-        classScope.apply(this,[proto].concat(baseProtos));
-    }
+jsolait=(function(){
+    jsolait = {};
     
-    //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
-    //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
-    proto.toString=proto.__str__;
-        
-    //allthough a single constructor would suffice for generating normal objects, Arrays and callables,
-    //we use 3 different ones. This will minimize the code inside the constructor and therefore
-    //minimize object construction time
-    if(proto.__call__){
-        //if the callable interface is implemented we need a class constructor
-        //which generates a function upon construction
-        var NewClass = function(calledBy){
-            if(calledBy !== Class){
-                var rslt = function(){
-                    return rslt.__call__.apply(rslt, arguments);
-                };
-                
-                //this will only work for the current class but not create any priv objects for any base class 
-                var proto=arguments.callee.prototype;
-                for(var n in proto){
-                    rslt[n] = proto[n];
-                }
-                rslt.constructor = proto.__class__;
-                rslt.toString = proto.__str__;
-                if(rslt.__init__){
-                    rslt.__init__.apply(rslt, arguments);
-                }
-                return rslt;
-            }
-        };
-    }else if(__class__.__isArray__){
-        //Since we cannot inherit from Array directly we take the same approach as with the callable above
-        //and just have a constructor which creates an Array
-        var NewClass = function(calledBy){
-            if(calledBy !== Class){
-                rslt=[];
-
-                var proto=arguments.callee.prototype;
-                for(var n in proto){
-                    rslt[n] = proto[n];
-                }
-                rslt.constructor = proto.__class__;
-                rslt.toString = proto.__str__;
-                if(rslt.__init__){
-                    rslt.__init__.apply(rslt, arguments);
-                }else{//implement Array's default behavior
-                    if(arguments.length==1){
-                        rslt.length=arguments[0];
-                    }else{
-                        for(var i=0;i<arguments.length;i++){
-                            rslt.push(arguments[i]);
-                        }
-                    }
-                }
-                return rslt;
-            }
-        }; 
-    }else{
-        //this is a 'normal' object constructor which does nothing but call the __init__ method
-        //unless it does not exsit or the constructor was used for prototyping
-        var NewClass = function(calledBy){
-            if(calledBy !== Class){
-                if(this.__init__){
-                    this.__init__.apply(this, arguments);
-                }
-            }
-        };
-    }
-
-    //reset the constructor for new objects to the actual constructor.
-    proto.constructor = NewClass;
-    proto.__class__= NewClass;//no, it is not needed, just like __str__ is not, but it is nicer than constructor
-        
-    //this is where the inheritance realy happens
-    NewClass.prototype = proto;
-
-    //apply all the static fileds
-    for(var key in __class__){
-        NewClass[key] = __class__[key];
-    }
-    NewClass.toString=__class__.__str__;
-
-    return NewClass;
-};
-Class.__idcount__=0;
-Class.__str__=Class.toString = function(){return "[object Class]";};
-Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
-
-Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
-Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
-Array.__isArray__=true;
-Array.__str__=Array.toString=function(){return "[class Array]";};
-Object.__str__=Object.toString=function(){return "[class Object]";};
-Number.__str__ =Number.toString=function(){return "[class Number]";};
-String.__str__ =String.toString=function(){return "[class String]";};
-
-/**
-    Returns a string representation of an object.
-    @param obj  The object to return a string repr. of.
-    @return A string repr. the object.
-**/
-str = String;
-
-/**
-    Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
-    Objects can cosutumize the the value being returned by repr(obj) by providing a obj.__repr__() method which is called by repr(obj).
-    @param obj  The object to create a repr. String from.
-    @return A representation of the object.
-**/
-repr = function(obj){
-    if(obj == null){
-        return null;
-    }else if(obj.__repr__){
-        return obj.__repr__();
-    }else{
-        switch(typeof obj){
-            case "string":
-                obj = obj.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r");
-                return '"' + obj + '"';
-            case "boolean":case"number":
-                return "" + obj;
-            case "object":
-                var out = [];
-                if(obj == null){
-                    return "null";
-                }else if(obj instanceof Array){
-                    for(var i=0;i<obj.length;i++){
-                        out.push(repr(obj[i]));
-                    }
-                    return "[" + out.join(",") + "]";
-                }else if(obj instanceof Object){
-                    for(var key in obj){
-                        out.push(repr(key) + ":" + repr(obj[key]));
-                    }
-                    return "{" + out.join(",") + "}";
-                }
-        }
-    }
-};
-
-/**
-    Returns a unique id for an object.
-    The same object will always return the same id. 
-    Most objects are id-able. The following steps are taken to find an id.
-    If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
-    If the obj has a __id__ method the return value of that method will be returned.(all jsolait objects have a __id__ method which sets an __id__ property)
-    If the obj is a String  the string prefixed with $ is returned.
-    If the obj is a Number the number prefixed with a # is returned as a string.
-    All other objects are not safely id-able and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
+    jsolait.__name__='jsolait';
     
-    @param obj The object to get the id for.
-    @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
-    @return A String containing a id value for the obj.
-**/
-id = function(obj, forceId){
-    switch(typeof obj.__id__){
-        
-        case "undefined":
-            if(obj instanceof String || typeof obj == 'string'){
-                return '$' + obj;
-            }else if(obj instanceof Number || typeof obj == 'number'){
-                return '#' + obj;
-            }else if(forceId){
-                obj.__id__ = '@' + (Class.__idcount__++);
-                return obj.__id__;
-            }else{
-                throw new jsolait.Exception('Objec cannot be IDed: %s'.format(obj));
-            }
-        
-        case "function":
-            return obj.__id__();
-        
-        default: //string
-            return obj.__id__;
-    }
-};
-
-/**
-    Returns a bound method.
-    A bound method is a function which is bound to a specific object.
-    Calling the bound method will call the given function with the this-object inside that function's scope being the object specified.
+    jsolait.__version__="$Revision$";
     
-    @param obj  The object the function should be bound to.
-    @param fn   A function object the obj will be bound to.
-    @return A method which when run executes the function with the this-object being the obj specified.
-**/
-bind = function(obj, fn){
-    return function(){
-        return fn.apply(obj, arguments);
+    jsolait.__str__ =function(){
+        return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
     };
-};
-
-/**
-    Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
+    jsolait.toString=jsolait.__str__;
     
-    It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
-    Internaly it first checks using instanceof if that fails it uses isinstance(obj.constructor, cls).
-    There are some differences between using isinstance and instanceof.
-    i.e. 
-    (123 instanceof Number) == false;
-    isinstance(123, Number) == true;
-    ('abc' instanceof String) == false;
-    isinstance('abc', String) == true;
-       
-    @param obj   The object to test.
-    @param cls     The class to test against.
-    @return True if the object is an instance of cls. False otherwise.
-**/
-isinstance=function(obj, cls){
-    if(obj instanceof cls){
-        return true;
-    }else{
-        return issubclass(obj.constructor, cls);
-    }
-};
-
-/**
-    Returns if a cls is a direct or indirect subclass of another.
-    
-    A class is always a subclass of itself and Object is the base for all classes.
-    A class is a subclass of baseclass if it's prototype is an instance of baseclass.
-    A class is a subclass of baseclass if any of it's __bases__ is a subclass of baseclass.
-    If there are no __bases__ defined there is no way to findout about inheritance besides 
-    the prototype chain which was checked by instanceof before, so false is returned.
-    
-    @param cls  The class to test.
-    @param baseclass  The assumed superclass.
-    @return True if cls is a subclass of baseclass otherwise false.
-**/
-issubclass=function(cls, baseclass){
-    if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
-        return true;
-    }else{
-        var bases = cls.__bases__;
-        if(bases != null){
-            for(var i=0;i<bases.length;i++){
-                if(bases[i] === baseclass){
-                    return true;
-                }
-            }
-            for(var i=0;i<bases.length;i++){
-                if(issubclass(bases[i], baseclass)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-};
-
-
-/**
-    Creates a new module and registers it.
-    @param name              The name of the module.
-    @param version            The version of a module.
-    @param moduleScope    A function which is executed for module creation.
-                                     As 1st parameter it will get the module variable.
-                                     The imported modules(imports) will be passed to the moduleScope starting with the 2nd parameter.
-**/
-Module=function(name, version, moduleScope){
-    var newMod = new Module.ModuleClass(name, version, Module.currentURI);
-    
-    try{//to execute the scope of the module
-        moduleScope.call(newMod, newMod);
-    }catch(e){
-        throw new Module.ModuleScopeExecFailed(newMod, e);
-    }
-    
-    //set __name__  for methods and classes
-    for(var n in newMod){
-        var obj = newMod[n];
-        if(typeof obj == 'function'){
-            obj.__name__ = n;
-        }
-    }
-    
-    jsolait.registerModule(newMod);
-    return newMod;
-};
-
-Module.ModuleClass=Class(function(publ){
-    publ.name;
-    publ.version;
-    publ.__sourceURI__;
-    publ.Exception;
-    
-    publ.__init__=function(name,version,sourceURI){
-        this.name=name;
-        this.version=version;
-        this.__sourceURI__ = sourceURI;
-        this.Exception = Class(Module.Exception, function(){});
-        this.Exception.prototype.module = this;
-    };
-    
-    publ.__str__=function(){
-        //todo:SVN adaption
-        return "[module '%s' version: %s]".format(this.name, (this.version+'').replace(/\$Revision:\s(\d+) \$/, "rev.$1"));
-    };
-});
-
-
-Module.toString=function(){
-    return "[object Module]";
-};
-
-Module.__createProto__=function(){
-    throw "Can't use Module as a base class.";
-};
-
-
-/**
-    Base class for all module-Exceptions.
-    This class should not be instaciated directly but rather
-    use the exception that is part of the module.
-**/
-Module.Exception=Class("Exception", function(publ){
-    /**
-        Initializes a new Exception.
-        @param msg           The error message for the user.
-        @param trace=undefined  The error causing this Exception if available.
-    **/
-    publ.__init__=function(msg, trace){
-        this.name = this.constructor.__name__;
-        this.message = ''+msg;
-        this.trace = trace;
-    };
-
-    publ.__str__=function(){
-        return this.toTraceString();
-    };
-    
-    /**
-        Returns the complete trace of the exception.
-        @param indent=0  The indention to use for each line.
-        @return The error trace.
-    **/
-    publ.toTraceString=function(indent){
-        indent = indent==null ? 0 : indent;
-
-        //todo:use  constructor.__name__?
-        var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
-        if(this.trace){
-            if(this.trace.toTraceString){
-                s+=('\n\nbecause:\n'+ this.trace.toTraceString(indent + 4));
-            }else{
-                s+=(this.trace +'\n').indent(indent+4);
-            }
-        }
-        return s;
-    };
-
-    ///The name of the Exception.
-    publ.name;//todo is that needed?
-    ///The error message.
-    publ.message;
-    ///The module the Exception belongs to.
-    publ.module="jsolait";
-    ///The error which caused the Exception or undefined.
-    publ.trace;
-});
-
-/**
-    Thrown if a module scope could not be run.
-**/
-Module.ModuleScopeExecFailed=Class("ModuleScopeExecFailed", Module.Exception, function(publ, supr){
-    /**
-        Initializes a new ModuleScopeExecFailed Exception.
-        @param module      The module.
-        @param trace      The error cousing this Exception.
-    **/
-    publ.__init__=function(module, trace){
-        supr.__init__.call(this, "Failed to run the module scope for %s".format(module), trace);
-        this.failedModule = module;
-    };
-    ///The module that could not be createed.
-    publ.module;
-});
-
-
-/**
-
-    @author                 Jan-Klaas Kollhof
-    @lastchangedby       $LastChangedBy$
-    @lastchangeddate    $Date$
-**/
-Module("jsolait", "$Revision$", function(mod){
-    jsolait=mod;
-    
-    mod.modules={};
-
-    ///The paths of  the modules that come with jsolait.
+    ///The location where jsolait is installed.
     //do not edit the following lines, it will be replaced by the build script
-    /*@moduleURIs begin*/
-    mod.knownModuleURIs={"codecs":"%(baseURI)s/lib/codecs.js",
-                                        "crypto":"%(baseURI)s/lib/crypto.js",
-                                        "dom":"%(baseURI)s/lib/dom.js",
-                                        "forms":"%(baseURI)s/lib/forms.js",
-                                        "iter":"%(baseURI)s/lib/iter.js",
-                                        "jsonrpc":"%(baseURI)s/lib/jsonrpc.js",
-                                        "lang":"%(baseURI)s/lib/lang.js",
-                                        "net":"%(baseURI)s/lib/net",
-                                        "sets":"%(baseURI)s/lib/sets.js",
-                                        "testing":"%(baseURI)s/lib/testing.js",
-                                        "urllib":"%(baseURI)s/lib/urllib.js",
-                                        "xml":"%(baseURI)s/lib/xml.js",
-                                        "xmlrpc":"%(baseURI)s/lib/xmlrpc.js"};
-    /*@moduleURIs end*/
-
+    /*@baseURI begin*/
+    jsolait.baseURI="./jsolait";
+    /*@baseURI end*/
+        
+    ///The paths to the modules that come with jsolait.
+    //do not edit the following lines, it will be replaced by the build script
+    /*@moduleSourceURIs begin*/
+    jsolait.moduleSourceURIs={};
+    /*@moduleSourceURIs end*/
     
     /**
         The base URIs to search for modules in. 
         each item will be formated using moduleSearchURIs[i].format(jsolait) so,
         they may contain StringFormating symbols e.g '%(baseURI)s/lib'
     **/
-    mod.moduleSearchURIs = ["."];
-
-    ///The location where jsolait is installed.
-    //do not edit the following lines, it will be replaced by the build script
-    /*@baseURI begin*/
-    mod.baseURI="./jsolait";
-    /*@baseURI end*/
+    jsolait.moduleSearchURIs = [".", "%(baseURI)s/lib"];
+   
+    jsolait.packagesURI = "%(baseURI)s/packages";
     
-    mod.packagesURI = "%(baseURI)s/packages";
+    jsolait.modules={};
+    
+    /**
+        Creates a new class object which inherits from superClass.
+        @param name="anonymous"  The name of the new class.
+                                                If the created class is a public member of a module then
+                                                the __name__ property of that class is automatically set by Module().
+        @param base1 *                  The base classes (not an array but one argument per base class).
+        @param classScope(-1)        A function which is executed for class construction.
+                                                As 1st parameter it will get the new class' protptype for
+                                                overrideing or extending the super class. As 2nd parameter it will get
+                                                the super class' wrapper for calling inherited methods.
+    **/
+    var Class=function(name, base1, classScope){
+        var args=[];
+        for(var i=0;i<arguments.length;i++){
+            args[i] = arguments[i];
+        }
+
+        classScope = args.pop();
+        var classID =  Class.__idcount__++;
+
+        if((args.length>0) && (typeof args[0] =='string')){
+            name=args.shift();
+        }else{
+            name="anonymous" + classID;
+        }
+
+        var bases = args;
+
+        //set up the 'public static' fields of the class
+        var __class__={__isArray__ : false,
+                             __name__ : name,
+                             __bases__: bases,
+                             __id__: '@' + classID,
+                             __str__ : function(){
+                                return "[class %s]".format(this.__name__);
+                             }
+                        };
+
+        var baseProtos=[];//stores the prototypes of all the base classes
+        var proto; //the prototype to use for the new class
+        if(bases.length==0){//use Object as base
+            proto={};
+            proto.__str__ = function(){
+                return "[%s %s]".format(this.__class__.prototype.__call__ === undefined ? 'object' : 'callable', this.__class__.__name__);
+            };
+            __class__.__bases__=[Object];
+        }else{ //inherit from all base classes
+            var baseProto;
+            for(var i=0;i<bases.length;i++){
+                var baseClass = bases[i];
+                //remember the base prototypes
+                baseProtos.push(baseClass.prototype);
+                if(baseClass.__createProto__ !== undefined){
+                    baseProto = baseClass.__createProto__(bases);
+                }else{
+                    baseProto = new baseClass(Class);
+                }
+                __class__.__isArray__ = __class__.__isArray__ || baseClass.__isArray__;
+
+                if(i==0){//for the first base class just use it's proto as the final proto
+                    proto = baseProto;
+                }else{//for all others extend(do not overwrite) the final proto with the properties in the baseProto
+                    for(var key in baseProto){
+                        if(proto[key] === undefined){
+                            proto[key] = baseProto[key];
+                        }
+                    }
+                }
+                //extend the new class' static interface
+                //todo: any props that should not be copied
+                for(var key in baseClass){
+                    if((key != 'prototype') && (__class__[key] === undefined)){
+                        __class__[key] = baseClass[key];
+                    }
+                }
+            }
+        }
+        //make sure all jsolait objects have a id method
+        if(proto.__id__ === undefined){
+            proto.__id__=function(){
+                this.__id__ = '@' + (Class.__idcount__++);
+                return this.__id__;
+            };
+        }
+        proto.__class__=__class__;
+
+        //run the class setup function provided as classScope
+        if(classScope.length-1 > baseProtos.length){
+            var privId = '__priv__' + __class__.__id__;
+            classScope.apply(this,[proto, privId].concat(baseProtos));
+        }else{
+            classScope.apply(this,[proto].concat(baseProtos));
+        }
+        
+        //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
+        //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
+        proto.toString=proto.__str__;
+            
+        //allthough a single constructor would suffice for generating normal objects, Arrays and callables,
+        //we use 3 different ones. This will minimize the code inside the constructor and therefore
+        //minimize object construction time
+        if(proto.__call__){
+            //if the callable interface is implemented we need a class constructor
+            //which generates a function upon construction
+            var NewClass = function(calledBy){
+                if(calledBy !== Class){
+                    var rslt = function(){
+                        return rslt.__call__.apply(rslt, arguments);
+                    };
+                    
+                    //this will only work for the current class but not create any priv objects for any base class 
+                    var proto=arguments.callee.prototype;
+                    for(var n in proto){
+                        rslt[n] = proto[n];
+                    }
+                    rslt.constructor = proto.__class__;
+                    rslt.toString = proto.__str__;
+                    if(rslt.__init__){
+                        rslt.__init__.apply(rslt, arguments);
+                    }
+                    return rslt;
+                }
+            };
+        }else if(__class__.__isArray__){
+            //Since we cannot inherit from Array directly we take the same approach as with the callable above
+            //and just have a constructor which creates an Array
+            var NewClass = function(calledBy){
+                if(calledBy !== Class){
+                    rslt=[];
+
+                    var proto=arguments.callee.prototype;
+                    for(var n in proto){
+                        rslt[n] = proto[n];
+                    }
+                    rslt.constructor = proto.__class__;
+                    rslt.toString = proto.__str__;
+                    if(rslt.__init__){
+                        rslt.__init__.apply(rslt, arguments);
+                    }else{//implement Array's default behavior
+                        if(arguments.length==1){
+                            rslt.length=arguments[0];
+                        }else{
+                            for(var i=0;i<arguments.length;i++){
+                                rslt.push(arguments[i]);
+                            }
+                        }
+                    }
+                    return rslt;
+                }
+            }; 
+        }else{
+            //this is a 'normal' object constructor which does nothing but call the __init__ method
+            //unless it does not exsit or the constructor was used for prototyping
+            var NewClass = function(calledBy){
+                if(calledBy !== Class){
+                    if(this.__init__){
+                        this.__init__.apply(this, arguments);
+                    }
+                }
+            };
+        }
+
+        //reset the constructor for new objects to the actual constructor.
+        proto.constructor = NewClass;
+        proto.__class__= NewClass;//no, it is not needed, just like __str__ is not, but it is nicer than constructor
+            
+        //this is where the inheritance realy happens
+        NewClass.prototype = proto;
+
+        //apply all the static fileds
+        for(var key in __class__){
+            NewClass[key] = __class__[key];
+        }
+        NewClass.toString=__class__.__str__;
+
+        return NewClass;
+    };
+    Class.__idcount__=0;
+    Class.__str__=Class.toString = function(){return "[object Class]";};
+    Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
+    
+    jsolait.Class = Class;
+    
+    jsolait.Exception=Class(function(publ){
+        /**
+            Initializes a new Exception.
+            @param msg           The error message for the user.
+            @param trace=undefined  The error causing this Exception if available.
+        **/
+        publ.__init__=function(msg, trace){
+            this.name = this.constructor.__name__;
+            this.message = ''+msg;
+            this.trace = trace;
+        };
+
+        publ.__str__=function(){
+            return this.toTraceString();
+        };
+        
+        /**
+            Returns the complete trace of the exception.
+            @param indent=0  The indention to use for each line.
+            @return The error trace.
+        **/
+        publ.__str__=function(indent){
+            indent = indent==null ? 0 : indent;
+
+            //todo:use  constructor.__name__?
+            var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
+            if(this.trace){
+                if(this.trace.toTraceString){
+                    s+=('\n\nbecause:\n'+ this.trace.toTraceString(indent + 4));
+                }else{
+                    s+=(this.trace +'\n').indent(indent+4);
+                }
+            }
+            return s;
+        };
+
+        ///The name of the Exception.
+        publ.name;//todo is that needed?
+        ///The error message.
+        publ.message;
+        ///The module the Exception belongs to.
+        publ.module=jsolait;
+        ///The error which caused the Exception or undefined.
+        publ.trace;
+    });
+    
+    jsolait.ModuleClass=Class(function(publ){
+        publ.__name__;
+        publ.__version__;
+        publ.__source__;
+        publ.__sourceURI__;
+        publ.Exception;
+        
+        publ.__init__=function(name, source, sourceURI){
+            this.__name__=name;
+            this.__version__="";
+            this.__source__ = source;
+            this.__sourceURI__ = sourceURI;
+            this.Exception = Class(jsolait.Exception, new Function());
+            this.Exception.prototype.module = this;
+        };
+        
+        publ.__str__=function(){
+            //todo:SVN adaption
+            return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
+        };
+    });
     
     /**
         Creates an HTTP request object for retreiving files.
         @return HTTP request object.
-    */
-    var getHTTP=function() {
+    **/
+    jsolait.getHTTPRequestObject=function() {
         var obj;
         try{ //to get the mozilla httprequest object
             obj = new XMLHttpRequest();
@@ -565,46 +302,18 @@ Module("jsolait", "$Revision$", function(mod){
                     try{// to get the old MS HTTP request object
                         obj = new ActiveXObject("microsoft.XMLHTTP");
                     }catch(e){
-                        throw new mod.Exception("Unable to get an HTTP request object.");
+                        throw new jsolait.Exception("Unable to get an HTTP request object.");
                     }
                 }
             }
         }
         return obj;
     };
-
-    /**
-        Retrieves a file given its URL.
-        @param uri             The uri to load.
-        @param headers=[]  The headers to use.
-        @return                 The content of the file.
-    */
-    mod.loadURI=function(uri, headers) {
-        headers = (headers !== undefined) ? headers : [];
-        try{
-            var xmlhttp = getHTTP();
-            xmlhttp.open("GET", uri, false);
-            for(var i=0;i< headers.length;i++){
-                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
-            }
-            xmlhttp.send("");
-        }catch(e){
-            throw new mod.LoadURIFailed(uri, e);
-        }
-        //todo: the status checking needs testing
-        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
-            var s= new String(xmlhttp.responseText);
-            s.__sourceURI__ = uri;
-            return s;
-        }else{
-             throw new mod.LoadURIFailed(uri,new mod.Exception("Server did not respond with 200"));
-        }
-    };
-
+        
     /**
         Thrown when a file could not be loaded.
     **/
-    mod.LoadURIFailed=Class(mod.Exception, function(publ, priv,supr){
+    jsolait.LoadURIFailed=Class(jsolait.Exception, function(publ, priv,supr){
         /**
             Initializes a new LoadURIFailed Exception.
             @param name      The name of the module.
@@ -618,82 +327,40 @@ Module("jsolait", "$Revision$", function(mod){
         ///The path paths jsolait tried to load the file from.
         publ.sourceURI;
     });
-
-
-     /**
-       Imports a module given its name(someModule.someSubModule).
-       A module's file location is determined by treating each module name as a directory.
-       Only the last one is assumed to point to a file.
-       If the module's URL is not known (i.e the module name was not found in jsolait.knownModuleURIs)
-       then it will be searched using all URIs found in jsolait.moduleSearchURIs.
-       @param name   The name of the module to load.
-       @return           The module object.
-    */
-    mod.__imprt__ = function(name){
-
-        if(mod.modules[name]){ //module already loaded
-            return mod.modules[name];
+    
+    /**
+        Retrieves data given its URI.
+        @param uri             The uri to load.
+        @param headers=[]  The headers to use.
+        @return                 The content of the file.
+    **/
+    jsolait.loadURI=function(uri, headers) {
+        headers = (headers !== undefined) ? headers : [];
+        try{
+            var xmlhttp = jsolait.getHTTPRequestObject();
+            xmlhttp.open("GET", uri, false);
+            for(var i=0;i< headers.length;i++){
+                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
+            }
+            xmlhttp.send("");
+        }catch(e){
+            throw new jsolait.LoadURIFailed(uri, e);
+        }
+        //todo: the status checking needs testing
+        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
+            var s= str(xmlhttp.responseText);
+            return s;
         }else{
-            var src,modPath;
-            
-            var searchURIs = [];
-            
-            if(mod.knownModuleURIs[name] != undefined){
-                searchURIs.push(mod.knownModuleURIs[name].format(mod));
-            }else{
-                name = name.split('.');
-                if(name.length>1){
-                    if(mod.knownModuleURIs[name[0]] != undefined){
-                        var uri = mod.knownModuleURIs[name[0]].format(mod);
-                        searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
-                    }
-                    searchURIs.push("%s/%s.js".format(mod.packagesURI.format(mod),name.join('/')));
-                }
-                
-                for(var i=0;i<mod.moduleSearchURIs.length; i++){
-                    searchURIs.push("%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/")));
-                }
-                name =  name.join(".");
-            }
-            
-            var failedURIs=[];
-            for(var i=0;i<searchURIs.length;i++){
-                try{
-                    src = mod.loadURI(searchURIs[i]);
-                    break;
-                }catch(e){
-                    failedURIs.push(e.sourceURI);
-                }
-            }
-            
-            if(src == null){
-                throw new mod.ImportFailed(name, failedURIs);
-            }else{
-                try{//interpret the script
-                    var srcURI = src.__sourceURI__;
-                    src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
-                    var f=new Function("",src);
-                    f();
-                }catch(e){
-                    throw new mod.ImportFailed(name, [srcURI], e);
-                }
-                
-                if(mod.modules[name] != null){
-                    return mod.modules[name];
-                }else{
-                    throw new mod.ImportFailed(name, [srcURI], new mod.Exception("Module did not register itself and cannot be imported. " + name));
-                }
-            }
+             throw new jsolait.LoadURIFailed(uri, new jsolait.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
         }
     };
-
-
+        
     /**
         Thrown when a module could not be found.
     **/
-    mod.ImportFailed=Class(mod.Exception, function(publ, supr){
+    jsolait.LoadModuleFailed=Class(jsolait.Exception, function(publ, supr){
         /**
-            Initializes a new ImportFailed Exception.
+            Initializes a new LoadModuleFailed Exception.
             @param name      The name of the module.
             @param moduleURIs A list of paths jsolait tried to load the modules from
             @param trace      The error cousing this Exception.
@@ -709,28 +376,314 @@ Module("jsolait", "$Revision$", function(mod){
         publ.moduleURIs;
     });
 
+    
     /**
-        Imports a module given its name.
-        Modules must have registered themselfes before they can be imported.
-        @param name   The name of the module to load.
-        @return           The module object.
+       Loads a module given its name(someModule.someSubModule).
+       A module's file location is determined by treating each module name as a directory.
+       Only the last one is assumed to point to a file.
+       If the module's URL is not known (i.e the module name was not found in jsolait.knownModuleURIs)
+       then it will be searched using all URIs found in jsolait.moduleSearchURIs.
+       @param name   The name of the module to load.
+       @return           The module object.
     **/
-    imprt = function(name){
-        return mod.__imprt__(name);
-    };
+    jsolait.loadModule = function(name){
 
-    mod.__registerModule__=function(modObj, modName){
-        if(modName != 'jsolait'){
-            return mod.modules[modName] = modObj;
+        if(jsolait.modules[name]){ //module already loaded
+            return jsolait.modules[name];
+        }else{
+            var src,sourceURI;
+            
+            var searchURIs = [];
+            
+            if(jsolait.moduleSourceURIs[name] != undefined){
+                searchURIs.push(jsolait.moduleSourceURIs[name].format(jsolait));
+            }else{
+                name = name.split('.');
+                if(name.length>1){
+                    if(jsolait.moduleSourceURIs[name[0]] != undefined){
+                        var uri = jsolait.moduleSourceURIs[name[0]].format(jsolait);
+                        searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
+                    }
+                    searchURIs.push("%s/%s.js".format(jsolait.packagesURI.format(jsolait),name.join('/')));
+                }
+                
+                for(var i=0;i<jsolait.moduleSearchURIs.length; i++){
+                    searchURIs.push("%s/%s.js".format(jsolait.moduleSearchURIs[i].format(jsolait), name.join("/")));
+                }
+                name =  name.join(".");
+            }
+            
+            var failedURIs=[];
+            for(var i=0;i<searchURIs.length;i++){
+                try{
+                    sourceURI = searchURIs[i];
+                    src = jsolait.loadURI(sourceURI);
+                    break;
+                }catch(e){
+                    failedURIs.push(e.sourceURI);
+                }
+            }
+            
+            if(src == null){
+                throw new jsolait.LoadModuleFailed(name, failedURIs);
+            }else{
+                try{//interpret the script
+                    var m = jsolait.createModuleFromSource(name, src, sourceURI);
+                    return m;
+                }catch(e){
+                    throw new jsolait.LoadModuleFailed(name, [sourceURI], e);
+                }
+            }
+        }
+    };
+           
+    jsolait.__imprt__ = function(name, destinationScope){
+        var n=name.replace(/\s/g,"").split(":");
+        name = n[0];
+        if(n.length>1){
+            var items = n[1].split(",");
+        }else{
+            var items=[];
+        }
+        
+        var m = jsolait.loadModule(name);
+        
+        if(items.length > 0){
+            if(items[0] == '*'){
+                for(var key in m){
+                    if(key.slice(0,2) != "__" && destinationScope[key] == undefined){
+                        destinationScope[key] = m[key];
+                    }
+                }
+            }else{
+                for(var i=0;i<items.length;i++){
+                    destinationScope[items[i]] = m[items[i]];
+                }
+            }
+        }else{
+            destinationScope[name] = m;
+        }
+    };
+    
+    jsolait.CreateModuleFailed=Class(jsolait.Exception, function(publ, supr){
+        /**
+            Initializes a new CreateModuleFailed Exception.
+            @param module      The module.
+            @param trace      The error cousing this Exception.
+        **/
+        publ.__init__=function(module, trace){
+            supr.__init__.call(this, "Failed to create the module for %s".format(module), trace);
+            this.failedModule = module;
+        };
+        ///The module that could not be createed.
+        publ.module;
+    });
+    
+    jsolait.createModule=function(name, source, sourceURI, modFn){
+        var newMod = new jsolait.ModuleClass(name, source, sourceURI);
+        
+        var privateScope={imprt: function(imp){
+            var s = arguments.callee.scope;
+            jsolait.__imprt__(imp, s);
+        }};
+        privateScope.imprt.scope=privateScope;
+       
+        try{//to run the module source
+            modFn.call(newMod, newMod, privateScope, jsolait.builtin);
+        }catch(e){
+            throw new jsolait.CreateModuleFailed(newMod, e);
+        }
+        
+        applyNames(newMod);
+        applyNames(privateScope);
+        
+        return newMod;
+    };
+    
+    jsolait.createModuleFromSource=function(name, source, sourceURI){
+        var modFn = new Function("publ,priv,__builtin__", "with(__builtin__){with(publ){with(priv){\n" + source + "\n}}}");
+        return jsolait.createModule(name, source, sourceURI, modFn);
+    };     
+    
+    jsolait.Module = function(name, modFn){
+        return jsolait.createModule(name, '', '', modFn);
+    };
+    
+    var applyNames=function(container){
+        for(var n in container){
+            var obj = container[n];
+            if(typeof obj == 'function'){
+                obj.__name__ = n;
+            }
         }
     };
 
-    mod.registerModule=function(modObj, modName){
-        modName = modName===undefined?modObj.name : modName;
-        return mod.__registerModule__(modObj, modName);
+//---------------------------------------------------builtins -------------------------------------------------------
+    /**
+        Returns a string representation of an object.
+        @param obj  The object to return a string repr. of.
+        @return A string repr. the object.
+    **/
+    var str = String;
+
+    /**
+        Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
+        Objects can cosutumize the the value being returned by repr(obj) by providing a obj.__repr__() method which is called by repr(obj).
+        @param obj  The object to create a repr. String from.
+        @return A representation of the object.
+    **/
+    var repr = function(obj){
+        if(obj == null){
+            return null;
+        }else if(obj.__repr__){
+            return obj.__repr__();
+        }else{
+            switch(typeof obj){
+                case "string":
+                    obj = obj.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r");
+                    return '"' + obj + '"';
+                case "boolean":case"number":
+                    return "" + obj;
+                case "object":
+                    var out = [];
+                    if(obj == null){
+                        return "null";
+                    }else if(obj instanceof Array){
+                        for(var i=0;i<obj.length;i++){
+                            out.push(repr(obj[i]));
+                        }
+                        return "[" + out.join(",") + "]";
+                    }else if(obj instanceof Object){
+                        for(var key in obj){
+                            out.push(repr(key) + ":" + repr(obj[key]));
+                        }
+                        return "{" + out.join(",") + "}";
+                    }
+            }
+        }
     };
 
+    /**
+        Returns a unique id for an object.
+        The same object will always return the same id. 
+        Most objects are id-able. The following steps are taken to find an id.
+        If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
+        If the obj has a __id__ method the return value of that method will be returned.(all jsolait objects have a __id__ method which sets an __id__ property)
+        If the obj is a String  the string prefixed with $ is returned.
+        If the obj is a Number the number prefixed with a # is returned as a string.
+        All other objects are not safely id-able and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
+        
+        @param obj The object to get the id for.
+        @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
+        @return A String containing a id value for the obj.
+    **/
+    var id = function(obj, forceId){
+        switch(typeof obj.__id__){
+            
+            case "undefined":
+                if(obj instanceof String || typeof obj == 'string'){
+                    return '$' + obj;
+                }else if(obj instanceof Number || typeof obj == 'number'){
+                    return '#' + obj;
+                }else if(forceId){
+                    obj.__id__ = '@' + (Class.__idcount__++);
+                    return obj.__id__;
+                }else{
+                    throw new jsolait.Exception('Objec cannot be IDed: %s'.format(obj));
+                }
+            
+            case "function":
+                return obj.__id__();
+            
+            default: //string
+                return obj.__id__;
+        }
+    };
 
+    /**
+        Returns a bound method.
+        A bound method is a function which is bound to a specific object.
+        Calling the bound method will call the given function with the this-object inside that function's scope being the object specified.
+        
+        @param obj  The object the function should be bound to.
+        @param fn   A function object the obj will be bound to.
+        @return A method which when run executes the function with the this-object being the obj specified.
+    **/
+    var bind = function(obj, fn){
+        return function(){
+            return fn.apply(obj, arguments);
+        };
+    };
+
+    /**
+        Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
+        
+        It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
+        Internaly it first checks using instanceof if that fails it uses isinstance(obj.constructor, cls).
+        There are some differences between using isinstance and instanceof.
+        i.e. 
+        (123 instanceof Number) == false;
+        isinstance(123, Number) == true;
+        ('abc' instanceof String) == false;
+        isinstance('abc', String) == true;
+           
+        @param obj   The object to test.
+        @param cls     The class to test against.
+        @return True if the object is an instance of cls. False otherwise.
+    **/
+    var isinstance=function(obj, cls){
+        if(obj instanceof cls){
+            return true;
+        }else{
+            return issubclass(obj.constructor, cls);
+        }
+    };
+
+    /**
+        Returns if a cls is a direct or indirect subclass of another.
+        
+        A class is always a subclass of itself and Object is the base for all classes.
+        A class is a subclass of baseclass if it's prototype is an instance of baseclass.
+        A class is a subclass of baseclass if any of it's __bases__ is a subclass of baseclass.
+        If there are no __bases__ defined there is no way to findout about inheritance besides 
+        the prototype chain which was checked by instanceof before, so false is returned.
+        
+        @param cls  The class to test.
+        @param baseclass  The assumed superclass.
+        @return True if cls is a subclass of baseclass otherwise false.
+    **/
+    var issubclass=function(cls, baseclass){
+        if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
+            return true;
+        }else{
+            var bases = cls.__bases__;
+            if(bases != null){
+                for(var i=0;i<bases.length;i++){
+                    if(bases[i] === baseclass){
+                        return true;
+                    }
+                }
+                for(var i=0;i<bases.length;i++){
+                    if(issubclass(bases[i], baseclass)){
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    };
+    
+    jsolait.builtin={
+        str:str,
+        repr:repr,
+        id:id,
+        bind:bind,
+        isinstance:isinstance,
+        issubclass:issubclass,
+        jsolait:jsolait,
+        Class:Class
+    };
+    
 //---------------------------------------------------String Format -------------------------------------------------------
     /**
         Creates a format specifier object.
@@ -827,10 +780,10 @@ Module("jsolait", "$Revision$", function(mod){
         var sf = this.match(/(%(\(\w+\)){0,1}[ 0-]{0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}[dibouxXeEfFgGcrs%])|([^%]+)/g);
         if(sf){
             if(sf.join("") != this){
-                throw new mod.Exception("Unsupported formating string.");
+                throw new jsolait.Exception("Unsupported formating string.");
             }
         }else{
-            throw new mod.Exception("Unsupported formating string.");
+            throw new jsolait.Exception("Unsupported formating string.");
         }
         var rslt="";
         var s;
@@ -845,7 +798,7 @@ Module("jsolait", "$Revision$", function(mod){
                 s = "%";
             }else if(s=="%s"){ //making %s faster
                 if(cnt>=arguments.length){
-                    throw new mod.Exception("Not enough arguments for format string.");
+                    throw new jsolait.Exception("Not enough arguments for format string.");
                 }else{
                     obj=arguments[cnt];
                     cnt++;
@@ -862,11 +815,11 @@ Module("jsolait", "$Revision$", function(mod){
                     if((typeof arguments[0]) == "object" && arguments.length == 1){
                         obj = arguments[0][frmt.key];
                     }else{
-                        throw new mod.Exception("Object or associative array expected as formating value.");
+                        throw new jsolait.Exception("Object or associative array expected as formating value.");
                     }
                 }else{//get the current value
                     if(cnt>=arguments.length){
-                        throw new mod.Exception("Not enough arguments for format string.");
+                        throw new jsolait.Exception("Not enough arguments for format string.");
                     }else{
                         obj=arguments[cnt];
                         cnt++;
@@ -891,10 +844,10 @@ Module("jsolait", "$Revision$", function(mod){
                         if(obj.length == 1){//make sure it's a single character
                             s=pad(obj, frmt.paddingFlag, frmt.minLength);
                         }else{
-                            throw new mod.Exception("Character of length 1 required.");
+                            throw new jsolait.Exception("Character of length 1 required.");
                         }
                     }else{
-                        throw new mod.Exception("Character or Byte required.");
+                        throw new jsolait.Exception("Character or Byte required.");
                     }
                 }else if(typeof obj == "number"){
                     //get sign of the number
@@ -953,7 +906,7 @@ Module("jsolait", "$Revision$", function(mod){
                     s=sign + s;//add sign
                     s=pad(s, frmt.paddingFlag, frmt.minLength);//do padding and justifiing
                 }else{
-                    throw new mod.Exception("Number required.");
+                    throw new jsolait.Exception("Number required.");
                 }
             }
             rslt += s;
@@ -1009,6 +962,37 @@ Module("jsolait", "$Revision$", function(mod){
         var a=new Array(l+1);
         return a.join(this);
     };
-});
+    
+    applyNames(jsolait);
+    return jsolait;
+}());
 
+
+var print = function(){
+    var a=[]
+    for(var i=0;i<arguments.length;i++){
+        a.push(arguments[i]);
+    }
+    WScript.echo(a.join(" "));
+}
+
+
+ 
+f=function(){
+    try{
+        imprt("test")
+        print(test.__sourceURI__, test.__source__)
+        test.x();
+    }catch(e){
+        print(e)
+    }
+    
+};
+
+var fs= new ActiveXObject("Scripting.FileSystemObject");
+
+jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
+jsolait.moduleSearchURIs=[jsolait.baseURI];
+var s = String(f).replace("function(){", "").slice(0,-1)
+jsolait.createModuleFromSource('',s)
 
