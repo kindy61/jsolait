@@ -1,3 +1,34 @@
+/*
+    Copyright (c) 2003-2006 Jan-Klaas Kollhof
+
+    This file is part of the JavaScript O Lait library(jsolait).
+
+    jsolait is free software; you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
+
+    This software is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this software; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+/**
+    The main jsolait script.
+    It provides the core functionalities for creating classes, modules and for importing modules.
+
+    @author Jan-Klaas Kollhof
+    @version 3.0
+    @lastchangedby $LastChangedBy$
+    @lastchangeddate $Date$
+    @revision $Revision$
+**/
+
 jsolait=(function(){
     jsolait = {};
     
@@ -68,6 +99,13 @@ jsolait=(function(){
                              __id__: '@' + classID,
                              __str__ : function(){
                                 return "[class %s]".format(this.__name__);
+                             },
+                             __create__:function(initArgs){
+                                var obj = new this(Class);
+                                if(obj.__init__){
+                                    obj.__init__.apply(obj, initArgs);
+                                }
+                                return obj;
                              }
                         };
 
@@ -237,7 +275,7 @@ jsolait=(function(){
             @param indent=0  The indention to use for each line.
             @return The error trace.
         **/
-        publ.__str__=function(indent){
+        publ.toTraceString=function(indent){
             indent = indent==null ? 0 : indent;
 
             //todo:use  constructor.__name__?
@@ -267,15 +305,12 @@ jsolait=(function(){
         publ.__version__;
         publ.__source__;
         publ.__sourceURI__;
-        publ.Exception;
         
         publ.__init__=function(name, source, sourceURI){
             this.__name__=name;
             this.__version__="";
             this.__source__ = source;
             this.__sourceURI__ = sourceURI;
-            this.Exception = Class(jsolait.Exception, new Function());
-            this.Exception.prototype.module = this;
         };
         
         publ.__str__=function(){
@@ -468,11 +503,11 @@ jsolait=(function(){
     jsolait.CreateModuleFailed=Class(jsolait.Exception, function(publ, supr){
         /**
             Initializes a new CreateModuleFailed Exception.
-            @param module      The module.
+            @param module     The module.
             @param trace      The error cousing this Exception.
         **/
         publ.__init__=function(module, trace){
-            supr.__init__.call(this, "Failed to create the module for %s".format(module), trace);
+            supr.__init__.call(this, "Failed to create module %s".format(module), trace);
             this.failedModule = module;
         };
         ///The module that could not be createed.
@@ -483,10 +518,12 @@ jsolait=(function(){
         var newMod = new jsolait.ModuleClass(name, source, sourceURI);
         
         var privateScope={imprt: function(imp){
-            var s = arguments.callee.scope;
-            jsolait.__imprt__(imp, s);
-        }};
+                var s = arguments.callee.scope;
+                jsolait.__imprt__(imp, s);
+            }};
         privateScope.imprt.scope=privateScope;
+        privateScope.Exception = Class(jsolait.Exception, new Function());
+        privateScope.Exception.prototype.module = newMod;
        
         try{//to run the module source
             modFn.call(newMod, newMod, privateScope, jsolait.builtin);
@@ -497,6 +534,7 @@ jsolait=(function(){
         applyNames(newMod);
         applyNames(privateScope);
         
+        jsolait.modules[name] = newMod;
         return newMod;
     };
     
@@ -966,33 +1004,3 @@ jsolait=(function(){
     applyNames(jsolait);
     return jsolait;
 }());
-
-
-var print = function(){
-    var a=[]
-    for(var i=0;i<arguments.length;i++){
-        a.push(arguments[i]);
-    }
-    WScript.echo(a.join(" "));
-}
-
-
- 
-f=function(){
-    try{
-        imprt("test")
-        print(test.__sourceURI__, test.__source__)
-        test.x();
-    }catch(e){
-        print(e)
-    }
-    
-};
-
-var fs= new ActiveXObject("Scripting.FileSystemObject");
-
-jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
-jsolait.moduleSearchURIs=[jsolait.baseURI];
-var s = String(f).replace("function(){", "").slice(0,-1)
-jsolait.createModuleFromSource('',s)
-

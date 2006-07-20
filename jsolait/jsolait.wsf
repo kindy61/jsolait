@@ -4,7 +4,7 @@
     <description>
         JavaScript O Lait for WSH.
         
-       Copyright (c) 2005 Jan-Klaas Kollhof
+       Copyright (c) 2005-2006 Jan-Klaas Kollhof
        
        This file is part of jsolait
      
@@ -24,7 +24,6 @@
     </description>
 
     <runtime>
-        <named name="compile" helpstring="Specifies to run a the lang.parser on it." many="false" required="0" />
         <unnamed name="filename" helpstring="The scriptfiles to run." many="false" required="1" />
         <named name="script-args" helpstring="Specifies arguments to pass to the module/script being run. This may be text or a JSON encoded object" many="false" required="0" />
     </runtime>
@@ -33,13 +32,20 @@
     
     <script language="JavaScript"> <![CDATA[
     
-    Module("jsolaitws", "0.0.1", function(mod){
-            
+    jsolait.Module("jsolaitws", function(publ,priv,__builtin__){with(publ){with(priv){with(__builtin__){
+        __version__ = "$Revision$"
+        __sourceURI__ = 'file://' + WScript.scriptFullName;
+        jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
+        
         var fs= new ActiveXObject("Scripting.FileSystemObject");
+        ///The location where jsolait is installed.
+        jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
+        jsolait.moduleSearchURIs = ["%(baseURI)s/lib"];
+        
         var wshShell= new ActiveXObject("WScript.Shell");
         var ForReading = 1, ForWriting = 2;
         
-        print = function(m){
+        var print = __builtin__.print = function(m){
             var s=[];
             for(var i=0;i<arguments.length;i++){
                 s.push(''+arguments[i]);
@@ -48,7 +54,7 @@
             WScript.echo(s.join(" "));
         }
          
-        pprint=function(m, indent){
+        var pprint= __builtin__.pprint=function(m, indent){
             var m = m.split("\n");
             
             indent =(indent === undefined) ? 0 : indent;
@@ -73,37 +79,11 @@
         pprint.indent=0;
         
         Error.prototype.toString=function(){
-            return this.name +": " + this.message;
-        }
-                
-        LogError=1;
-        LogWarn=2;
-        LogInfo=4;
-        Error.prototype.toTraceString=function(){
-            return this.message
+            return  this.name +": " + this.message;
         }
         
-        log=function(msg, level){
-            level = level==null?LogInfo:level;
-            if(typeof msg !="string"){
-                level = LogError;
-                
-                msg = msg.toTraceString();
-            }
+        publ.run=function(){
             
-            if(level & log.level){
-                print(msg);
-            }
-        }
-        log.level = LogInfo | LogWarn | LogError;    
-        
-        mod.run=function(){
-            mod.__sourceURI__ = 'file://' + WScript.scriptFullName;
-            jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
-                        
-            ///The location where jsolait is installed.
-            jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
-        
             if (WScript.arguments.unnamed.length==0){
                 WScript.Arguments.ShowUsage();                                              
                 return;
@@ -125,70 +105,40 @@
                 wshShell.currentDirectory = fileBase.slice('file://'.length);
             }
             
-            
-            if(WScript.arguments.named.exists("compile")){
-                var lang = imprt('lang');
-                var s = jsolait.loadURI(fileName);
-                var p = new lang.Parser(s);
-                    
-                try{
-                    p.parseStatements(p.next());
-                }catch(e){
-                    var l=p.getPosition();
-                    throw fileName + '(' + (l[0] ) + ',' +l[1] + ') ' +   e + ' near:\n' + p._working.slice(0,200);
-                } 
-    
-            }else{
-                try{//load the script if it is not the main jsolait or jsolaitws module that has already been loaded.
-                    if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&
-                                fileName.toLowerCase() != mod.__sourceURI__.toLowerCase()){
-                        var src = jsolait.loadURI(fileName);
-                        src = 'Module.currentURI="%s";\n%s\nModule.currentURI=null;\n'.format(src.__sourceURI__.replace(/\\/g, '\\\\'), src);
-                        var f=new Function("",src); //todo should it use globalEval ?
-                        f();
-                    }
-                }catch(e){
-                    log(e);
-                    return;
-                }
+            if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&  fileName.toLowerCase() != __sourceURI__.toLowerCase()){
+                var src = jsolait.loadURI(fileName);
+                var modl = jsolait.createModuleFromSource("__main__", src, fileName);
                 
-                //if the loaded file contained a module then run it's __main__ method
-                for(var mn in jsolait.modules){
-                    var modl =jsolait.modules[mn];
-                    if(modl.__sourceURI__.toLowerCase() == fileName.toLowerCase()){
-                        if(modl.__main__){
-                            //todo find arguments
-                            if(WScript.arguments.named.exists("script-args")){
-                                var args = WScript.arguments.named.Item("script-args");
-                                switch(args.slice(0,1)){
-                                    case "{": case "'":  case "[":  case '"':
-                                        break;
-                                    default:
-                                        args = repr(args);
-                                }
-                                f=new Function( "return " + args);
-                                args = [f()];
-                            }else{
-                                var args =[];
-                            }
-                            
-                            try{
-                                modl.__main__.apply(modl,args);
-                            }catch(e){
-                                throw new mod.Exception("runing %s  __main__()  failed\n".format(modl),e)
-                            }
+                if(typeof modl.__main__=='function'){
+                    //todo find arguments
+                    if(WScript.arguments.named.exists("script-args")){
+                        var args = WScript.arguments.named.Item("script-args");
+                        switch(args.slice(0,1)){
+                            case "{": case "'":  case "[":  case '"':
+                                break;
+                            default:
+                                args = repr(args);
                         }
-                        return;
+                        f=new Function( "return " + args);
+                        args = [f()];
+                    }else{
+                        var args =[];
+                    }
+                    
+                    try{
+                        modl.__main__.apply(modl,args);
+                    }catch(e){
+                        throw new Exception("runing %s  __main__()  failed\n".format(modl),e)
                     }
                 }
             }
-        }
-    });
+        };
+    }}}});
 
     try{
-        imprt("jsolaitws").run();
+        jsolait.loadModule("jsolaitws").run();
     }catch(e){
-        log(e,LogError);
+        WScript.echo(""+e);
     }
        
     ]]>

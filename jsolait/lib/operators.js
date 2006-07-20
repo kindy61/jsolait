@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005 Jan-Klaas Kollhof
+  Copyright (c) 2005-2006 Jan-Klaas Kollhof
 
   This file is part of the JavaScript O Lait library(jsolait).
 
@@ -26,125 +26,120 @@
     @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
-Module("operators", "$Revision: 20 $", function(mod){
+__version__ = "$Revision: 20 $";
 
-    mod.lt=function(a, b){
-        if((a!=null) && (a.__lt__!==undefined)){
-            return a.__lt__(b);
-        }else if((b!=null) && (b.__lt__!==undefined)){
-            return b.__lt__(a);
-        }else{
-            return a<b;
-        }
-    };
+publ.lt=function(a, b){
+    if((a!=null) && (a.__lt__!==undefined)){
+        return a.__lt__(b);
+    }else if((b!=null) && (b.__lt__!==undefined)){
+        return b.__lt__(a);
+    }else{
+        return a<b;
+    }
+};
 
-    mod.le=function(a, b){
-        if((a!=null) && (a.__le__!==undefined)){
-            return a.__le__(b);
-        }else if((b!=null) && (b.__le__!==undefined)){
-            return b.__le__(a);
-        }else{
-            return a<=b;
-        }
-    };
+publ.le=function(a, b){
+    if((a!=null) && (a.__le__!==undefined)){
+        return a.__le__(b);
+    }else if((b!=null) && (b.__le__!==undefined)){
+        return b.__le__(a);
+    }else{
+        return a<=b;
+    }
+};
 
-    mod.eq=function(a, b){
-        if((a!=null) && (a.__eq__!==undefined)){
-            return a.__eq__(b);
-        }else if((b!=null) && (b.__eq__!==undefined)){
-            return b.__eq__(a);
-        }else{
-            return a===b;
-        }
-    };
-    
-    mod.ne=function(a, b){
-        if((a!=null) && (a.__ne__!==undefined)){
-            return a.__ne__(b);
-        }else if((b!=null) && (b.__ne__!==undefined)){
-            return b.__ne__(a);
-        }else{
-            return a !== b;
-        }
-    };
-    
-    mod.is=function(a,b){
-        if((a!=null) && (a.__is__!==undefined)){
-            return a.__is__(b);
-        }else if((b!=null) && (b.__is__!==undefined)){
-            return b.__is__(a);
-        }else{
-            return a===b;
-        }
-    };
-    
-    mod.isnot=function(a,b){
-        if((a!=null) && (a.__isnot__!==undefined)){
-            return a.__isnot__(b);
-        }else if((b!=null) && (b.__isnot__!==undefined)){
-            return b.__isnot__(a);
-        }else{
-            return a!==b;
-        }
-    };
-    
-    mod.ge=function(a, b){
-        if((a!=null) && (a.__ge__!==undefined)){
-            return a.__ge__(b);
-        }else if((b!=null) && (b.__ge__!==undefined)){
-            return b.__ge__(a);
-        }else{
-            return a>=b;
-        }
-    };
+publ.eq=function(a, b){
+    if((a!=null) && (a.__eq__!==undefined)){
+        return a.__eq__(b);
+    }else if((b!=null) && (b.__eq__!==undefined)){
+        return b.__eq__(a);
+    }else{
+        return a===b;
+    }
+};
 
-    mod.gt=function(a, b){
-        if((a!=null) && (a.__gt__!==undefined)){
-            return a.__gt__(b);
-        }else if((b!=null) && (b.__gt__!==undefined)){
-            return b.__gt__(a);
-        }else{
-            return a>b;
-        }
-    };
+publ.ne=function(a, b){
+    if((a!=null) && (a.__ne__!==undefined)){
+        return a.__ne__(b);
+    }else if((b!=null) && (b.__ne__!==undefined)){
+        return b.__ne__(a);
+    }else{
+        return a !== b;
+    }
+};
 
-    mod.not=function(a){
-        if((a!=null) && (a.__not__!==undefined)){
-            return a.__not__();
-        }else{
-            return ! a;
-        }
-    };
+publ.is=function(a,b){
+    if((a!=null) && (a.__is__!==undefined)){
+        return a.__is__(b);
+    }else if((b!=null) && (b.__is__!==undefined)){
+        return b.__is__(a);
+    }else{
+        return a===b;
+    }
+};
+
+publ.isnot=function(a,b){
+    if((a!=null) && (a.__isnot__!==undefined)){
+        return a.__isnot__(b);
+    }else if((b!=null) && (b.__isnot__!==undefined)){
+        return b.__isnot__(a);
+    }else{
+        return a!==b;
+    }
+};
+
+publ.ge=function(a, b){
+    if((a!=null) && (a.__ge__!==undefined)){
+        return a.__ge__(b);
+    }else if((b!=null) && (b.__ge__!==undefined)){
+        return b.__ge__(a);
+    }else{
+        return a>=b;
+    }
+};
+
+publ.gt=function(a, b){
+    if((a!=null) && (a.__gt__!==undefined)){
+        return a.__gt__(b);
+    }else if((b!=null) && (b.__gt__!==undefined)){
+        return b.__gt__(a);
+    }else{
+        return a>b;
+    }
+};
+
+publ.not=function(a){
+    if((a!=null) && (a.__not__!==undefined)){
+        return a.__not__();
+    }else{
+        return ! a;
+    }
+};
 
 
-    Array.prototype.__eq__ = function(a){
-        if(this.length != a.length){
-            return false;
-        }else{
-            for(var i=0;i<this.length;i++){
-                if(! mod.eq(this[i], a[i])){
-                    return false;
-                }
+Array.prototype.__eq__ = function(a){
+    if(this.length != a.length){
+        return false;
+    }else{
+        for(var i=0;i<this.length;i++){
+            if(! eq(this[i], a[i])){
+                return false;
             }
-            return true;
         }
-    };
-    
-    Array.prototype.__neq__ = function(a){
-        if(this.length != a.length){
-            return true;
-        }else{
-            for(var i=0;i<this.length;i++){
-                if(mod.neq(this[i], a[i])){
-                    return true;
-                }
+        return true;
+    }
+};
+
+Array.prototype.__neq__ = function(a){
+    if(this.length != a.length){
+        return true;
+    }else{
+        for(var i=0;i<this.length;i++){
+            if(neq(this[i], a[i])){
+                return true;
             }
-            return false;
         }
-    };
-    
-    mod.__main__=function(){
+        return false;
+    }
+};
 
-    };
-
-});

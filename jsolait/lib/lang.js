@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004 Jan-Klaas Kollhof
+  Copyright (c) 2004-2006 Jan-Klaas Kollhof
   
   This file is part of the JavaScript o lait library(jsolait).
   
