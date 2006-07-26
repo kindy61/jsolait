@@ -200,7 +200,6 @@ jsolait=(function(){
             var NewClass = function(calledBy){
                 if(calledBy !== Class){
                     rslt=[];
-
                     var proto=arguments.callee.prototype;
                     for(var n in proto){
                         rslt[n] = proto[n];
@@ -251,8 +250,15 @@ jsolait=(function(){
     Class.__idcount__=0;
     Class.__str__=Class.toString = function(){return "[object Class]";};
     Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
-    
     jsolait.Class = Class;
+    
+    Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
+    Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
+    Array.__isArray__=true;
+    Array.__str__=Array.toString=function(){return "[class Array]";};
+    Object.__str__=Object.toString=function(){return "[class Object]";};
+    Number.__str__ =Number.toString=function(){return "[class Number]";};
+    String.__str__ =String.toString=function(){return "[class String]";};
     
     jsolait.Exception=Class(function(publ){
         /**
