@@ -107,9 +107,14 @@
             
             if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&  fileName.toLowerCase() != __sourceURI__.toLowerCase()){
                 var src = jsolait.loadURI(fileName);
-                var modl = jsolait.createModuleFromSource("__main__", src, fileName);
                 
-                if(typeof modl.__main__=='function'){
+                var modl = jsolait.createModuleFromSource("__main__", src, fileName);
+                try{
+                    var tmain =typeof(modl.__main__);
+                }catch(e){
+                    var tmain="";
+                }
+                if(tmain=='function'){
                     //todo find arguments
                     if(WScript.arguments.named.exists("script-args")){
                         var args = WScript.arguments.named.Item("script-args");
@@ -126,11 +131,12 @@
                     }
                     
                     try{
-                        modl.__main__.apply(modl,args);
+                        modl.__main__.apply(modl, args);
                     }catch(e){
                         throw new Exception("runing %s  __main__()  failed\n".format(modl),e)
                     }
                 }
+                
             }
         };
     }}}});
