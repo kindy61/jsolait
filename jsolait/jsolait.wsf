@@ -45,7 +45,7 @@
         var wshShell= new ActiveXObject("WScript.Shell");
         var ForReading = 1, ForWriting = 2;
         
-        var print = __builtin__.print = function(m){
+        print = function(m){
             var s=[];
             for(var i=0;i<arguments.length;i++){
                 s.push(''+arguments[i]);
@@ -54,7 +54,7 @@
             WScript.echo(s.join(" "));
         }
          
-        var pprint= __builtin__.pprint=function(m, indent){
+        pprint= function(m, indent){
             var m = m.split("\n");
             
             indent =(indent === undefined) ? 0 : indent;

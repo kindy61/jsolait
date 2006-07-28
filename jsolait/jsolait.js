@@ -29,28 +29,27 @@
     @revision $Revision$
 **/
 
-jsolait=(function(){
-    jsolait = {};
+jsolait=(function(publ){{with(publ){
     
-    jsolait.__name__='jsolait';
+    publ.__name__='jsolait';
     
-    jsolait.__version__="$Revision$";
+    publ.__version__="$Revision$";
     
-    jsolait.__str__ =function(){
+    publ.__str__ =function(){
         return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
     };
-    jsolait.toString=jsolait.__str__;
+    publ.toString=__str__;
     
     ///The location where jsolait is installed.
     //do not edit the following lines, it will be replaced by the build script
     /*@baseURI begin*/
-    jsolait.baseURI="./jsolait";
+    publ.baseURI="./jsolait";
     /*@baseURI end*/
         
     ///The paths to the modules that come with jsolait.
     //do not edit the following lines, it will be replaced by the build script
     /*@moduleSourceURIs begin*/
-    jsolait.moduleSourceURIs={};
+    publ.moduleSourceURIs={};
     /*@moduleSourceURIs end*/
     
     /**
@@ -58,11 +57,166 @@ jsolait=(function(){
         each item will be formated using moduleSearchURIs[i].format(jsolait) so,
         they may contain StringFormating symbols e.g '%(baseURI)s/lib'
     **/
-    jsolait.moduleSearchURIs = [".", "%(baseURI)s/lib"];
+    publ.moduleSearchURIs = [".", "%(baseURI)s/lib"];
    
-    jsolait.packagesURI = "%(baseURI)s/packages";
+    publ.packagesURI = "%(baseURI)s/packages";
     
-    jsolait.modules={};
+    publ.modules={};
+ 
+    /**
+        Returns a string representation of an object.
+        @param obj  The object to return a string repr. of.
+        @return A string repr. the object.
+    **/
+    publ.str = String;
+
+    /**
+        Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
+        Objects can cosutumize the the value being returned by repr(obj) by providing a obj.__repr__() method which is called by repr(obj).
+        @param obj  The object to create a repr. String from.
+        @return A representation of the object.
+    **/
+    publ.repr = function(obj){
+        if(obj == null){
+            return null;
+        }else if(obj.__repr__){
+            return obj.__repr__();
+        }else{
+            switch(typeof obj){
+                case "string":
+                    obj = obj.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r");
+                    return '"' + obj + '"';
+                case "boolean":case"number":
+                    return "" + obj;
+                case "object":
+                    var out = [];
+                    if(obj == null){
+                        return "null";
+                    }else if(obj instanceof Array){
+                        for(var i=0;i<obj.length;i++){
+                            out.push(repr(obj[i]));
+                        }
+                        return "[" + out.join(",") + "]";
+                    }else if(obj instanceof Object){
+                        for(var key in obj){
+                            out.push(repr(key) + ":" + repr(obj[key]));
+                        }
+                        return "{" + out.join(",") + "}";
+                    }
+            }
+        }
+    };
+
+    /**
+        Returns a unique id for an object.
+        The same object will always return the same id. 
+        Most objects are id-able. The following steps are taken to find an id.
+        If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
+        If the obj has a __id__ method the return value of that method will be returned.(all jsolait objects have a __id__ method which sets an __id__ property)
+        If the obj is a String  the string prefixed with $ is returned.
+        If the obj is a Number the number prefixed with a # is returned as a string.
+        All other objects are not safely id-able and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
+        
+        @param obj The object to get the id for.
+        @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
+        @return A String containing a id value for the obj.
+    **/
+    publ.id = function(obj, forceId){
+        switch(typeof obj.__id__){
+            
+            case "undefined":
+                if(obj instanceof String || typeof obj == 'string'){
+                    return '$' + obj;
+                }else if(obj instanceof Number || typeof obj == 'number'){
+                    return '#' + obj;
+                }else if(forceId){
+                    obj.__id__ = '@' + (Class.__idcount__++);
+                    return obj.__id__;
+                }else{
+                    throw new Exception('Objec cannot be IDed: %s'.format(obj));
+                }
+            
+            case "function":
+                return obj.__id__();
+            
+            default: //string
+                return obj.__id__;
+        }
+    };
+
+    /**
+        Returns a bound method.
+        A bound method is a function which is bound to a specific object.
+        Calling the bound method will call the given function with the this-object inside that function's scope being the object specified.
+        
+        @param obj  The object the function should be bound to.
+        @param fn   A function object the obj will be bound to.
+        @return A method which when run executes the function with the this-object being the obj specified.
+    **/
+    publ.bind = function(obj, fn){
+        return function(){
+            return fn.apply(obj, arguments);
+        };
+    };
+
+    /**
+        Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
+        
+        It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
+        Internaly it first checks using instanceof if that fails it uses isinstance(obj.constructor, cls).
+        There are some differences between using isinstance and instanceof.
+        i.e. 
+        (123 instanceof Number) == false;
+        isinstance(123, Number) == true;
+        ('abc' instanceof String) == false;
+        isinstance('abc', String) == true;
+           
+        @param obj   The object to test.
+        @param cls     The class to test against.
+        @return True if the object is an instance of cls. False otherwise.
+    **/
+    publ.isinstance=function(obj, cls){
+        if(obj instanceof cls){
+            return true;
+        }else{
+            return issubclass(obj.constructor, cls);
+        }
+    };
+
+    /**
+        Returns if a cls is a direct or indirect subclass of another.
+        
+        A class is always a subclass of itself and Object is the base for all classes.
+        A class is a subclass of baseclass if it's prototype is an instance of baseclass.
+        A class is a subclass of baseclass if any of it's __bases__ is a subclass of baseclass.
+        If there are no __bases__ defined there is no way to findout about inheritance besides 
+        the prototype chain which was checked by instanceof before, so false is returned.
+        
+        @param cls  The class to test.
+        @param baseclass  The assumed superclass.
+        @return True if cls is a subclass of baseclass otherwise false.
+    **/
+    publ.issubclass=function(cls, baseclass){
+        if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
+            return true;
+        }else{
+            var bases = cls.__bases__;
+            if(bases != null){
+                for(var i=0;i<bases.length;i++){
+                    if(bases[i] === baseclass){
+                        return true;
+                    }
+                }
+                for(var i=0;i<bases.length;i++){
+                    if(issubclass(bases[i], baseclass)){
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    };
+    
     
     /**
         Creates a new class object which inherits from superClass.
@@ -75,7 +229,7 @@ jsolait=(function(){
                                                 overrideing or extending the super class. As 2nd parameter it will get
                                                 the super class' wrapper for calling inherited methods.
     **/
-    var Class=function(name, base1, classScope){
+    publ.Class=function(name, base1, classScope){
         var args=[];
         for(var i=0;i<arguments.length;i++){
             args[i] = arguments[i];
@@ -250,7 +404,6 @@ jsolait=(function(){
     Class.__idcount__=0;
     Class.__str__=Class.toString = function(){return "[object Class]";};
     Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
-    jsolait.Class = Class;
     
     Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
     Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
@@ -260,7 +413,7 @@ jsolait=(function(){
     Number.__str__ =Number.toString=function(){return "[class Number]";};
     String.__str__ =String.toString=function(){return "[class String]";};
     
-    jsolait.Exception=Class(function(publ){
+    publ.Exception=Class(function(publ){
         /**
             Initializes a new Exception.
             @param msg           The error message for the user.
@@ -301,12 +454,12 @@ jsolait=(function(){
         ///The error message.
         publ.message;
         ///The module the Exception belongs to.
-        publ.module=jsolait;
+        publ.module=publ;
         ///The error which caused the Exception or undefined.
         publ.trace;
     });
     
-    jsolait.ModuleClass=Class(function(publ){
+    publ.ModuleClass=Class(function(publ){
         publ.__name__;
         publ.__version__;
         publ.__source__;
@@ -329,7 +482,7 @@ jsolait=(function(){
         Creates an HTTP request object for retreiving files.
         @return HTTP request object.
     **/
-    jsolait.getHTTPRequestObject=function() {
+    publ.getHTTPRequestObject=function() {
         var obj;
         try{ //to get the mozilla httprequest object
             obj = new XMLHttpRequest();
@@ -343,7 +496,7 @@ jsolait=(function(){
                     try{// to get the old MS HTTP request object
                         obj = new ActiveXObject("microsoft.XMLHTTP");
                     }catch(e){
-                        throw new jsolait.Exception("Unable to get an HTTP request object.");
+                        throw new Exception("Unable to get an HTTP request object.");
                     }
                 }
             }
@@ -354,7 +507,7 @@ jsolait=(function(){
     /**
         Thrown when a file could not be loaded.
     **/
-    jsolait.LoadURIFailed=Class(jsolait.Exception, function(publ, priv,supr){
+    publ.LoadURIFailed=Class(Exception, function(publ, priv,supr){
         /**
             Initializes a new LoadURIFailed Exception.
             @param name      The name of the module.
@@ -375,31 +528,63 @@ jsolait=(function(){
         @param headers=[]  The headers to use.
         @return                 The content of the file.
     **/
-    jsolait.loadURI=function(uri, headers) {
+    publ.loadURI=function(uri, headers){
         headers = (headers !== undefined) ? headers : [];
         try{
-            var xmlhttp = jsolait.getHTTPRequestObject();
+            var xmlhttp = getHTTPRequestObject();
             xmlhttp.open("GET", uri, false);
             for(var i=0;i< headers.length;i++){
                 xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
             }
             xmlhttp.send("");
         }catch(e){
-            throw new jsolait.LoadURIFailed(uri, e);
+            throw new LoadURIFailed(uri, e);
         }
         //todo: the status checking needs testing
         if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
             var s= str(xmlhttp.responseText);
             return s;
         }else{
-             throw new jsolait.LoadURIFailed(uri, new jsolait.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
+             throw new LoadURIFailed(uri, new Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
         }
     };
+
+    
+    /**
+        Returns the possible locations of a module's source file.
+        A module's source file location is determined by treating each module name as a directory.
+        Only the last one is assumed to point to a file.
         
+    **/
+    publ.getSearchURIsForModuleName=function(name){
+        var sourceURI;
+        
+        var searchURIs = [];
+        
+        if(moduleSourceURIs[name] != undefined){
+            searchURIs.push(moduleSourceURIs[name].format(jsolait));
+        }else{
+            name = name.split('.');
+            if(name.length>1){
+                if(moduleSourceURIs[name[0]] != undefined){
+                    var uri = moduleSourceURIs[name[0]].format(jsolait);
+                    searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
+                }
+                searchURIs.push("%s/%s.js".format(packagesURI.format(jsolait),name.join('/')));
+            }
+            
+            for(var i=0;i<moduleSearchURIs.length; i++){
+                searchURIs.push("%s/%s.js".format(moduleSearchURIs[i].format(jsolait), name.join("/")));
+            }
+            name =  name.join(".");
+        }
+        return searchURIs;
+    };
+    
     /**
         Thrown when a module could not be found.
     **/
-    jsolait.LoadModuleFailed=Class(jsolait.Exception, function(publ, supr){
+    publ.LoadModuleFailed=Class(Exception, function(publ, supr){
         /**
             Initializes a new LoadModuleFailed Exception.
             @param name      The name of the module.
@@ -416,49 +601,28 @@ jsolait=(function(){
         ///The URIs or a list of paths jsolait tried to load the modules from.
         publ.moduleURIs;
     });
-
     
     /**
        Loads a module given its name(someModule.someSubModule).
-       A module's file location is determined by treating each module name as a directory.
-       Only the last one is assumed to point to a file.
-       If the module's URL is not known (i.e the module name was not found in jsolait.knownModuleURIs)
-       then it will be searched using all URIs found in jsolait.moduleSearchURIs.
+       jsolait.getSearchURIsForModuleName() will be used to determine the possible locations for the source of the module.
+      
        @param name   The name of the module to load.
        @return           The module object.
     **/
-    jsolait.loadModule = function(name){
+    publ.loadModule = function(name){
 
-        if(jsolait.modules[name]){ //module already loaded
-            return jsolait.modules[name];
+        if(modules[name]){ //module already loaded
+            return modules[name];
         }else{
             var src,sourceURI;
             
-            var searchURIs = [];
-            
-            if(jsolait.moduleSourceURIs[name] != undefined){
-                searchURIs.push(jsolait.moduleSourceURIs[name].format(jsolait));
-            }else{
-                name = name.split('.');
-                if(name.length>1){
-                    if(jsolait.moduleSourceURIs[name[0]] != undefined){
-                        var uri = jsolait.moduleSourceURIs[name[0]].format(jsolait);
-                        searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
-                    }
-                    searchURIs.push("%s/%s.js".format(jsolait.packagesURI.format(jsolait),name.join('/')));
-                }
-                
-                for(var i=0;i<jsolait.moduleSearchURIs.length; i++){
-                    searchURIs.push("%s/%s.js".format(jsolait.moduleSearchURIs[i].format(jsolait), name.join("/")));
-                }
-                name =  name.join(".");
-            }
+            var searchURIs =getSearchURIsForModuleName(name);
             
             var failedURIs=[];
             for(var i=0;i<searchURIs.length;i++){
                 try{
                     sourceURI = searchURIs[i];
-                    src = jsolait.loadURI(sourceURI);
+                    src = loadURI(sourceURI);
                     break;
                 }catch(e){
                     failedURIs.push(e.sourceURI);
@@ -466,19 +630,19 @@ jsolait=(function(){
             }
             
             if(src == null){
-                throw new jsolait.LoadModuleFailed(name, failedURIs);
+                throw new LoadModuleFailed(name, failedURIs);
             }else{
                 try{//interpret the script
-                    var m = jsolait.createModuleFromSource(name, src, sourceURI);
+                    var m = createModuleFromSource(name, src, sourceURI);
                     return m;
                 }catch(e){
-                    throw new jsolait.LoadModuleFailed(name, [sourceURI], e);
+                    throw new LoadModuleFailed(name, [sourceURI], e);
                 }
             }
         }
     };
            
-    jsolait.__imprt__ = function(name, destinationScope){
+    publ.__imprt__ = function(name, destinationScope){
         var n=name.replace(/\s/g,"").split(":");
         name = n[0];
         if(n.length>1){
@@ -487,7 +651,7 @@ jsolait=(function(){
             var items=[];
         }
         
-        var m = jsolait.loadModule(name);
+        var m = loadModule(name);
         
         if(items.length > 0){
             if(items[0] == '*'){
@@ -506,7 +670,7 @@ jsolait=(function(){
         }
     };
     
-    jsolait.CreateModuleFailed=Class(jsolait.Exception, function(publ, supr){
+    publ.CreateModuleFailed=Class(Exception, function(publ, supr){
         /**
             Initializes a new CreateModuleFailed Exception.
             @param module     The module.
@@ -520,37 +684,48 @@ jsolait=(function(){
         publ.module;
     });
     
-    jsolait.createModule=function(name, source, sourceURI, modFn){
-        var newMod = new jsolait.ModuleClass(name, source, sourceURI);
+    publ.createModule=function(name, source, sourceURI, modFn){
+        var newMod = new ModuleClass(name, source, sourceURI);
         
         var privateScope={imprt: function(imp){
                 var s = arguments.callee.scope;
-                jsolait.__imprt__(imp, s);
+                __imprt__(imp, s);
             }};
         privateScope.imprt.scope=privateScope;
-        privateScope.Exception = Class(jsolait.Exception, new Function());
+        privateScope.Exception = Class(Exception, new Function());
         privateScope.Exception.prototype.module = newMod;
-       
+        
+        var locals={
+            str:str,
+            repr:repr,
+            id:id,
+            bind:bind,
+            isinstance:isinstance,
+            issubclass:issubclass,
+            jsolait:jsolait,
+            Class:Class
+        };
+        
         try{//to run the module source
-            modFn.call(newMod, newMod, privateScope, jsolait.builtin);
+            modFn.call(newMod, newMod, privateScope, locals);
         }catch(e){
-            throw new jsolait.CreateModuleFailed(newMod, e);
+            throw new CreateModuleFailed(newMod, e);
         }
         
         applyNames(newMod);
         applyNames(privateScope);
         
-        jsolait.modules[name] = newMod;
+        modules[name] = newMod;
         return newMod;
     };
     
-    jsolait.createModuleFromSource=function(name, source, sourceURI){
+    publ.createModuleFromSource=function(name, source, sourceURI){
         var modFn = new Function("publ,priv,__builtin__", "with(__builtin__){with(publ){with(priv){\n" + source + "\n}}}");
-        return jsolait.createModule(name, source, sourceURI, modFn);
+        return createModule(name, source, sourceURI, modFn);
     };     
     
-    jsolait.Module = function(name, modFn){
-        return jsolait.createModule(name, '', '', modFn);
+    publ.Module = function(name, modFn){
+        return createModule(name, str(modFn), '', modFn);
     };
     
     var applyNames=function(container){
@@ -562,172 +737,7 @@ jsolait=(function(){
         }
     };
 
-//---------------------------------------------------builtins -------------------------------------------------------
-    /**
-        Returns a string representation of an object.
-        @param obj  The object to return a string repr. of.
-        @return A string repr. the object.
-    **/
-    var str = String;
 
-    /**
-        Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
-        Objects can cosutumize the the value being returned by repr(obj) by providing a obj.__repr__() method which is called by repr(obj).
-        @param obj  The object to create a repr. String from.
-        @return A representation of the object.
-    **/
-    var repr = function(obj){
-        if(obj == null){
-            return null;
-        }else if(obj.__repr__){
-            return obj.__repr__();
-        }else{
-            switch(typeof obj){
-                case "string":
-                    obj = obj.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r");
-                    return '"' + obj + '"';
-                case "boolean":case"number":
-                    return "" + obj;
-                case "object":
-                    var out = [];
-                    if(obj == null){
-                        return "null";
-                    }else if(obj instanceof Array){
-                        for(var i=0;i<obj.length;i++){
-                            out.push(repr(obj[i]));
-                        }
-                        return "[" + out.join(",") + "]";
-                    }else if(obj instanceof Object){
-                        for(var key in obj){
-                            out.push(repr(key) + ":" + repr(obj[key]));
-                        }
-                        return "{" + out.join(",") + "}";
-                    }
-            }
-        }
-    };
-
-    /**
-        Returns a unique id for an object.
-        The same object will always return the same id. 
-        Most objects are id-able. The following steps are taken to find an id.
-        If the obj has an __id__ property that id will be returned. (all jsolait classes have an __id__ property)
-        If the obj has a __id__ method the return value of that method will be returned.(all jsolait objects have a __id__ method which sets an __id__ property)
-        If the obj is a String  the string prefixed with $ is returned.
-        If the obj is a Number the number prefixed with a # is returned as a string.
-        All other objects are not safely id-able and an exception is thrown unless forceId is true. In that case the object will get a unique __id__ property applied which is returned.
-        
-        @param obj The object to get the id for.
-        @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
-        @return A String containing a id value for the obj.
-    **/
-    var id = function(obj, forceId){
-        switch(typeof obj.__id__){
-            
-            case "undefined":
-                if(obj instanceof String || typeof obj == 'string'){
-                    return '$' + obj;
-                }else if(obj instanceof Number || typeof obj == 'number'){
-                    return '#' + obj;
-                }else if(forceId){
-                    obj.__id__ = '@' + (Class.__idcount__++);
-                    return obj.__id__;
-                }else{
-                    throw new jsolait.Exception('Objec cannot be IDed: %s'.format(obj));
-                }
-            
-            case "function":
-                return obj.__id__();
-            
-            default: //string
-                return obj.__id__;
-        }
-    };
-
-    /**
-        Returns a bound method.
-        A bound method is a function which is bound to a specific object.
-        Calling the bound method will call the given function with the this-object inside that function's scope being the object specified.
-        
-        @param obj  The object the function should be bound to.
-        @param fn   A function object the obj will be bound to.
-        @return A method which when run executes the function with the this-object being the obj specified.
-    **/
-    var bind = function(obj, fn){
-        return function(){
-            return fn.apply(obj, arguments);
-        };
-    };
-
-    /**
-        Returns if an object is an instance of a specified class or of a direct or indirect subclass thereof.
-        
-        It also works for traditional javascript inheritance(i.e. SomeClass=function(){}; SomeClass.prototype=new SuperClass(); ...).
-        Internaly it first checks using instanceof if that fails it uses isinstance(obj.constructor, cls).
-        There are some differences between using isinstance and instanceof.
-        i.e. 
-        (123 instanceof Number) == false;
-        isinstance(123, Number) == true;
-        ('abc' instanceof String) == false;
-        isinstance('abc', String) == true;
-           
-        @param obj   The object to test.
-        @param cls     The class to test against.
-        @return True if the object is an instance of cls. False otherwise.
-    **/
-    var isinstance=function(obj, cls){
-        if(obj instanceof cls){
-            return true;
-        }else{
-            return issubclass(obj.constructor, cls);
-        }
-    };
-
-    /**
-        Returns if a cls is a direct or indirect subclass of another.
-        
-        A class is always a subclass of itself and Object is the base for all classes.
-        A class is a subclass of baseclass if it's prototype is an instance of baseclass.
-        A class is a subclass of baseclass if any of it's __bases__ is a subclass of baseclass.
-        If there are no __bases__ defined there is no way to findout about inheritance besides 
-        the prototype chain which was checked by instanceof before, so false is returned.
-        
-        @param cls  The class to test.
-        @param baseclass  The assumed superclass.
-        @return True if cls is a subclass of baseclass otherwise false.
-    **/
-    var issubclass=function(cls, baseclass){
-        if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
-            return true;
-        }else{
-            var bases = cls.__bases__;
-            if(bases != null){
-                for(var i=0;i<bases.length;i++){
-                    if(bases[i] === baseclass){
-                        return true;
-                    }
-                }
-                for(var i=0;i<bases.length;i++){
-                    if(issubclass(bases[i], baseclass)){
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-    };
-    
-    jsolait.builtin={
-        str:str,
-        repr:repr,
-        id:id,
-        bind:bind,
-        isinstance:isinstance,
-        issubclass:issubclass,
-        jsolait:jsolait,
-        Class:Class
-    };
-    
 //---------------------------------------------------String Format -------------------------------------------------------
     /**
         Creates a format specifier object.
@@ -824,10 +834,10 @@ jsolait=(function(){
         var sf = this.match(/(%(\(\w+\)){0,1}[ 0-]{0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}[dibouxXeEfFgGcrs%])|([^%]+)/g);
         if(sf){
             if(sf.join("") != this){
-                throw new jsolait.Exception("Unsupported formating string.");
+                throw new Exception("Unsupported formating string.");
             }
         }else{
-            throw new jsolait.Exception("Unsupported formating string.");
+            throw new Exception("Unsupported formating string.");
         }
         var rslt="";
         var s;
@@ -842,7 +852,7 @@ jsolait=(function(){
                 s = "%";
             }else if(s=="%s"){ //making %s faster
                 if(cnt>=arguments.length){
-                    throw new jsolait.Exception("Not enough arguments for format string.");
+                    throw new Exception("Not enough arguments for format string.");
                 }else{
                     obj=arguments[cnt];
                     cnt++;
@@ -859,11 +869,11 @@ jsolait=(function(){
                     if((typeof arguments[0]) == "object" && arguments.length == 1){
                         obj = arguments[0][frmt.key];
                     }else{
-                        throw new jsolait.Exception("Object or associative array expected as formating value.");
+                        throw new Exception("Object or associative array expected as formating value.");
                     }
                 }else{//get the current value
                     if(cnt>=arguments.length){
-                        throw new jsolait.Exception("Not enough arguments for format string.");
+                        throw new Exception("Not enough arguments for format string.");
                     }else{
                         obj=arguments[cnt];
                         cnt++;
@@ -888,10 +898,10 @@ jsolait=(function(){
                         if(obj.length == 1){//make sure it's a single character
                             s=pad(obj, frmt.paddingFlag, frmt.minLength);
                         }else{
-                            throw new jsolait.Exception("Character of length 1 required.");
+                            throw new Exception("Character of length 1 required.");
                         }
                     }else{
-                        throw new jsolait.Exception("Character or Byte required.");
+                        throw new Exception("Character or Byte required.");
                     }
                 }else if(typeof obj == "number"){
                     //get sign of the number
@@ -950,7 +960,7 @@ jsolait=(function(){
                     s=sign + s;//add sign
                     s=pad(s, frmt.paddingFlag, frmt.minLength);//do padding and justifiing
                 }else{
-                    throw new jsolait.Exception("Number required.");
+                    throw new Exception("Number required.");
                 }
             }
             rslt += s;
@@ -1007,6 +1017,7 @@ jsolait=(function(){
         return a.join(this);
     };
     
-    applyNames(jsolait);
-    return jsolait;
-}());
+    applyNames(publ);
+    
+    return publ;
+}}}({}));

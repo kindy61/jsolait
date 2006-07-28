@@ -1,3 +1,5 @@
+
+
 var applyNames=function(container){
     for(var n in container){
         var obj = container[n];
@@ -62,37 +64,14 @@ publ.createModuleFromSource=function(name, source, sourceURI, returncb){
     }
 };     
 
-publ.getSearchURIsForModuleName=function(name){
-    var sourceURI;
-    
-    var searchURIs = [];
-    
-    if(jsolait.moduleSourceURIs[name] != undefined){
-        searchURIs.push(jsolait.moduleSourceURIs[name].format(jsolait));
-    }else{
-        name = name.split('.');
-        if(name.length>1){
-            if(jsolait.moduleSourceURIs[name[0]] != undefined){
-                var uri = jsolait.moduleSourceURIs[name[0]].format(jsolait);
-                searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
-            }
-            searchURIs.push("%s/%s.js".format(jsolait.packagesURI.format(jsolait),name.join('/')));
-        }
-        
-        for(var i=0;i<jsolait.moduleSearchURIs.length; i++){
-            searchURIs.push("%s/%s.js".format(jsolait.moduleSearchURIs[i].format(jsolait), name.join("/")));
-        }
-        name =  name.join(".");
-    }
-    return searchURIs;
-};
+
 
 publ.loadModule = function(name, returncb){
     
     if(jsolait.modules[name]){ //module already loaded
         returncb(jsolait.modules[name], null);
     }else{
-        var searchURIs = getSearchURIsForModuleName(name);
+        var searchURIs = jsolait.getSearchURIsForModuleName(name);
         var failedURIs=[];
         loadURI(searchURIs.shift(), function(src, sourceURI, err){
             if(err==null && src != null){
