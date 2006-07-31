@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2003-2006 Jan-Klaas Kollhof
+    Copyright (c) 2003 Jan-Klaas Kollhof
     
     This file is part of the JavaScript o lait library(jsolait).
     
@@ -26,13 +26,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-__version__ =  "$Revision$";
-
+mod.__version__="$Revision$";
 /**
     Returns all all available encrypters.
     @return  An array of encrypters names.
 **/
-publ.listEncrypters=function(){
+mod.listEncrypters=function(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "encrypt_"){
@@ -45,7 +44,7 @@ publ.listEncrypters=function(){
     Returns all all available decrypters.
     @return  An array of decrypters names.
 **/
-publ.listDecrypters=function(){
+mod.listDecrypters=function(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "decrypt_"){
@@ -69,7 +68,7 @@ String.prototype.encrypt=function(crydec){
         }
         return String.prototype[n].apply(this, args);
     }else{
-        throw new Exception("Decrypter '%s' not found.".format(crydec));
+        throw new mod.Exception("Decrypter '%s' not found.".format(crydec));
     }
 };
 /**
@@ -86,7 +85,7 @@ String.prototype.decrypt=function(crydec){
         }
         return String.prototype[n].apply(this, args);
     }else{
-        throw new Exception("Encrypter '%s' not found.".format(crydec));
+        throw new mod.Exception("Encrypter '%s' not found.".format(crydec));
     }
 };
 

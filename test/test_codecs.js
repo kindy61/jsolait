@@ -3,7 +3,7 @@ __version__ = "$Revision: 44 $";
 imprt("testing");
 imprt('codecs');
 
-publ.test=function(logger){
+mod.test=function(logger){
     logger.log("testing codecs ...");
    
     testing.assertEquals('encoders', codecs.listEncoders(), ['base64','uri','lzw']);
@@ -21,6 +21,6 @@ publ.test=function(logger){
 };
 
 
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };

@@ -29,27 +29,27 @@
     @revision $Revision$
 **/
 
-jsolait=(function(publ){{with(publ){
+jsolait=(function(mod){
     
-    publ.__name__='jsolait';
+    mod.__name__='jsolait';
     
-    publ.__version__="$Revision$";
+    mod.__version__="$Revision$";
     
-    publ.__str__ =function(){
+    mod.__str__ =function(){
         return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
     };
-    publ.toString=__str__;
+    mod.toString=mod.__str__;
     
     ///The location where jsolait is installed.
     //do not edit the following lines, it will be replaced by the build script
     /*@baseURI begin*/
-    publ.baseURI="./jsolait";
+    mod.baseURI="./jsolait";
     /*@baseURI end*/
         
     ///The paths to the modules that come with jsolait.
     //do not edit the following lines, it will be replaced by the build script
     /*@moduleSourceURIs begin*/
-    publ.moduleSourceURIs={};
+    mod.moduleSourceURIs={};
     /*@moduleSourceURIs end*/
     
     /**
@@ -57,18 +57,18 @@ jsolait=(function(publ){{with(publ){
         each item will be formated using moduleSearchURIs[i].format(jsolait) so,
         they may contain StringFormating symbols e.g '%(baseURI)s/lib'
     **/
-    publ.moduleSearchURIs = [".", "%(baseURI)s/lib"];
+    mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
    
-    publ.packagesURI = "%(baseURI)s/packages";
+    mod.packagesURI = "%(baseURI)s/packages";
     
-    publ.modules={};
+    mod.modules={};
  
     /**
         Returns a string representation of an object.
         @param obj  The object to return a string repr. of.
         @return A string repr. the object.
     **/
-    publ.str = String;
+    var str = String;
 
     /**
         Return a String containing a printable representation of an object which can be used with eval() to create an equal object.
@@ -76,7 +76,7 @@ jsolait=(function(publ){{with(publ){
         @param obj  The object to create a repr. String from.
         @return A representation of the object.
     **/
-    publ.repr = function(obj){
+    var repr = function(obj){
         if(obj == null){
             return null;
         }else if(obj.__repr__){
@@ -121,7 +121,7 @@ jsolait=(function(publ){{with(publ){
         @param forceId=false if true it forces id() to set an __id__ property onto a non id-able object, making it id-able.
         @return A String containing a id value for the obj.
     **/
-    publ.id = function(obj, forceId){
+    var id = function(obj, forceId){
         switch(typeof obj.__id__){
             
             case "undefined":
@@ -133,7 +133,7 @@ jsolait=(function(publ){{with(publ){
                     obj.__id__ = '@' + (Class.__idcount__++);
                     return obj.__id__;
                 }else{
-                    throw new Exception('Objec cannot be IDed: %s'.format(obj));
+                    throw new mod.Exception('Objec cannot be IDed: %s'.format(obj));
                 }
             
             case "function":
@@ -153,7 +153,7 @@ jsolait=(function(publ){{with(publ){
         @param fn   A function object the obj will be bound to.
         @return A method which when run executes the function with the this-object being the obj specified.
     **/
-    publ.bind = function(obj, fn){
+    var bind = function(obj, fn){
         return function(){
             return fn.apply(obj, arguments);
         };
@@ -175,7 +175,7 @@ jsolait=(function(publ){{with(publ){
         @param cls     The class to test against.
         @return True if the object is an instance of cls. False otherwise.
     **/
-    publ.isinstance=function(obj, cls){
+    var isinstance=function(obj, cls){
         if(obj instanceof cls){
             return true;
         }else{
@@ -196,7 +196,7 @@ jsolait=(function(publ){{with(publ){
         @param baseclass  The assumed superclass.
         @return True if cls is a subclass of baseclass otherwise false.
     **/
-    publ.issubclass=function(cls, baseclass){
+    var issubclass=function(cls, baseclass){
         if(baseclass === Object || cls===baseclass || (cls.prototype instanceof baseclass)){
             return true;
         }else{
@@ -229,7 +229,7 @@ jsolait=(function(publ){{with(publ){
                                                 overrideing or extending the super class. As 2nd parameter it will get
                                                 the super class' wrapper for calling inherited methods.
     **/
-    publ.Class=function(name, base1, classScope){
+    var Class=function(name, base1, classScope){
         var args=[];
         for(var i=0;i<arguments.length;i++){
             args[i] = arguments[i];
@@ -405,6 +405,8 @@ jsolait=(function(publ){{with(publ){
     Class.__str__=Class.toString = function(){return "[object Class]";};
     Class.__createProto__=function(){ throw "Can't use Class as a base class.";};
     
+    mod.Class = Class;
+    
     Function.__createProto__ = function(){ throw "Cannot inherit from Function. implement the callable interface instead using YourClass::__call__.";};
     Array.__createProto__=function(){ var r =[]; r.__str__ = Array.prototype.toString;  return r; };
     Array.__isArray__=true;
@@ -413,7 +415,7 @@ jsolait=(function(publ){{with(publ){
     Number.__str__ =Number.toString=function(){return "[class Number]";};
     String.__str__ =String.toString=function(){return "[class String]";};
     
-    publ.Exception=Class(function(publ){
+    mod.Exception=Class(function(publ,priv,supr){
         /**
             Initializes a new Exception.
             @param msg           The error message for the user.
@@ -436,9 +438,8 @@ jsolait=(function(publ){{with(publ){
         **/
         publ.toTraceString=function(indent){
             indent = indent==null ? 0 : indent;
-
             //todo:use  constructor.__name__?
-            var s="%s in %s:\n%s".format(this.name, this.module, this.message.indent(4)).indent(indent);
+            var s="%s in %s:\n%s".format(this.constructor.__name__, this.module, this.message.indent(4)).indent(indent);
             if(this.trace){
                 if(this.trace.toTraceString){
                     s+=('\n\nbecause:\n'+ this.trace.toTraceString(indent + 4));
@@ -454,35 +455,16 @@ jsolait=(function(publ){{with(publ){
         ///The error message.
         publ.message;
         ///The module the Exception belongs to.
-        publ.module=publ;
+        publ.module=mod;
         ///The error which caused the Exception or undefined.
         publ.trace;
     });
-    
-    publ.ModuleClass=Class(function(publ){
-        publ.__name__;
-        publ.__version__;
-        publ.__source__;
-        publ.__sourceURI__;
         
-        publ.__init__=function(name, source, sourceURI){
-            this.__name__=name;
-            this.__version__="";
-            this.__source__ = source;
-            this.__sourceURI__ = sourceURI;
-        };
-        
-        publ.__str__=function(){
-            //todo:SVN adaption
-            return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
-        };
-    });
-    
     /**
         Creates an HTTP request object for retreiving files.
         @return HTTP request object.
     **/
-    publ.getHTTPRequestObject=function() {
+    mod.getHTTPRequestObject=function() {
         var obj;
         try{ //to get the mozilla httprequest object
             obj = new XMLHttpRequest();
@@ -496,7 +478,7 @@ jsolait=(function(publ){{with(publ){
                     try{// to get the old MS HTTP request object
                         obj = new ActiveXObject("microsoft.XMLHTTP");
                     }catch(e){
-                        throw new Exception("Unable to get an HTTP request object.");
+                        throw new mod.Exception("Unable to get an HTTP request object.");
                     }
                 }
             }
@@ -507,7 +489,7 @@ jsolait=(function(publ){{with(publ){
     /**
         Thrown when a file could not be loaded.
     **/
-    publ.LoadURIFailed=Class(Exception, function(publ, priv,supr){
+    mod.LoadURIFailed=Class(mod.Exception, function(publ, priv,supr){
         /**
             Initializes a new LoadURIFailed Exception.
             @param name      The name of the module.
@@ -528,24 +510,24 @@ jsolait=(function(publ){{with(publ){
         @param headers=[]  The headers to use.
         @return                 The content of the file.
     **/
-    publ.loadURI=function(uri, headers){
+    mod.loadURI=function(uri, headers){
         headers = (headers !== undefined) ? headers : [];
         try{
-            var xmlhttp = getHTTPRequestObject();
+            var xmlhttp = mod.getHTTPRequestObject();
             xmlhttp.open("GET", uri, false);
             for(var i=0;i< headers.length;i++){
                 xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
             }
             xmlhttp.send("");
         }catch(e){
-            throw new LoadURIFailed(uri, e);
+            throw new mod.LoadURIFailed(uri, e);
         }
         //todo: the status checking needs testing
         if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
             var s= str(xmlhttp.responseText);
             return s;
         }else{
-             throw new LoadURIFailed(uri, new Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
+             throw new mod.LoadURIFailed(uri, new mod.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
         }
     };
 
@@ -556,25 +538,25 @@ jsolait=(function(publ){{with(publ){
         Only the last one is assumed to point to a file.
         
     **/
-    publ.getSearchURIsForModuleName=function(name){
+    mod.getSearchURIsForModuleName=function(name){
         var sourceURI;
         
         var searchURIs = [];
         
-        if(moduleSourceURIs[name] != undefined){
-            searchURIs.push(moduleSourceURIs[name].format(jsolait));
+        if(mod.moduleSourceURIs[name] != undefined){
+            searchURIs.push(mod.moduleSourceURIs[name].format(mod));
         }else{
             name = name.split('.');
             if(name.length>1){
-                if(moduleSourceURIs[name[0]] != undefined){
-                    var uri = moduleSourceURIs[name[0]].format(jsolait);
+                if(mod.moduleSourceURIs[name[0]] != undefined){
+                    var uri = mod.moduleSourceURIs[name[0]].format(mod);
                     searchURIs.push("%s/%s.js".format(uri, name.slice(1).join('/')));
                 }
-                searchURIs.push("%s/%s.js".format(packagesURI.format(jsolait),name.join('/')));
+                searchURIs.push("%s/%s.js".format(mod.packagesURI.format(mod),name.join('/')));
             }
             
-            for(var i=0;i<moduleSearchURIs.length; i++){
-                searchURIs.push("%s/%s.js".format(moduleSearchURIs[i].format(jsolait), name.join("/")));
+            for(var i=0;i<mod.moduleSearchURIs.length; i++){
+                searchURIs.push("%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/")));
             }
             name =  name.join(".");
         }
@@ -584,7 +566,7 @@ jsolait=(function(publ){{with(publ){
     /**
         Thrown when a module could not be found.
     **/
-    publ.LoadModuleFailed=Class(Exception, function(publ, supr){
+    mod.LoadModuleFailed=Class(mod.Exception, function(publ, priv, supr){
         /**
             Initializes a new LoadModuleFailed Exception.
             @param name      The name of the module.
@@ -609,40 +591,37 @@ jsolait=(function(publ){{with(publ){
        @param name   The name of the module to load.
        @return           The module object.
     **/
-    publ.loadModule = function(name){
+    mod.loadModule = function(name){
 
-        if(modules[name]){ //module already loaded
-            return modules[name];
+        if(mod.modules[name]){ //module already loaded
+            return mod.modules[name];
         }else{
             var src,sourceURI;
-            
-            var searchURIs =getSearchURIsForModuleName(name);
-            
+            var searchURIs = mod.getSearchURIsForModuleName(name);
             var failedURIs=[];
             for(var i=0;i<searchURIs.length;i++){
                 try{
                     sourceURI = searchURIs[i];
-                    src = loadURI(sourceURI);
+                    src = mod.loadURI(sourceURI);
                     break;
                 }catch(e){
                     failedURIs.push(e.sourceURI);
                 }
             }
-            
             if(src == null){
-                throw new LoadModuleFailed(name, failedURIs);
+                throw new mod.LoadModuleFailed(name, failedURIs);
             }else{
                 try{//interpret the script
-                    var m = createModuleFromSource(name, src, sourceURI);
+                    var m = mod.createModuleFromSource(name, src, sourceURI);
                     return m;
                 }catch(e){
-                    throw new LoadModuleFailed(name, [sourceURI], e);
+                    throw new mod.LoadModuleFailed(name, [sourceURI], e);
                 }
             }
         }
     };
            
-    publ.__imprt__ = function(name, destinationScope){
+    mod.__imprt__ = function(name, attachTo){
         var n=name.replace(/\s/g,"").split(":");
         name = n[0];
         if(n.length>1){
@@ -651,26 +630,66 @@ jsolait=(function(publ){{with(publ){
             var items=[];
         }
         
-        var m = loadModule(name);
+        var m = mod.loadModule(name);
         
         if(items.length > 0){
             if(items[0] == '*'){
                 for(var key in m){
-                    if(key.slice(0,2) != "__" && destinationScope[key] == undefined){
-                        destinationScope[key] = m[key];
+                    if(key.slice(0,2) != "__" && attachTo[key] == undefined){
+                        attachTo[key] = m[key];
                     }
                 }
             }else{
                 for(var i=0;i<items.length;i++){
-                    destinationScope[items[i]] = m[items[i]];
+                    attachTo[items[i]] = m[items[i]];
                 }
             }
         }else{
-            destinationScope[name] = m;
+            attachTo[name] = m;
         }
     };
     
-    publ.CreateModuleFailed=Class(Exception, function(publ, supr){
+    var StringsOrCommentsOrImprt=/(\/\*([\n\r]|.)*?\*\/)|(\/\/.*)|('(\\'|.)*?')|("(\\"|.)*?")|\b(imprt\(.*?\))/g;
+    var ImprtStatement=/^imprt\(['"](.*?)['"]\)$/;
+    
+    mod.getModuleDependenciesFromSource=function(source){
+        
+        var imprtStatements=[];
+        var items=str(source).match(StringsOrCommentsOrImprt);
+        if(items){
+            for(var i=0;i<items.length;i++){
+                var item = items[i];
+                var imprtStatement=item.match(ImprtStatement);
+                if(imprtStatement){
+                    imprtStatements.push(imprtStatement[1]);
+                }
+            }
+        }
+        return imprtStatements;
+    };
+    
+    mod.ModuleClass=Class(function(publ,priv,supr){
+        publ.__name__;
+        publ.__version__;
+        publ.__source__;
+        publ.__sourceURI__;
+        
+        publ.__init__=function(name, source, sourceURI){
+            this.__name__=name;
+            this.__version__="0.0.0";
+            this.__source__ = source;
+            this.__sourceURI__ = sourceURI;
+            this.Exception = Class(mod.Exception, new Function());
+            this.Exception.prototype.module = this;
+        };
+        
+        publ.__str__=function(){
+            //todo:SVN adaption
+            return "[module '%s' version: %s]".format(this.__name__, (this.__version__+'').replace(/\$Revision:\s(\d+) \$/, "Rev.$1"));
+        };
+    });
+    
+    mod.CreateModuleFailed=Class(mod.Exception, function(publ, priv, supr){
         /**
             Initializes a new CreateModuleFailed Exception.
             @param module     The module.
@@ -681,19 +700,33 @@ jsolait=(function(publ){{with(publ){
             this.failedModule = module;
         };
         ///The module that could not be createed.
-        publ.module;
+        publ.failedModule;
+        
+        publ.__str___=function(){
+            return str(this.failedModule);
+        
+        }
     });
     
-    publ.createModule=function(name, source, sourceURI, modFn){
-        var newMod = new ModuleClass(name, source, sourceURI);
+    mod.createModule=function(name, source, sourceURI, modFn){
+        var newMod = new mod.ModuleClass(name, source, sourceURI);
         
-        var privateScope={imprt: function(imp){
-                var s = arguments.callee.scope;
-                __imprt__(imp, s);
-            }};
-        privateScope.imprt.scope=privateScope;
-        privateScope.Exception = Class(Exception, new Function());
-        privateScope.Exception.prototype.module = newMod;
+        try{//to run the module source
+            modFn.call(newMod, newMod);
+        }catch(e){
+            throw new mod.CreateModuleFailed(newMod, e);
+        }
+        
+        applyNames(newMod);
+       
+        mod.modules[name] = newMod;
+        return newMod;
+    };
+    
+    mod.createModuleFromSource=function(name, source, sourceURI){
+        var newMod = new mod.ModuleClass(name, source, sourceURI);
+            
+        var deps=mod.getModuleDependenciesFromSource(source);
         
         var locals={
             str:str,
@@ -702,30 +735,40 @@ jsolait=(function(publ){{with(publ){
             bind:bind,
             isinstance:isinstance,
             issubclass:issubclass,
-            jsolait:jsolait,
             Class:Class
         };
         
+        for(var i=0;i<deps.length;i++){
+            mod.__imprt__(deps[i], locals);
+        }
+            
+        var argNames = ['mod', 'imprt', 'jsolait'];
+        var args = [];
+        
+        args.push(newMod);
+        args.push(new Function("",""));
+        args.push(mod);
+                
+        for(var key in locals){
+            argNames.push(key);
+            args.push(locals[key]);
+        }               
+        
+        var modFn = new Function(argNames.join(","), source);
+            
         try{//to run the module source
-            modFn.call(newMod, newMod, privateScope, locals);
+            modFn.apply(newMod, args);
         }catch(e){
-            throw new CreateModuleFailed(newMod, e);
+            throw new mod.CreateModuleFailed(newMod, e);
         }
         
         applyNames(newMod);
-        applyNames(privateScope);
-        
-        modules[name] = newMod;
+        mod.modules[name] = newMod;
         return newMod;
-    };
-    
-    publ.createModuleFromSource=function(name, source, sourceURI){
-        var modFn = new Function("publ,priv,__builtin__", "with(__builtin__){with(publ){with(priv){\n" + source + "\n}}}");
-        return createModule(name, source, sourceURI, modFn);
     };     
     
-    publ.Module = function(name, modFn){
-        return createModule(name, str(modFn), '', modFn);
+    mod.Module = function(name, modFn){
+        return mod.createModule(name, str(modFn), '', modFn);
     };
     
     var applyNames=function(container){
@@ -834,10 +877,10 @@ jsolait=(function(publ){{with(publ){
         var sf = this.match(/(%(\(\w+\)){0,1}[ 0-]{0,1}(\+){0,1}(\d+){0,1}(\.\d+){0,1}[dibouxXeEfFgGcrs%])|([^%]+)/g);
         if(sf){
             if(sf.join("") != this){
-                throw new Exception("Unsupported formating string.");
+                throw new mod.Exception("Unsupported formating string.");
             }
         }else{
-            throw new Exception("Unsupported formating string.");
+            throw new mod.Exception("Unsupported formating string.");
         }
         var rslt="";
         var s;
@@ -852,7 +895,7 @@ jsolait=(function(publ){{with(publ){
                 s = "%";
             }else if(s=="%s"){ //making %s faster
                 if(cnt>=arguments.length){
-                    throw new Exception("Not enough arguments for format string.");
+                    throw new mod.Exception("Not enough arguments for format string.");
                 }else{
                     obj=arguments[cnt];
                     cnt++;
@@ -869,11 +912,11 @@ jsolait=(function(publ){{with(publ){
                     if((typeof arguments[0]) == "object" && arguments.length == 1){
                         obj = arguments[0][frmt.key];
                     }else{
-                        throw new Exception("Object or associative array expected as formating value.");
+                        throw new mod.Exception("Object or associative array expected as formating value.");
                     }
                 }else{//get the current value
                     if(cnt>=arguments.length){
-                        throw new Exception("Not enough arguments for format string.");
+                        throw new mod.Exception("Not enough arguments for format string.");
                     }else{
                         obj=arguments[cnt];
                         cnt++;
@@ -898,10 +941,10 @@ jsolait=(function(publ){{with(publ){
                         if(obj.length == 1){//make sure it's a single character
                             s=pad(obj, frmt.paddingFlag, frmt.minLength);
                         }else{
-                            throw new Exception("Character of length 1 required.");
+                            throw new mod.Exception("Character of length 1 required.");
                         }
                     }else{
-                        throw new Exception("Character or Byte required.");
+                        throw new mod.Exception("Character or Byte required.");
                     }
                 }else if(typeof obj == "number"){
                     //get sign of the number
@@ -960,7 +1003,7 @@ jsolait=(function(publ){{with(publ){
                     s=sign + s;//add sign
                     s=pad(s, frmt.paddingFlag, frmt.minLength);//do padding and justifiing
                 }else{
-                    throw new Exception("Number required.");
+                    throw new mod.Exception("Number required.");
                 }
             }
             rslt += s;
@@ -1017,7 +1060,7 @@ jsolait=(function(publ){{with(publ){
         return a.join(this);
     };
     
-    applyNames(publ);
+    applyNames(mod);
     
-    return publ;
-}}}({}));
+    return mod;
+}({}));

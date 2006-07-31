@@ -21,28 +21,28 @@
 /**
     Provides networking sockets.
 **/
-__version__ = "$Revision: 0 $";
+mod.__version__="0.0.1";
 
 //the flash object that provides the sockets
 var flashSocketProvider;
 
 var flashSocketWrappers={};
 
-publ.prepare=function(){
+mod.prepare=function(){
     addFlashToPage();
 };
 
 /**
     Returns a new Socket object.
 **/
-publ.createSocket=function(){
-    return new FlashSocket();
+mod.createSocket=function(){
+    return new mod.FlashSocket();
 };
 
 /**
     Basic Socket class.
 **/
-publ.Socket=Class(function(publ,priv,supr){
+mod.Socket=Class(function(publ,priv,supr){
      
     publ.connect=function(host, port){};
     
@@ -58,7 +58,7 @@ publ.Socket=Class(function(publ,priv,supr){
 });
 
 
-publ.FlashSocket=Class(Socket, function(publ,priv,supr){
+mod.FlashSocket=Class(mod.Socket, function(publ,priv,supr){
     
     publ.connect=function(host, port){
         if(this.id != null){
@@ -74,7 +74,7 @@ publ.FlashSocket=Class(Socket, function(publ,priv,supr){
         if(this.id != null){
             flashSocketProvider.send(this.id, data);
         }else{
-            throw new Exception("Socket not connected");
+            throw new mod.Exception("Socket not connected");
         }
     };
     
@@ -106,7 +106,7 @@ var addFlashToPage=function(){
     }
 };
     
-publ.handleFlashMessage=function(id, type, data, data2){
+mod.handleFlashMessage=function(id, type, data, data2){
     if(type=="socketProviderLoaded"){
         if (flashSocketProvider == null) {
             flashSocketProvider=document.getElementById("__SocketProvider__");
@@ -122,6 +122,8 @@ publ.handleFlashMessage=function(id, type, data, data2){
     }
 };
 
-publ.isReady = function(){
+
+
+mod.isReady = function(){
     return flashSocketProvider != null;
 };

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005-2006 Jan-Klaas Kollhof
+  Copyright (c) 2005 Jan-Klaas Kollhof
 
   This file is part of the JavaScript O Lait library(jsolait).
 
@@ -26,12 +26,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-__version__ = "$Revision$";
+mod.__version__="$Revision$";
 
 /**
     Thrown if an item was not found in the set.
 **/
-publ.ItemNotFoundInSet=Class(Exception, function(publ, supr){
+mod.ItemNotFoundInSet=Class(mod.Exception, function(publ, supr){
     ///The set the item was not found in.
     publ.set;
     ///The item that was not found.
@@ -47,7 +47,7 @@ publ.ItemNotFoundInSet=Class(Exception, function(publ, supr){
     The Set class.
     All Items added to a set must be id-able using jsolait's id() function.
 **/
-publ.Set=Class(function(publ, supr){
+mod.Set=Class(function(publ, supr){
     /**
         Initializes a Set instance.
         @param elem*   An element which is added to the set or an Array object of which the elements are added to the set.
@@ -66,7 +66,7 @@ publ.Set=Class(function(publ, supr){
                     this.add(elems[i]);
                 }
             }else{
-                throw new Exception("Expecting an Array object or multiple arguments");
+                throw new mod.Exception("Expecting an Array object or multiple arguments");
             }
         }
     };
@@ -90,7 +90,7 @@ publ.Set=Class(function(publ, supr){
     publ.remove=function(item){
         var h = id(item);
         if(this.items[h] === undefined){
-            throw new ItemNotFoundInSet(this, item);
+            throw new mod.ItemNotFoundInSet(this, item);
         }else{
             item = this.items[h];
             delete this.items[h];
@@ -175,7 +175,7 @@ publ.Set=Class(function(publ, supr){
         @return A new set.
     **/
     publ.intersection=function(setObj){
-        var ns=new Set();
+        var ns=new mod.Set();
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)){
@@ -190,7 +190,7 @@ publ.Set=Class(function(publ, supr){
         @return A new set.
     **/
     publ.difference=function(setObj){
-        var ns=new Set();
+        var ns=new mod.Set();
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)==false){
@@ -270,7 +270,7 @@ publ.Set=Class(function(publ, supr){
         @return A new copy of the set.
     **/
     publ.copy=function(){
-        var ns = new Set();
+        var ns = new mod.Set();
         return ns.unionUpdate(this);
     };
 

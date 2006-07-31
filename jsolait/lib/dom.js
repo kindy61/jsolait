@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2006 Jan-Klaas Kollhof
+    Copyright (c) 2005 Jan-Klaas Kollhof
 
     This file is part of the JavaScript o lait library(jsolait).
 
@@ -24,15 +24,14 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-
-__version__ = "$Revision$";
+mod.__version__="$Revision$";
 
 imprt("sets");
 
 /**
     Event class.
 **/
-publ.Event=Class(function(publ, supr){
+mod.Event=Class(function(publ, supr){
     publ.__init__=function(type, target){
         this.type = type;
         this.target = target;
@@ -47,7 +46,7 @@ publ.Event=Class(function(publ, supr){
 /**
     An EventTarget implementation.
 **/
-publ.EventTarget =Class(function(publ, supr){
+mod.EventTarget =Class(function(publ, supr){
     publ.__init__=function(){
         this.eventListeners={};
     };
@@ -98,7 +97,7 @@ publ.EventTarget =Class(function(publ, supr){
     An EventListener wrapper.
     It forwards all events to handler methods using the evt.type as the name for the method.
 **/
-publ.EventListener=Class(function(publ){
+mod.EventListener=Class(function(publ){
     /**
         Handles events dispatched by an EventTarget.
         It forwards the evt to a handler method with the name == evt.type.
@@ -114,5 +113,5 @@ publ.EventListener=Class(function(publ){
 /**
     A combination of an EventTarget and a EventListener.
 **/
-publ.EventListenerTarget=Class(EventTarget, EventListener, function(publ, supr){
+mod.EventListenerTarget=Class(mod.EventTarget, mod.EventListener, function(publ, supr){
 });

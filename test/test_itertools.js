@@ -3,7 +3,7 @@ __version__ = "$Revision: 44 $";
 imprt("testing");
 imprt("itertools:*");
 
-publ.test=function(logger){
+mod.test=function(logger){
     logger.log("testing itertools module ...");
     
     
@@ -70,7 +70,7 @@ publ.test=function(logger){
 };
 
 
-publ.profile=function(){
+mod.profile=function(){
     var task=function(){
         var s='';
         for(var i=0;i<100;i++){
@@ -175,6 +175,6 @@ publ.profile=function(){
     
 
 };
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };    

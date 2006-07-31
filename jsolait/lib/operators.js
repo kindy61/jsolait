@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005-2006 Jan-Klaas Kollhof
+  Copyright (c) 2005 Jan-Klaas Kollhof
 
   This file is part of the JavaScript O Lait library(jsolait).
 
@@ -26,9 +26,9 @@
     @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
-__version__ = "$Revision: 20 $";
+mod.__version__= "$Revision: 20 $";
 
-publ.lt=function(a, b){
+mod.lt=function(a, b){
     if((a!=null) && (a.__lt__!==undefined)){
         return a.__lt__(b);
     }else if((b!=null) && (b.__lt__!==undefined)){
@@ -38,7 +38,7 @@ publ.lt=function(a, b){
     }
 };
 
-publ.le=function(a, b){
+mod.le=function(a, b){
     if((a!=null) && (a.__le__!==undefined)){
         return a.__le__(b);
     }else if((b!=null) && (b.__le__!==undefined)){
@@ -48,7 +48,7 @@ publ.le=function(a, b){
     }
 };
 
-publ.eq=function(a, b){
+mod.eq=function(a, b){
     if((a!=null) && (a.__eq__!==undefined)){
         return a.__eq__(b);
     }else if((b!=null) && (b.__eq__!==undefined)){
@@ -58,7 +58,7 @@ publ.eq=function(a, b){
     }
 };
 
-publ.ne=function(a, b){
+mod.ne=function(a, b){
     if((a!=null) && (a.__ne__!==undefined)){
         return a.__ne__(b);
     }else if((b!=null) && (b.__ne__!==undefined)){
@@ -68,7 +68,7 @@ publ.ne=function(a, b){
     }
 };
 
-publ.is=function(a,b){
+mod.is=function(a,b){
     if((a!=null) && (a.__is__!==undefined)){
         return a.__is__(b);
     }else if((b!=null) && (b.__is__!==undefined)){
@@ -78,7 +78,7 @@ publ.is=function(a,b){
     }
 };
 
-publ.isnot=function(a,b){
+mod.isnot=function(a,b){
     if((a!=null) && (a.__isnot__!==undefined)){
         return a.__isnot__(b);
     }else if((b!=null) && (b.__isnot__!==undefined)){
@@ -88,7 +88,7 @@ publ.isnot=function(a,b){
     }
 };
 
-publ.ge=function(a, b){
+mod.ge=function(a, b){
     if((a!=null) && (a.__ge__!==undefined)){
         return a.__ge__(b);
     }else if((b!=null) && (b.__ge__!==undefined)){
@@ -98,7 +98,7 @@ publ.ge=function(a, b){
     }
 };
 
-publ.gt=function(a, b){
+mod.gt=function(a, b){
     if((a!=null) && (a.__gt__!==undefined)){
         return a.__gt__(b);
     }else if((b!=null) && (b.__gt__!==undefined)){
@@ -108,7 +108,7 @@ publ.gt=function(a, b){
     }
 };
 
-publ.not=function(a){
+mod.not=function(a){
     if((a!=null) && (a.__not__!==undefined)){
         return a.__not__();
     }else{
@@ -122,7 +122,7 @@ Array.prototype.__eq__ = function(a){
         return false;
     }else{
         for(var i=0;i<this.length;i++){
-            if(! eq(this[i], a[i])){
+            if(! mod.eq(this[i], a[i])){
                 return false;
             }
         }
@@ -135,11 +135,10 @@ Array.prototype.__neq__ = function(a){
         return true;
     }else{
         for(var i=0;i<this.length;i++){
-            if(neq(this[i], a[i])){
+            if(mod.neq(this[i], a[i])){
                 return true;
             }
         }
         return false;
     }
 };
-

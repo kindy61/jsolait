@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 imprt("testing");
 imprt('strings')
 
-publ.test=function( logger){
+mod.test=function( logger){
    
     logger.log("testing strings");
     
@@ -18,6 +18,6 @@ publ.test=function( logger){
     testing.assertEquals("natural compare", a.join(", "), "jsolait 1, jsolait 2, jsolait 11");
 };
 
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };

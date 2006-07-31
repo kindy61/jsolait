@@ -1,23 +1,3 @@
-/*
-    Copyright (c) 2006 Jan-Klaas Kollhof
-
-    This file is part of jsolait
-
-    jsolait is free software; you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 2.1 of the License, or
-    (at your option) any later version.
-
-    This software is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-*/
 /**
     Module providing String functionality (String templates, Fast writable Strings, ...).
     
@@ -26,9 +6,9 @@
     @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
-__version__ = "$Revision: 43$";
-   
-publ.WordNumberStringSplitter = Class(function(publ,priv,supr){
+mod.__version__="$Revision: 43$";
+
+mod.WordNumberStringSplitter = Class(function(publ,priv,supr){
     publ.__init__=function(s){
         this.s=s;
     };
@@ -54,9 +34,9 @@ publ.WordNumberStringSplitter = Class(function(publ,priv,supr){
     };
 });
 
-publ.naturalCompare=function(a, b){
-    var asplitter=new WordNumberStringSplitter(a);
-    var bsplitter=new WordNumberStringSplitter(b);
+mod.naturalCompare=function(a, b){
+    var asplitter=new mod.WordNumberStringSplitter(a);
+    var bsplitter=new mod.WordNumberStringSplitter(b);
     
     while(true){
         var x = asplitter.next();
@@ -77,7 +57,7 @@ publ.naturalCompare=function(a, b){
     Use it when you need a writable stream to generate a large String.
     This is much faster than using string concatinations (e.g. s += "new string data)
 **/
-publ.WritableString=Class(Array, function(publ,supr){
+mod.WritableString=Class(Array, function(publ,supr){
     /**
         Initializes a WritableString object.
         @param value   The initial value of the WritableString.
@@ -107,11 +87,11 @@ publ.WritableString=Class(Array, function(publ,supr){
 /**
     Default value for String::exec's codeStartDelimiter.
 **/
-publ.templateCodeStartDelimiter = "<?";
+mod.templateCodeStartDelimiter = "<?";
 /**
     Default value for String::exec's codeEndDelimiter.
 **/
-publ.templateCodeEndDelimiter = "?>";
+mod.templateCodeEndDelimiter = "?>";
 
 
 /**
@@ -132,13 +112,13 @@ publ.templateCodeEndDelimiter = "?>";
     
 
     @param locals={} A dictionary containing name:value-pairs for local variables exposed to the script that is run from the template.
-    @param codeStartDelimiter = templateCodeStartDelimiter  The start of a codeblock.
-    @param codeEndDelimiter = templateCodeEndDelimiter     The end of a codeblock.
+    @param codeStartDelimiter = mod.templateCodeStartDelimiter  The start of a codeblock.
+    @param codeEndDelimiter = mod.templateCodeEndDelimiter     The end of a codeblock.
     @return A string that results from running the template.
 **/
 String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
-    codeStartDelimiter = codeStartDelimiter == null ? templateCodeStartDelimiter : codeStartDelimiter;
-    codeEndDelimiter = codeEndDelimiter == null ? templateCodeEndDelimiter : codeEndDelimiter;
+    codeStartDelimiter = codeStartDelimiter == null ? mod.templateCodeStartDelimiter : codeStartDelimiter;
+    codeEndDelimiter = codeEndDelimiter == null ? mod.templateCodeEndDelimiter : codeEndDelimiter;
     
     var s=this + "";
     var code = [];
@@ -159,7 +139,7 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
                     code.push(text);
                 }
             }else{
-                throw Exception("No code end dilimiter: '%s' found".format(codeEndDelimiter));
+                throw mod.Exception("No code end dilimiter: '%s' found".format(codeEndDelimiter));
             }
         }else{
             code.push(';out.write("' + s.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r") + '");');
@@ -167,7 +147,7 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
         }
     }
     
-    var sout=new WritableString();
+    var sout=new mod.WritableString();
     var params  = [sout];
     
     var paramNames = ["out"];
@@ -178,9 +158,8 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
     try{
         var f = new Function(paramNames.join(","), code.join(""));
     }catch(e){
-        throw new Exception("Error compiling template:\n\n%s".format(code.join("")),e);
+        throw new mod.Exception("Error compiling template:\n\n%s".format(code.join("")),e);
     }
     f.apply(sout, params);
     return str(sout);
 };
-

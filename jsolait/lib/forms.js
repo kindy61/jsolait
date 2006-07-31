@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005-2006 Jan-Klaas Kollhof
+  Copyright (c) 2005 Jan-Klaas Kollhof
   
   This file is part of the JavaScript O Lait library(jsolait).
   
@@ -27,13 +27,13 @@
     @lastchangeddate    $Date$
 **/
 
-__version__="$Revision$";
+mod.__version__="$Revision$";
 /**
     A class that resembles the functionality of an HTML form.
     One can access the elements using the elements property of the form or
     by accessing the element as a named property of the form object(formObj.elemName ...).
 **/
-publ.Form=Class(function(publ, supr){
+mod.Form=Class(function(publ, supr){
     ///Contains the form elements.
     publ.elements=[];
     ///The URL to submit the form to.
@@ -67,7 +67,7 @@ publ.Form=Class(function(publ, supr){
             }
         }
         if(f == null){//add a new element
-            f = new Element(name, value);
+            f = new mod.Element(name, value);
             this.elements.push(f);
         }
         //add the element as a properyt to the form object
@@ -163,7 +163,7 @@ publ.Form=Class(function(publ, supr){
 /**
     A form element class.
 **/
-publ.Element=Class(function(publ, supr){
+mod.Element=Class(function(publ, supr){
     ///The name of the element.
     publ.name="";
     ///The value of the elenet.
@@ -187,8 +187,8 @@ publ.Element=Class(function(publ, supr){
     };
 }) ;   
 
-publ.__main__=function(){
-    var fm = new Form("http://localhost/echoform.py", "get");
+mod.__main__=function(){
+    var fm = new mod.Form("http://localhost/echoform.py", "get");
     print("testing all sorts of chars, the should be encoded.");
     fm.set("testchars", "abcdefghijklmnopqrstuvwxyz1234567890 \n\t!@#$%^&*()_+-=[]{};'\\:\"|,./<>?");
     print(fm.encode());

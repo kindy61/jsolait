@@ -32,9 +32,9 @@
     
     <script language="JavaScript"> <![CDATA[
     
-    jsolait.Module("jsolaitws", function(publ,priv,__builtin__){with(publ){with(priv){with(__builtin__){
-        __version__ = "$Revision$"
-        __sourceURI__ = 'file://' + WScript.scriptFullName;
+    jsolait.Module("jsolaitws", function(mod){
+        mod.__version__ = "$Revision$"
+        mod.__sourceURI__ = 'file://' + WScript.scriptFullName;
         jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
         
         var fs= new ActiveXObject("Scripting.FileSystemObject");
@@ -82,7 +82,7 @@
             return  this.name +": " + this.message;
         }
         
-        publ.run=function(){
+        mod.run=function(){
             
             if (WScript.arguments.unnamed.length==0){
                 WScript.Arguments.ShowUsage();                                              
@@ -105,9 +105,8 @@
                 wshShell.currentDirectory = fileBase.slice('file://'.length);
             }
             
-            if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&  fileName.toLowerCase() != __sourceURI__.toLowerCase()){
+            if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&  fileName.toLowerCase() != mod.__sourceURI__.toLowerCase()){
                 var src = jsolait.loadURI(fileName);
-                
                 var modl = jsolait.createModuleFromSource("__main__", src, fileName);
                 try{
                     var tmain =typeof(modl.__main__);
@@ -122,7 +121,7 @@
                             case "{": case "'":  case "[":  case '"':
                                 break;
                             default:
-                                args = repr(args);
+                                args = jsolait.repr(args);
                         }
                         f=new Function( "return " + args);
                         args = [f()];
@@ -133,13 +132,13 @@
                     try{
                         modl.__main__.apply(modl, args);
                     }catch(e){
-                        throw new Exception("runing %s  __main__()  failed\n".format(modl),e)
+                        throw new mod.Exception("runing %s  __main__()  failed\n".format(modl),e)
                     }
                 }
                 
             }
         };
-    }}}});
+    });
 
     try{
         jsolait.loadModule("jsolaitws").run();

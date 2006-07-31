@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003-2006 Jan-Klaas Kollhof
+  Copyright (c) 2003 Jan-Klaas Kollhof
 
   This file is part of the JavaScript o lait library(jsolait).
 
@@ -25,11 +25,11 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-__version__="$Revision$";
+mod.__version__="$Revision$";
 /**
     Thrown if no request object could be instanciated.
 */
-publ.NoHTTPRequestObject=Class(Exception, function(publ, supr){
+mod.NoHTTPRequestObject=Class(mod.Exception, function(publ, supr){
     /**
         Initializes the Exception.
         @param trace The error causing this exception.
@@ -42,7 +42,7 @@ publ.NoHTTPRequestObject=Class(Exception, function(publ, supr){
 /**
     Thrown if an HTTP request could not be opened.
 */
-publ.RequestOpenFailed = Class(Exception, function(publ, supr){
+mod.RequestOpenFailed = Class(mod.Exception, function(publ, supr){
     /**
         Initializes the Exception.
         @param trace The error causing this exception.
@@ -55,7 +55,7 @@ publ.RequestOpenFailed = Class(Exception, function(publ, supr){
 /**
     Thrown is arequest could not be sent to the server.
 */
-publ.SendFailed=Class(Exception, function(publ, supr){
+mod.SendFailed=Class(mod.Exception, function(publ, supr){
      /**
         Initializes the Exception.
         @param trace The error causing this exception.
@@ -158,7 +158,7 @@ var getHTTP=function() {
                     try{//to create the ASV request object.
                         obj = new ASVRequest();
                     }catch(e){
-                        throw new NoHTTPRequestObject("Neither Mozilla, IE nor ASV found. Can't do HTTP request without them.");
+                        throw new mod.NoHTTPRequestObject("Neither Mozilla, IE nor ASV found. Can't do HTTP request without them.");
                     }
                 }
             }
@@ -196,7 +196,7 @@ var getHTTP=function() {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-publ.sendRequest=function(type, url, user, pass, data, headers, callback){
+mod.sendRequest=function(type, url, user, pass, data, headers, callback){
     var async=false;
     //check if the last argument is a function and treat it as callback;
     if(typeof arguments[arguments.length-1]  == 'function'){
@@ -232,7 +232,7 @@ publ.sendRequest=function(type, url, user, pass, data, headers, callback){
             xmlhttp.open(type, url, async);
         }
     }catch(e){
-        throw new RequestOpenFailed(e);
+        throw new mod.RequestOpenFailed(e);
     }
     //set headers
     for(var i=0;i< headers.length;i++){
@@ -273,7 +273,7 @@ publ.sendRequest=function(type, url, user, pass, data, headers, callback){
             callback(xmlhttp, e);
             xmlhttp=null;
         }else{
-            throw new SendFailed(e);
+            throw new mod.SendFailed(e);
         }
     }
     return xmlhttp;
@@ -289,12 +289,12 @@ publ.sendRequest=function(type, url, user, pass, data, headers, callback){
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-publ.getURL=function(url, user, pass, headers, callback) {
+mod.getURL=function(url, user, pass, headers, callback) {
     var a=["GET"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
     }
-    return sendRequest.apply(this,a);
+    return mod.sendRequest.apply(this,a);
 };
 /**
     Shorthand for a POST request.
@@ -308,12 +308,12 @@ publ.getURL=function(url, user, pass, headers, callback) {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-publ.postURL=function(url, user, pass, data, headers, callback) {
+mod.postURL=function(url, user, pass, data, headers, callback) {
     var a= ["POST"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
     }
-    return sendRequest.apply(this,a);
+    return mod.sendRequest.apply(this,a);
 };
 
 
@@ -321,7 +321,7 @@ publ.postURL=function(url, user, pass, data, headers, callback) {
     Returns wether or not the module is usable or not.
     @return True if the module can make HTTP requests, false otherwise.
 **/
-publ.isUsable=function(){
+mod.isUsable=function(){
     try{
         getHTTP();
         return true;                
@@ -329,5 +329,4 @@ publ.isUsable=function(){
         return false;
     }
 };
-
 

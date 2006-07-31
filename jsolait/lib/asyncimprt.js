@@ -1,5 +1,8 @@
 
+Error.prototype.toString=function(){
+    return this.message;
 
+}
 var applyNames=function(container){
     for(var n in container){
         var obj = container[n];

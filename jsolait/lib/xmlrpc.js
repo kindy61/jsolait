@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003-2006 Jan-Klaas Kollhof
+  Copyright (c) 2003-2005 Jan-Klaas Kollhof
 
   This file is part of the JavaScript o lait library(jsolait).
 
@@ -26,15 +26,16 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-__verstion__ = "$Revision$";
+mod.__version__="$Revision$";
     
 imprt("xml:parseXML");
 imprt("urllib");
 
+
 /**
     Thrown if a  server did not respond with response status 200 (OK).
 */
-publ.InvalidServerResponse = Class(Exception, function(publ, supr){
+mod.InvalidServerResponse = Class(mod.Exception, function(publ, supr){
     /**
         Initializes the Exception.
         @param status       The status returned by the server.
@@ -50,7 +51,7 @@ publ.InvalidServerResponse = Class(Exception, function(publ, supr){
 /**
     Thrown if an XML-RPC response is not well formed.
 */
-publ.MalformedXmlRpc = Class(Exception, function(publ, supr){
+mod.MalformedXmlRpc = Class(mod.Exception, function(publ, supr){
     /**
         Initializes the Exception.
         @param msg          The error message of the user.
@@ -67,7 +68,7 @@ publ.MalformedXmlRpc = Class(Exception, function(publ, supr){
 /**
     Thrown if the RPC response is a Fault.
 */
-publ.Fault = Class(Exception, function(publ, supr){
+mod.Fault = Class(mod.Exception, function(publ, supr){
     /**
         Initializes the Exception.
         @param faultCode       The fault code returned by the rpc call.
@@ -92,14 +93,14 @@ publ.Fault = Class(Exception, function(publ, supr){
     @param obj    The object to marshall
     @return         An xml representation of the object.
 */
-publ.marshall = function(obj){
+mod.marshall = function(obj){
     if(obj.toXmlRpc!=null){
         return obj.toXmlRpc();
     }else{
         var s = "<struct>";
         for(var attr in obj){
             if(typeof obj[attr] != "function"){
-                s += "<member><name>" + attr + "</name><value>" + marshall(obj[attr]) + "</value></member>";
+                s += "<member><name>" + attr + "</name><value>" + mod.marshall(obj[attr]) + "</value></member>";
             }
         }
         s += "</struct>";
@@ -113,13 +114,13 @@ publ.marshall = function(obj){
     @param xml    The xml document source to unmarshall.
     @return         The JavaScript object created from the XML.
 */
-publ.unmarshall = function(xml){
+mod.unmarshall = function(xml){
     try {//try to parse xml ... this will throw an Exception if failed
         var doc = parseXML(xml);
     }catch(e){
-        throw new MalformedXmlRpc("The server's response could not be parsed.", xml, e);
+        throw new mod.MalformedXmlRpc("The server's response could not be parsed.", xml, e);
     }
-    var rslt = unmarshallDoc(doc, xml);
+    var rslt = mod.unmarshallDoc(doc, xml);
     doc=null;
     return rslt;
 };
@@ -130,11 +131,11 @@ publ.unmarshall = function(xml){
     @param doc   The xml document(DOM compatible) to unmarshall.
     @return         The JavaScript object created from the XML.
 */
-publ.unmarshallDoc = function(doc, xml){
+mod.unmarshallDoc = function(doc, xml){
     try{
         var node = doc.documentElement;
         if(node==null){//just in case parse xml didn't throw an Exception but returned nothing usefull.
-            throw new MalformedXmlRpc("No documentElement found.", xml);
+            throw new mod.MalformedXmlRpc("No documentElement found.", xml);
         }
         switch(node.tagName){
             case "methodResponse":
@@ -142,13 +143,13 @@ publ.unmarshallDoc = function(doc, xml){
             case "methodCall":
                 return parseMethodCall(node);
             default://nothing usefull returned by parseXML.
-                throw new MalformedXmlRpc("'methodCall' or 'methodResponse' element expected.\nFound: '" + node.tagName + "'", xml);
+                throw new mod.MalformedXmlRpc("'methodCall' or 'methodResponse' element expected.\nFound: '" + node.tagName + "'", xml);
         }
     }catch(e){
-        if(e.constructor == Fault){//just rethrow the fault.
+        if(e.constructor == mod.Fault){//just rethrow the fault.
             throw e;
         }else {
-            throw new MalformedXmlRpc("Unmarshalling of XML failed.", xml, e);
+            throw new mod.MalformedXmlRpc("Unmarshalling of XML failed.", xml, e);
         }
     }
 };
@@ -171,20 +172,20 @@ var parseMethodResponse=function(node){
                         if(params.length == 1){//params should only have one param
                             return params[0];
                         }else{
-                            throw new MalformedXmlRpc("'params' element inside 'methodResponse' must have exactly ONE 'param' child element.\nFound: " + params.length);
+                            throw new mod.MalformedXmlRpc("'params' element inside 'methodResponse' must have exactly ONE 'param' child element.\nFound: " + params.length);
                         }
                     default:
-                        throw new MalformedXmlRpc("'fault' or 'params' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'fault' or 'params' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         //no child elements found
-        throw new MalformedXmlRpc("No child elements found.");
+        throw new mod.MalformedXmlRpc("No child elements found.");
     }catch(e){
-        if(e.constructor == Fault){
+        if(e.constructor == mod.Fault){
             throw e;
         }else{
-            throw new MalformedXmlRpc("'methodResponse' element could not be parsed.",null,e);
+            throw new mod.MalformedXmlRpc("'methodResponse' element could not be parsed.",null,e);
         }
     }
 };
@@ -208,17 +209,17 @@ var parseMethodCall = function(node){
                         params = parseParams(child);
                         break;
                     default:
-                        throw new MalformedXmlRpc("'methodName' or 'params' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'methodName' or 'params' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         if(methodName==null){
-            throw new MalformedXmlRpc("'methodName' element expected.");
+            throw new mod.MalformedXmlRpc("'methodName' element expected.");
         }else{
             return new Array(methodName, params);
         }
     }catch(e){
-        throw new MalformedXmlRpc("'methodCall' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'methodCall' element could not be parsed.",null,e);
     }
 };
 /**
@@ -237,14 +238,14 @@ var parseParams = function(node){
                         params.push(parseParam(child));
                         break;
                     default:
-                        throw new MalformedXmlRpc("'param' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'param' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         //the specs say a 'params' element can contain any number of 'param' elements. That includes 0 ?!
         return params;
     }catch(e){
-        throw new MalformedXmlRpc("'params' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'params' element could not be parsed.",null,e);
     }
 };
 /**
@@ -261,14 +262,14 @@ var parseParam = function(node){
                     case "value":
                         return parseValue(child);
                     default:
-                        throw new MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         //no child elements found, that's an error
-        throw new MalformedXmlRpc("'value' element expected.But none found.");
+        throw new mod.MalformedXmlRpc("'value' element expected.But none found.");
     }catch(e){
-        throw new MalformedXmlRpc("'param' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'param' element could not be parsed.",null,e);
     }
 };
 /**
@@ -307,7 +308,7 @@ var parseValue = function(node){
                     case "nil": //for python None todo: ??? is this valid XML-RPC
                         return null;
                     default:
-                        throw new MalformedXmlRpc("'string','int','i4','double','boolean','base64','dateTime.iso8601','array' or 'struct' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'string','int','i4','double','boolean','base64','dateTime.iso8601','array' or 'struct' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
@@ -323,7 +324,7 @@ var parseValue = function(node){
             return "";
         }
     }catch(e){
-        throw new MalformedXmlRpc("'value' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'value' element could not be parsed.",null,e);
     }
 };
 /**
@@ -336,7 +337,7 @@ var parseBase64=function(node){
         var s = node.firstChild.nodeValue;
         return s.decode("base64");
     }catch(e){
-        throw new MalformedXmlRpc("'base64' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'base64' element could not be parsed.",null,e);
     }
 };
 /**
@@ -349,10 +350,10 @@ var parseDateTime=function(node){
         if(/^(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2}):?(\d{2})/.test(node.firstChild.nodeValue)){
             return new Date(Date.UTC(RegExp.$1, RegExp.$2-1, RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6));
         }else{ //todo error message
-            throw new MalformedXmlRpc("Could not convert the given date.");
+            throw new mod.MalformedXmlRpc("Could not convert the given date.");
         }
     }catch(e){
-        throw new MalformedXmlRpc("'dateTime.iso8601' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'dateTime.iso8601' element could not be parsed.",null,e);
     }
 };
 /**
@@ -369,13 +370,13 @@ var parseArray=function(node){
                     case "data":
                         return parseData(child);
                     default:
-                        throw new MalformedXmlRpc("'data' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'data' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
-        throw new MalformedXmlRpc("'data' element expected. But not found.");
+        throw new mod.MalformedXmlRpc("'data' element expected. But not found.");
     }catch(e){
-        throw new MalformedXmlRpc("'array' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'array' element could not be parsed.",null,e);
     }
 };
 /**
@@ -394,13 +395,13 @@ var parseData=function(node){
                         rslt.push(parseValue(child));
                         break;
                     default:
-                        throw new MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         return rslt;
     }catch(e){
-        throw new MalformedXmlRpc("'data' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'data' element could not be parsed.",null,e);
     }
 };
 /**
@@ -422,13 +423,13 @@ var parseStruct=function(node){
                         }
                         break;
                     default:
-                        throw new MalformedXmlRpc("'data' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'data' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         return struct;
     }catch(e){
-        throw new MalformedXmlRpc("'struct' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'struct' element could not be parsed.",null,e);
     }
 };
 /**
@@ -453,18 +454,18 @@ var parseMember=function(node){
                         }
                         break;
                     default:
-                        throw new MalformedXmlRpc("'value' or 'name' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'value' or 'name' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
         /*if(name == ""){
-            throw new MalformedXmlRpc("Name for member not found/convertable.");
+            throw new mod.MalformedXmlRpc("Name for member not found/convertable.");
         }else{
             return new Array(name, value);
         }*/
         return [name, value];
     }catch(e){
-        throw new MalformedXmlRpc("'member' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'member' element could not be parsed.",null,e);
     }
 };
 /**
@@ -480,15 +481,15 @@ var parseFault = function(node){
                 switch (child.tagName){
                     case "value":
                         var flt = parseValue(child);
-                        return new Fault(flt.faultCode, flt.faultString);
+                        return new mod.Fault(flt.faultCode, flt.faultString);
                     default:
-                        throw new MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
+                        throw new mod.MalformedXmlRpc("'value' element expected.\nFound: '" + child.tagName + "'");
                 }
             }
         }
-        throw new MalformedXmlRpc("'value' element expected. But not found.");
+        throw new mod.MalformedXmlRpc("'value' element expected. But not found.");
     }catch(e){
-        throw new MalformedXmlRpc("'fault' element could not be parsed.",null,e);
+        throw new mod.MalformedXmlRpc("'fault' element could not be parsed.",null,e);
     }
 };
 
@@ -504,7 +505,7 @@ var parseFault = function(node){
     then the remote method will be called asynchronously.
     The results and errors are passed to the callback.
 */
-publ.XMLRPCMethod =Class(function(publ){
+mod.XMLRPCMethod =Class(function(publ){
     var postData = function(url, user, pass, data, callback){
         if(callback == null){
             var rslt = urllib.postURL(url, user, pass, data, [["Content-Type", "text/xml"]]);
@@ -533,15 +534,15 @@ publ.XMLRPCMethod =Class(function(publ){
             }
             if((respDoc == null) || (respDoc.documentElement == null)){
                 if(respTxt == null || respTxt == ""){
-                    throw new MalformedXmlRpc("The server responded with an empty document.", "");
+                    throw new mod.MalformedXmlRpc("The server responded with an empty document.", "");
                 }else{
-                    return unmarshall(respTxt);
+                    return mod.unmarshall(respTxt);
                 }
             }else{ //use the respDoc directly so the xml does not have to be parsed.
-                return unmarshallDoc(respDoc, respTxt);
+                return mod.unmarshallDoc(respDoc, respTxt);
             }
         }else{
-            throw new InvalidServerResponse(status);
+            throw new mod.InvalidServerResponse(status);
         }
     };
 
@@ -550,7 +551,7 @@ publ.XMLRPCMethod =Class(function(publ){
         if (args.length>0){
             data += "<params>";
             for(var i=0;i<args.length;i++){
-                data += '<param><value>' + marshall(args[i]) + '</value></param>';
+                data += '<param><value>' + mod.marshall(args[i]) + '</value></param>';
             }
             data += '</params>';
         }
@@ -644,7 +645,7 @@ publ.XMLRPCMethod =Class(function(publ){
     Creates proxy objects which resemble the remote service.
     Method calls of this proxy will result in calls to the service.
 */
-publ.ServiceProxy=Class(function(publ){
+mod.ServiceProxy=Class(function(publ){
     /**
         Initializes a new ServerProxy.
         The arguments are interpreted as shown in the examples:
@@ -705,7 +706,7 @@ publ.ServiceProxy=Class(function(publ){
             var name = names[names.length-1];
             if(obj[name]){
             }else{
-                var mth = new XMLRPCMethod(this._url, methodNames[i], this._user, this._password);
+                var mth = new mod.XMLRPCMethod(this._url, methodNames[i], this._user, this._password);
                 obj[name] = mth;
                 this._methods.push(mth);
             }
@@ -745,7 +746,7 @@ publ.ServiceProxy=Class(function(publ){
 });
 
 ///@deprecated  Use ServiceProxy instead.
-publ.ServerProxy= ServiceProxy;
+mod.ServerProxy= mod.ServiceProxy;
 
 /**
     XML-RPC representation of a string.
@@ -810,23 +811,23 @@ Date.prototype.toXmlRpc = function(){
 Array.prototype.toXmlRpc = function(){
     var retstr = "<array><data>";
     for(var i=0;i<this.length;i++){
-        retstr += "<value>" + marshall(this[i]) + "</value>";
+        retstr += "<value>" + mod.marshall(this[i]) + "</value>";
     }
     return retstr + "</data></array>";
 };
 
 
-publ.__main__ = function(){
-    var s = new ServiceProxy("http://jsolait.net/test.py",['echo']);
+mod.__main__ = function(){
+    var s = new mod.ServiceProxy("http://jsolait.net/test.py",['echo']);
     print("creating ServiceProxy object using introspection for method construction...\n");
     print("%s created\n".format(s));
     print("creating and marshalling test data:\n");
     var o = [1.234, 5, {a:"Hello & < ", b:new Date()}];
-    print(marshall(o));
+    print(mod.marshall(o));
     print("\ncalling echo() on remote service...\n");
     var r = s.echo(o);
     print("service returned data(marshalled again):\n");
-    print(marshall(r));
+    print(mod.marshall(r));
 };
 
 

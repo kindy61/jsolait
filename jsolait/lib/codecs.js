@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2004-2006 Jan-Klaas Kollhof
+    Copyright (c) 2004-2005 Jan-Klaas Kollhof
 
     This file is part of the JavaScript o lait library(jsolait).
 
@@ -27,13 +27,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-__version__ = "$Revision$";
-
+mod.__version__ = "$Revision$";
 /**
     Returns all all available encoders.
     @return  An array of encoder names.
 **/
-publ.listEncoders=function(){
+mod.listEncoders=function(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "encode_"){
@@ -46,7 +45,7 @@ publ.listEncoders=function(){
     Returns all all available decoders.
     @return  An array of decoder names.
 **/
-publ.listDecoders=function(){
+mod.listDecoders=function(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "decode_"){
@@ -70,7 +69,7 @@ String.prototype.decode = function(codec){
         }
         return String.prototype[n].apply(this, args);
     }else{
-        throw new Exception("Decoder '%s' not found.".format(codec));
+        throw new mod.Exception("Decoder '%s' not found.".format(codec));
     }
 };
 
@@ -88,7 +87,7 @@ String.prototype.encode = function(codec){
         }
         return String.prototype[n].apply(this, args);
     }else{
-        throw new Exception("Ecnoder '%s' not found.".format(codec));
+        throw new mod.Exception("Ecnoder '%s' not found.".format(codec));
     }
 };
 
@@ -116,7 +115,7 @@ String.prototype.decode_base64=function(){
             return sDecoded.join("");
          }
      }else{
-         throw new Exception("String length must be divisible by 4.");
+         throw new mod.Exception("String length must be divisible by 4.");
      }
 };
 
@@ -221,4 +220,3 @@ String.prototype.decode_lzw=function(){
     }
     return out.join("");
 };
-

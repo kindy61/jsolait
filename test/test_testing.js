@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 
 imprt("testing");
 
-publ.test=function( logger){
+mod.test=function( logger){
     logger.log("testing testing ...");
     
     testing.assert(true);
@@ -29,7 +29,7 @@ publ.test=function( logger){
     testing.assertEquals("a","a");
     testing.assertEquals(null,null);
     testing.assertEquals(undefined,undefined);
-    testing.assertEquals(publ,publ);
+    testing.assertEquals(mod,mod);
     testing.assertEquals([1,2,3], [1,2,3]);
     
     testing.assertNotEquals(1,2);
@@ -40,7 +40,7 @@ publ.test=function( logger){
     testing.assertNotEquals([1,2,3], [2,3]);
     
     
-    testing.assertIs(publ,publ);
+    testing.assertIs(mod,mod);
     testing.assertIs(null,null);
     testing.assertIs(undefined,undefined);
     testing.assertIs("ab","ab");
@@ -51,12 +51,12 @@ publ.test=function( logger){
     testing.assertIs(a,b);
     
     testing.assertIsNot(null,undefined);
-    testing.assertIsNot(publ,{});
+    testing.assertIsNot(mod,{});
     testing.assertIsNot([123],[123]);
     testing.assertIsNot({},{});
     
 };
 
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };    

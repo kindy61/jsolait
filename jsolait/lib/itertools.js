@@ -42,13 +42,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-__version__ = "$Revision$"
-
+mod.__version__="$Revision$";
 
 /**
     Base class for Iterators.
 **/
-publ.Iterator=Class(function(publ, supr){
+mod.Iterator=Class(function(publ, supr){
     /**
         Returns the next item in the iteration.
         If there is no item left it throws StopIteration
@@ -123,14 +122,14 @@ publ.Iterator=Class(function(publ, supr){
     };
     
     publ.replace = function(item){
-        throw new Exception("Iterator::replace() not implemented");
+        throw new mod.Exception("Iterator::replace() not implemented");
     };
 });
 
 /**
     A simple range class to iterate over a range of numbers.
 **/
-publ.Range =Class(Iterator, function(publ, supr){
+mod.Range =Class(mod.Iterator, function(publ, supr){
     /**
         Initializes a new range.
         @param start=0  The first item in the range.
@@ -184,15 +183,16 @@ publ.Range =Class(Iterator, function(publ, supr){
     @param end       The last item in the range.
     @param step=1 The steps between each Item.
 **/
-publ.range = function(start, end, step){
-    var r=Range.__create__(arguments);
+mod.range = function(start, end, step){
+    var r=new mod.Range(Class);
+    r.__init__.apply(r, arguments);
     return r;
 };
 
 /**
     Iterator for Arrays.
 **/
-publ.ArrayItereator=Class(Iterator, function(publ, supr){
+mod.ArrayItereator=Class(mod.Iterator, function(publ, supr){
     publ.__init__=function(array){
         this.array = array;
         this.index = -1;
@@ -240,13 +240,13 @@ publ.ArrayItereator=Class(Iterator, function(publ, supr){
 });
 
 Array.prototype.__iter__ = function(){
-    return new ArrayItereator(this);
+    return new mod.ArrayItereator(this);
 };
 
 /**
     Iterator for Objects.
 **/
-publ.ObjectIterator=Class(Iterator, function(publ, supr){
+mod.ObjectIterator=Class(mod.Iterator, function(publ, supr){
     publ.__init__=function(obj){
         this.obj = obj;
         this.keys=[];
@@ -283,16 +283,16 @@ publ.ObjectIterator=Class(Iterator, function(publ, supr){
     @param cb                  An IterationCallback object to call for each step.
     @return                      An iterator object or the return value returned by the callback.
 **/
-publ.iter=function(iterable, thisObj, cb){
+mod.iter=function(iterable, thisObj, cb){
     var iterator;
     if(iterable.__iter__ !==undefined){
         iterator = iterable.__iter__();
     }else if(iterable.length != null){
-        iterator = new ArrayItereator(iterable);
+        iterator = new mod.ArrayItereator(iterable);
     }else if(iterable.constructor == Object){
-        iterator  = new ObjectIterator(iterable);
+        iterator  = new mod.ObjectIterator(iterable);
     }else{
-        throw new Exception("Iterable object does not provide __iter__ method or no Iterator found.");
+        throw new mod.Exception("Iterable object does not provide __iter__ method or no Iterator found.");
     }
     if(arguments.length==1){
         return iterator;
@@ -310,7 +310,7 @@ publ.iter=function(iterable, thisObj, cb){
     @param item The item returned by the iterator for the current step.
     @param iteration The Iteration object handling the iteration.
 **/
-publ.IterationCallback = function(item, iteration){};
+mod.IterationCallback = function(item, iteration){};
 
 /**
     Returns a list containing all elements from an iteratable object for which the callback returns true.
@@ -320,8 +320,8 @@ publ.IterationCallback = function(item, iteration){};
     @param cb                  An IterationCallback object to call for each item.
     @return                      A list containing all elements that were filtered.
 **/
-publ.filter=function(iterable, thisObj,cb){
-    var iterator = iter(iterable);
+mod.filter=function(iterable, thisObj,cb){
+    var iterator = mod.iter(iterable);
     if(cb == null){
         cb = thisObj;
         thisObj = null;
@@ -337,8 +337,8 @@ publ.filter=function(iterable, thisObj,cb){
     @param cb                  An IterationCallback object to call for each item.
     @return                      A list containing new elements.
 **/        
-publ.map=function(iterable, thisObj, cb){
-    var iterator  = iter(iterable);
+mod.map=function(iterable, thisObj, cb){
+    var iterator  = mod.iter(iterable);
     if(cb == null){
         cb = thisObj;
         thisObj = null;
@@ -353,15 +353,15 @@ publ.map=function(iterable, thisObj, cb){
     @param iterable          The iterable object.
     @return                      A list containing all elements.
 **/    
-publ.list=function(iterable){
-    return iter(iterable).__list__();
+mod.list=function(iterable){
+    return mod.iter(iterable).__list__();
 };
 
 /**
     An itereator that iterates over a number of given iterators.
     use zip() to create a Zipper.
 **/
-publ.Zipper = Class(Iterator, function(publ,priv,supr){
+mod.Zipper = Class(mod.Iterator, function(publ,priv,supr){
     
     publ.__init__=function(iterators){
         this.iterators = iterators;
@@ -388,11 +388,11 @@ publ.Zipper = Class(Iterator, function(publ,priv,supr){
     @param iterable*  Any number of iterable objects.
     @return a Zipper iterator.
 **/
-publ.zip = function(iterable){
+mod.zip = function(iterable){
     var iterators =[];
     for(var i=0;i<arguments.length;i++){
-        iterators.push(iter(arguments[i]));
+        iterators.push(mod.iter(arguments[i]));
     }
-    return new Zipper(iterators);
+    return new mod.Zipper(iterators);
 };
 

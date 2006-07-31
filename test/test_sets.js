@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 imprt("testing");
 imprt('sets');
 
-publ.test=function(logger){
+mod.test=function(logger){
     var s1=new sets.Set("0123456".split(""));
     var s2=new sets.Set("3456789".split(""));
     logger.log("testing sets...");
@@ -32,6 +32,6 @@ publ.test=function(logger){
                                 new sets.Set("012789".split("")),s2.symmDifference(s1));
 };
 
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };

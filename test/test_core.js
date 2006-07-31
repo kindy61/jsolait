@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 
 imprt("testing");
 
-publ.test=function(logger){
+mod.test=function(logger){
     logger.log("testing core String methods ...");
     
     testing.assertEquals("%s", "...%s...".format("abc"), "...abc...");
@@ -55,7 +55,7 @@ publ.test=function(logger){
     testing.assertEquals("id()", id("a"), "$a");
     testing.assertEquals("id()", id("$a"), "$$a");
     testing.assertEquals("id()", id(123), "#123");
-    testing.assertEquals("id()", id(publ), __id__);
+    testing.assertEquals("id()", id(mod), mod.__id__);
     
     
     testing.assertTrue("isinstance('a', String)", isinstance("a", String))
@@ -67,20 +67,20 @@ publ.test=function(logger){
     });
     testing.assertEquals("testing bind()", {f:f, x:123}.f(), 1);
     
-    var C=Class(Array, function(publ,priv,supr){});
+    var C=Class(Array, function(mod,priv,supr){});
     testing.assertEquals("Array subclassing", new C(1,2,3), [1,2,3]);
     
-    var C=Class(function(publ,priv,supr){
-        publ.__call__=function(){
+    var C=Class(function(mod,priv,supr){
+        mod.__call__=function(){
             return this;
         }
     });
     var o = new C();
     testing.assertEquals("callable()", o(), o);
     
-    testing.assertEquals("jsolait.loadURI()", str(jsolait.loadURI(__sourceURI__.slice(0,-2) + "txt")), "test\n");
+    testing.assertEquals("jsolait.loadURI()", str(jsolait.loadURI(mod.__sourceURI__.slice(0,-2) + "txt")), "test\n");
 };
 
-publ.__main__=function(){
-    test({log:print})
+mod.__main__=function(){
+    mod.test({log:print})
 };
