@@ -143,6 +143,18 @@ mod.test=function(name, testScope){
 };
 
 /**
+    Tests a module by running each of the modules test_ methods;
+**/
+mod.testModule=function(modObj){
+    
+    for(var key in modObj){
+        if(key.slice(0,5)=='test_'){
+            print(mod.test(modObj.__name__+'.'+key, modObj[key]));
+        }
+    }
+};
+
+/**
     Raised when an assertion fails.
 **/
 mod.AssertFailed=Class(mod.Exception, function(publ,supr){

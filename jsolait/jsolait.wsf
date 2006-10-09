@@ -95,10 +95,29 @@
                         
             //get the base of the file to execute
             var fileBase= fs.getParentFolderName(fileName);
-            
             //make sure the search path is updated to include the fileBase
             jsolait.moduleSearchURIs = [fileBase,  "%(baseURI)s/lib"];
             
+            
+            //see if there are any jsolait config files in any of the parent folders
+            var parentFolder= fileBase;
+            while(parentFolder){
+                try{
+                    var src = jsolait.loadURI(parentFolder+'/.jsolait');
+                    try{
+                        var f = new Function('__baseURI__',src);
+                        f(parentFolder);
+                        break;
+                    }catch(e){
+                        print('error in .jsolait', parentFolder);
+                        break;
+                    }
+                }catch(e){
+                }
+                parentFolder=fs.getParentFolderName(parentFolder);
+            }
+
+
             //change working dir to the file's location
             //todo:is it OK to change cwd?
             if(fileBase.slice(0, 'file://'.length) == 'file://'){

@@ -645,7 +645,9 @@ jsolait=(function(mod){
                 }
             }
         }else{
-            attachTo[name] = m;
+            var finalModuleName=name.split('.');
+            finalModuleName=finalModuleName.pop();
+            attachTo[finalModuleName] = m;
         }
     };
     
@@ -753,7 +755,7 @@ jsolait=(function(mod){
             argNames.push(key);
             args.push(locals[key]);
         }               
-        
+
         var modFn = new Function(argNames.join(","), source);
             
         try{//to run the module source
