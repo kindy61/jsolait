@@ -45,7 +45,20 @@ jsolait=(function(mod){
     /*@baseURI begin*/
     mod.baseURI="./jsolait";
     /*@baseURI end*/
-        
+    
+    try{// to guess the location where jsolait is installed
+        var elems=document.getElementsByTagName('script');
+        for(var i=0;i<elems.length;i++){
+            var src=elems[i].getAttribute('src');
+            var idx=src.indexOf('jsolait.js');
+            if(idx>0){
+                mod.baseURI=src.slice(0,idx-1);
+                break;
+            }
+        }
+    }catch(e){
+    }
+
     ///The paths to the modules that come with jsolait.
     //do not edit the following lines, it will be replaced by the build script
     /*@moduleSourceURIs begin*/
@@ -781,7 +794,6 @@ jsolait=(function(mod){
             }
         }
     };
-
 
 //---------------------------------------------------String Format -------------------------------------------------------
     /**
