@@ -26,18 +26,19 @@
     @lastchangeddate    $Date$
 **/
 
-mod.__version__="$Revision$";
+__version__="$Revision$";
 
-imprt('operators:*');
+import operators:*;
 
-mod.minProfileTime=500;
+minProfileTime=500;
+
 /**
     Returns the average time used for executing a function.
     @param repeat   How often the function should be executed.
     @param fn         The function to execute.
     @param ...         The rest of the parameters are sent to the function as arguments.
 */
-mod.timeExec=function(repeat, fn){
+def timeExec(repeat, fn){
     var args = [];
     for(var i=2;i<arguments.length;i++){
         args.push(arguments[i]);
@@ -52,11 +53,11 @@ mod.timeExec=function(repeat, fn){
 
 /**
     Messures the time it takes to run a function given as a parameter.
-    @param min=mod.minProfileTime  The minimum time to use for profiling.
+    @param min=minProfileTime  The minimum time to use for profiling.
     @param fn                              The function to profile. The function wil be called until the min-time is reached.
     @return                                  The time it took to run the function a single time. The time is averaged by the total time/repetitions
 **/
-mod.profile=function(min,fn){
+def profile(min,fn){
     if(arguments.length==1){
         fn=min;
         min=mod.minProfileTime;
@@ -79,8 +80,8 @@ mod.profile=function(min,fn){
 /**
     Provides a test task.
 **/
-mod.Test=Class(function(publ,supr){
-    publ.__init__=function(name, testScope){
+class Test({
+    publ __init__(name, testScope){
         if(testScope === undefined){
             testScope=name;
             name = 'anonymous';
@@ -92,18 +93,18 @@ mod.Test=Class(function(publ,supr){
     /**
         Runs the test and generates a report.
     **/
-    publ.run=function(){
+    publ run(){
         this.failed=false;
         this.error=null;
         this.startTime=(new Date()).getTime();
         try{
             this.testScope();
         }catch(e){
-            if(e.constructor == mod.AssertFailed){
+            if(e.constructor == AssertFailed){
                 this.error = e;
                 this.failed=true;
             }else{
-                throw new mod.Exception("Failed to run test.", e);
+                throw new Exception("Failed to run test.", e);
             }
         }
         this.endTime=(new Date()).getTime();
@@ -113,18 +114,18 @@ mod.Test=Class(function(publ,supr){
     /**
         Returns a report about the test run.
     **/
-    publ.report=function(){
+    publ report(){
         if(this.error){
             return "Test '%s' has failed after %s ms due to:\n\n%s".format(this.name, this.duration, this.error.toTraceString().indent(4));
         }else{
             return "Test '%s' completed in %s ms".format( this.name, this.duration);
         }
     };
-    publ.failed=false;
-    publ.error;
-    publ.startTime;
-    publ.endTime;
-    publ.duration;
+    publ failed=false;
+    publ error;
+    publ startTime;
+    publ endTime;
+    publ duration;
 });
 
 /**
@@ -132,12 +133,12 @@ mod.Test=Class(function(publ,supr){
     @param name='anonymous' The name for the test.
     @param testScope  A function to test.
 **/
-mod.test=function(name, testScope){
+def test(name, testScope){
     if(arguments.length == 1){
         testScope = name;
         name = 'anonymous';
     }
-    var t= new mod.Test(name, testScope);
+    var t= new Test(name, testScope);
     t.run();
     return t.report();
 };
@@ -145,11 +146,11 @@ mod.test=function(name, testScope){
 /**
     Tests a module by running each of the modules test_ methods;
 **/
-mod.testModule=function(modObj){
+def testModule(modObj){
     
     for(var key in modObj){
         if(key.slice(0,5)=='test_'){
-            print(mod.test(modObj.__name__+'.'+key, modObj[key]));
+            print(test(modObj.__name__+'.'+key, modObj[key]));
         }
     }
 };
@@ -157,8 +158,8 @@ mod.testModule=function(modObj){
 /**
     Raised when an assertion fails.
 **/
-mod.AssertFailed=Class(mod.Exception, function(publ,supr){
-    publ.__init__=function(comment, failMsg){
+class AssertFailed extends Exception({
+    publ __init__(comment, failMsg){
         this.failMessage = failMsg;
         this.comment = comment;
         supr.__init__.call(this, "%s failed: %s".format(comment, failMsg));
@@ -171,7 +172,7 @@ mod.AssertFailed=Class(mod.Exception, function(publ,supr){
     @param value          A boolean to testfor true.
     @param failMsg=''     A message to pass to the AssertFailed constructor in case the assertion fails.
 **/
-mod.assert=function(comment, value, failMsg){
+def assert(comment, value, failMsg){
     if(typeof comment == 'boolean'){
         failMsg=value;
         value = comment;
@@ -179,7 +180,7 @@ mod.assert=function(comment, value, failMsg){
     }
 
     if(value!==true){
-        throw new mod.AssertFailed(comment, failMsg===undefined ? "Expected true but found: %s".format(repr(value)) : failMsg);
+        throw new AssertFailed(comment, failMsg===undefined ? "Expected true but found: %s".format(repr(value)) : failMsg);
     }
 };
 
@@ -188,12 +189,12 @@ mod.assert=function(comment, value, failMsg){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-mod.assertTrue=function(comment, value){
+def assertTrue(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value===true, "Expected true but found: %s".format(repr(value)));
+    assert(comment, value===true, "Expected true but found: %s".format(repr(value)));
 };
 
 /**
@@ -201,12 +202,12 @@ mod.assertTrue=function(comment, value){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-mod.assertFalse=function(comment, value){
+def assertFalse(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value===false, "Expected false but found: %s".format(repr(value)));
+    assert(comment, value===false, "Expected false but found: %s".format(repr(value)));
 };
 
 /**
@@ -214,95 +215,95 @@ mod.assertFalse=function(comment, value){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-mod.assertEquals=function(comment, value1, value2){
+def assertEquals(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
         comment ='';
     }
-    mod.assert(comment, eq(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
+    assert(comment, eq(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
 };
     
-mod.assertNotEquals=function(comment, value1, value2){
+def assertNotEquals(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
         comment ='';
     }
-    mod.assert(comment, ne(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
+    assert(comment, ne(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
 };
 
-mod.assertIs=function(comment, value1, value2){
+def assertIs(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
         comment ='';
     }
-    mod.assert(comment, is(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
+    assert(comment, is(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
 };
     
-mod.assertIsNot=function(comment, value1, value2){
+def assertIsNot(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
         comment ='';
     }
-    mod.assert(comment, isnot(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
+    assert(comment, isnot(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
 };
 
-mod.assertNull=function(comment, value){
+def assertNull(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value===null, "Expected %s === null.".format(repr(value)));
+    assert(comment, value===null, "Expected %s === null.".format(repr(value)));
 };
 
-mod.assertNotNull=function(comment, value){
+def assertNotNull(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value !==null, "Expected %s !== null.".format(repr(value)));
+    assert(comment, value !==null, "Expected %s !== null.".format(repr(value)));
 };
 
-mod.assertUndefined=function(comment, value){
+def assertUndefined(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value===undefined, "Expected %s === undefined.".format(repr(value)));
+    assert(comment, value===undefined, "Expected %s === undefined.".format(repr(value)));
 };
 
-mod.assertNotUndefined=function(comment, value){
+def assertNotUndefined(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, value!==undefined, "Expected %s !== undefined".format(repr(value)));
+    assert(comment, value!==undefined, "Expected %s !== undefined".format(repr(value)));
 };
 
-mod.assertNaN=function(comment, value){
+def assertNaN(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(repr(value)));
+    assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(repr(value)));
 };
 
-mod.assertNotNaN=function(comment, value){
+def assertNotNaN(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
     }
-    mod.assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(repr(value)));
+    assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(repr(value)));
 };
 
-mod.fail=function(comment){
-    throw new mod.AssertFailed(comment, "Fail was called");
+def fail(comment){
+    throw new AssertFailed(comment, "Fail was called");
 };
 
-mod.objectKeys=function(obj){
+def objectKeys(obj){
     var keys=[];
     for(var n in obj){
         keys.push(n);

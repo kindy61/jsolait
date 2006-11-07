@@ -1,9 +1,9 @@
-mod.__version__ = "$Revision: 44 $";
+__version__ = "$Revision: 44 $";
 
-imprt("testing");
-imprt('urllib')
+import testing;
+import urllib;
 
-mod.test=function(logger){
+def test(logger){
     logger.log("testing urllib ...");
     testing.assertTrue("urllib usable", urllib.isUsable());
     
@@ -14,6 +14,6 @@ mod.test=function(logger){
     testing.assertEquals(resp.responseText, "test")
     
 };
-mod.__main__=function(){
-    mod.test({log:print});
+def __main__(){
+    test({log:print});
 };

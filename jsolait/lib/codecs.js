@@ -27,12 +27,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-mod.__version__ = "$Revision$";
+__version__ = "$Revision$";
 /**
     Returns all all available encoders.
     @return  An array of encoder names.
 **/
-mod.listEncoders=function(){
+def listEncoders(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "encode_"){
@@ -45,7 +45,7 @@ mod.listEncoders=function(){
     Returns all all available decoders.
     @return  An array of decoder names.
 **/
-mod.listDecoders=function(){
+def listDecoders(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "decode_"){

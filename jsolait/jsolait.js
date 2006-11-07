@@ -517,33 +517,62 @@ jsolait=(function(mod){
         publ.sourceURI;
     });
     
-    /**
-        Retrieves data given its URI.
-        @param uri             The uri to load.
-        @param headers=[]  The headers to use.
-        @return                 The content of the file.
-    **/
-    mod.loadURI=function(uri, headers){
-        headers = (headers !== undefined) ? headers : [];
+
+    mod.loadURI=function(uri, cb){
+        var errorNotHandled=true;
         try{
             var xmlhttp = mod.getHTTPRequestObject();
-            xmlhttp.open("GET", uri, false);
-            for(var i=0;i< headers.length;i++){
-                xmlhttp.setRequestHeader(headers[i][0], headers[i][1]);
+        }catch(e){
+            cb(null, new mod.LoadURIFailed(uri, new mod.Exception(uri,e)));
+            return;
+        }
+        
+        xmlhttp.onreadystatechange=function(){
+            if (xmlhttp.readyState==4) {
+                //todo: the status checking needs testing
+                if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
+                    var s= str(xmlhttp.responseText);
+                    xmlhttp = null;
+                    cb(s);
+                }else{
+                    if(errorNotHandled){
+                        errorNotHandled=false;
+                        cb(null, new mod.LoadURIFailed(uri, new mod.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status)));
+                    }
+                }
+                xmlhttp=null;
+            }else if (xmlhttp.readyState==2){
+                //status property should be available (MS IXMLHTTPRequest documentation)
+                //in Mozilla it is not if the request failed(server not reachable)
+                //in IE it is not available at all ?!
+                try{//see if it is mozilla otherwise don't care.
+                    var isNetscape = netscape;
+                    try{//if status is not available the request failed.
+                        var s=xmlhttp.status;
+                    }catch(e){//call the callback because Mozilla will not get to readystate 4
+                        if(errorNotHandled){
+                            xmlhttp = null;
+                            errorNotHandled=false;
+                            cb(null, new mod.LoadURIFailed(uri, new mod.Exception("url request failed ",e)));
+                        }
+                    }
+                }catch(e){
+                }
             }
+        };
+        
+        try{
+            xmlhttp.open("GET", uri, true);
             xmlhttp.send("");
         }catch(e){
-            throw new mod.LoadURIFailed(uri, e);
-        }
-        //todo: the status checking needs testing
-        if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
-            var s= str(xmlhttp.responseText);
-            return s;
-        }else{
-             throw new mod.LoadURIFailed(uri, new mod.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status));
+            if(errorNotHandled){
+                errorNotHandled=false;
+                xmlhttp=null;
+                cb (null, new mod.LoadURIFailed(uri, e));
+            }
         }
     };
-
+    
     
     /**
         Returns the possible locations of a module's source file.
@@ -598,90 +627,141 @@ jsolait=(function(mod){
     });
     
     /**
-       Loads a module given its name(someModule.someSubModule).
+       Loads a module given its name(someModule.someSubModule) asynchronously.
        jsolait.getSearchURIsForModuleName() will be used to determine the possible locations for the source of the module.
       
        @param name   The name of the module to load.
-       @return           The module object.
+       @param loadedCB   A callback which gets called (callback(module, error) 
+                                when the module is loaded or an error occurs.
     **/
-    mod.loadModule = function(name){
+    mod.loadModule=function(name, loadedCB){
 
         if(mod.modules[name]){ //module already loaded
-            return mod.modules[name];
+            loadedCB(mod.modules[name]);
         }else{
             var src,sourceURI;
             var searchURIs = mod.getSearchURIsForModuleName(name);
+            
             var failedURIs=[];
-            for(var i=0;i<searchURIs.length;i++){
-                try{
-                    sourceURI = searchURIs[i];
-                    src = mod.loadURI(sourceURI);
-                    break;
-                }catch(e){
-                    failedURIs.push(e.sourceURI);
+            var currentURI='';
+            var i=0
+            var handler=function(src, err){
+                if(err){
+                    failedURIs.push(currentURI);//err.sourceURI);
+                    if(searchURIs.length){
+                        mod.loadURI(currentURI=searchURIs.shift(), handler);
+                    }else{
+                        loadedCB(null, new mod.LoadModuleFailed(name, failedURIs));
+                    }
+                }else{
+                    mod.createModuleFromSource(name, src, currentURI, function(m, err){
+                        loadedCB(m, err);
+                    });
                 }
             }
-            if(src == null){
-                throw new mod.LoadModuleFailed(name, failedURIs);
-            }else{
-                try{//interpret the script
-                    var m = mod.createModuleFromSource(name, src, sourceURI);
-                    return m;
-                }catch(e){
-                    throw new mod.LoadModuleFailed(name, [sourceURI], e);
-                }
-            }
+            mod.loadURI(currentURI=searchURIs.shift(), handler);
         }
     };
-           
-    mod.__imprt__ = function(name, attachTo){
-        var n=name.replace(/\s/g,"").split(":");
-        name = n[0];
-        if(n.length>1){
-            var items = n[1].split(",");
-        }else{
-            var items=[];
-        }
+    
+    mod.createModuleFromSource =function(name, source, sourceURI, createdCB){
+        var newMod = new mod.ModuleClass(name, source, sourceURI);
+    
+        var cmpSrc = mod.compileSource(source);
         
-        var m = mod.loadModule(name);
+        var deps= cmpSrc.imports;
+        var source= 'with(mod){\n%s\n}'.format(cmpSrc.src);
         
-        if(items.length > 0){
-            if(items[0] == '*'){
-                for(var key in m){
-                    if(key.slice(0,2) != "__" && attachTo[key] == undefined){
-                        attachTo[key] = m[key];
+        var locals={
+            str:str,
+            repr:repr,
+            id:id,
+            bind:bind,
+            isinstance:isinstance,
+            issubclass:issubclass,
+            Class:Class
+        };
+        
+        mod.resolveDependencies(deps, locals, function(locals, err){
+            if(err){
+                createdCB(newMod, err);
+            }else{
+
+                var argNames = ['mod','imprt', 'jsolait'];
+                var args = [];
+                
+                args.push(newMod);
+                args.push(new Function("",""));
+                args.push(mod);
+                
+                for(var key in locals){
+                    argNames.push(key);
+                    args.push(locals[key]);
+                }              
+                
+                try{//to run the module source
+                    var modFn = new Function(argNames.join(","), source);
+                    modFn.apply(newMod, args);
+                }catch(e){
+                    createdCB(newMod, new mod.CreateModuleFailed(newMod, e));
+                    return;
+                }
+                              
+                applyNames(newMod);
+                mod.modules[name] = newMod;
+                createdCB(newMod);
+            }
+        });
+    };
+    
+    mod.resolveDependencies=function(deps, attachTo, resolvedCB){
+        var step = function(name){
+            var n=name.replace(/\s/g,"").split(":");
+            name = n[0];
+            if(n.length>1){
+                var items = n[1].split(",");
+            }else{
+                var items=[];
+            }
+
+            mod.loadModule(name, function(m, err){
+                if(err){
+                    resolvedCB(attachTo, err);
+                }else{
+                    
+                    if(items.length > 0){
+                        if(items[0] == '*'){
+                            for(var key in m){
+                                if(key.slice(0,2) != "__" && attachTo[key] == undefined){
+                                    attachTo[key] = m[key];
+                                }
+                            }
+                        }else{
+                            for(var i=0;i<items.length;i++){
+                                attachTo[items[i]] = m[items[i]];
+                            }
+                        }
+                    }else{
+                        var finalModuleName=name.split('.');
+                        finalModuleName=finalModuleName.pop();
+                        attachTo[finalModuleName] = m;
+                    }
+
+                    if(deps.length){
+                        step(deps.shift());
+                    }else{
+                        resolvedCB(attachTo);
                     }
                 }
-            }else{
-                for(var i=0;i<items.length;i++){
-                    attachTo[items[i]] = m[items[i]];
-                }
-            }
-        }else{
-            var finalModuleName=name.split('.');
-            finalModuleName=finalModuleName.pop();
-            attachTo[finalModuleName] = m;
-        }
-    };
-    
-    var StringsOrCommentsOrImprt=/(\/\*([\n\r]|.)*?\*\/)|(\/\/.*)|('(\\'|.)*?')|("(\\"|.)*?")|\b(imprt\(.*?\))/g;
-    var ImprtStatement=/^imprt\(['"](.*?)['"]\)$/;
-    
-    mod.getModuleDependenciesFromSource=function(source){
+            });
+        };
         
-        var imprtStatements=[];
-        var items=str(source).match(StringsOrCommentsOrImprt);
-        if(items){
-            for(var i=0;i<items.length;i++){
-                var item = items[i];
-                var imprtStatement=item.match(ImprtStatement);
-                if(imprtStatement){
-                    imprtStatements.push(imprtStatement[1]);
-                }
-            }
+        if(deps.length){
+            step(deps.shift());
+        }else{
+            resolvedCB(attachTo);
         }
-        return imprtStatements;
     };
+
     
     mod.ModuleClass=Class(function(publ,priv,supr){
         publ.__name__;
@@ -738,52 +818,9 @@ jsolait=(function(mod){
         return newMod;
     };
     
-    mod.createModuleFromSource=function(name, source, sourceURI){
-        var newMod = new mod.ModuleClass(name, source, sourceURI);
-            
-        var deps=mod.getModuleDependenciesFromSource(source);
-        
-        var locals={
-            str:str,
-            repr:repr,
-            id:id,
-            bind:bind,
-            isinstance:isinstance,
-            issubclass:issubclass,
-            Class:Class
-        };
-        
-        for(var i=0;i<deps.length;i++){
-            mod.__imprt__(deps[i], locals);
-        }
-            
-        var argNames = ['mod', 'imprt', 'jsolait'];
-        var args = [];
-        
-        args.push(newMod);
-        args.push(new Function("",""));
-        args.push(mod);
-                
-        for(var key in locals){
-            argNames.push(key);
-            args.push(locals[key]);
-        }               
-
-        var modFn = new Function(argNames.join(","), source);
-            
-        try{//to run the module source
-            modFn.apply(newMod, args);
-        }catch(e){
-            throw new mod.CreateModuleFailed(newMod, e);
-        }
-        
-        applyNames(newMod);
-        mod.modules[name] = newMod;
-        return newMod;
-    };     
     
     mod.Module = function(name, modFn){
-        return mod.createModule(name, str(modFn), '', modFn);
+        return mod.createModule(name, str(modFn), 'unknown', modFn);
     };
     
     var applyNames=function(container){
@@ -795,6 +832,180 @@ jsolait=(function(mod){
         }
     };
 
+    mod.compileSource=function(src){
+        var or=function(){
+            var a=[];
+            for(var i=0;i<arguments.length;i++){
+                a.push(grp(arguments[i]));
+            }
+            return a.join('|');
+        }
+        
+        var grp=function(a){
+            return '(' + a + ')';
+        }
+
+        var wrd=function(w){
+            w= w.replace(/\\/g,'\\\\');
+            w= w.replace(/\(/g,'\\(');
+            w= w.replace(/\)/g,'\\)');
+            w= w.replace(/\//g,'\\/');
+            w= w.replace(/\*/g,'\\*');
+            w= w.replace(/\./g,'\\.');
+            w= w.replace(/\]/g,'\\]');
+            w= w.replace(/\[/g,'\\[');
+            w= w.replace(/\{/g,'\\{');
+            w= w.replace(/\}/g,'\\}');
+            
+            return '\\b' + w + '\\b';
+        };
+        
+
+        var parens= function(a){
+            return '\\('+a+'\\)';
+        }
+        
+        var re=function(s){
+            return new RegExp(s,'g');
+        };
+        
+        var string=function(d){
+            return   d + '(\\\\'+d+'|.' + d + ')*?' ;
+        };
+        
+        var identifier=function(){
+           return '\\w+';
+        };
+        
+        var anyWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
+        var someWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
+        var startOfLine= grp('^|[\\n\\r]');
+        
+        var blockComment='/\\*([\\n\\r]|.)*?\\*/';
+        
+        var comment='//' + '.*' ;
+        
+        var methodDecl= grp([wrd('function'), wrd('def'),wrd('publ')].join('|')) ;
+        
+        var moduleFunctionStatement = startOfLine + methodDecl +'\\s+' +grp(identifier()) + '\\s*' +  grp(parens('.*?'));
+        
+        var classMethodStatement = someWhiteSpaceStart + methodDecl +'\\s+' +grp(identifier()) +  '\\s*' + grp(parens('.*?'));
+        
+        var classMember= someWhiteSpaceStart + wrd('publ')+ '\\s+'  +grp(identifier());
+        
+        var classStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s+' + wrd('extends') +'\\s+' + grp('.+?') + '\\(\\{';
+        var simpleClassStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s*\\(\\{';
+        
+        var importStatement = anyWhiteSpaceStart + wrd('import')+'\\s+'  + grp('.+?') + '[\\r\\n;]';
+        
+        var iterStatement= anyWhiteSpaceStart + wrd('iter') + '\\s+' +grp(identifier())+  '\\s+' + wrd('in') + '\\s+' + grp('.+?') + '\\{';
+        
+        var modLevelAssignment=startOfLine +grp(identifier())+'\\s*=';
+        
+        var modGlobaling =wrd('mod') + '\\s+' + grp(identifier())  +'\\s*=';
+        
+        var tupleAssingnment ='\\s\\[' + grp('.*?')  + '\\]\\s*=' + grp('.+?') + ';';
+        
+        
+        var allStatments=re(or(blockComment, comment, string("'"), string('"'), 
+                                        classStatement, simpleClassStatement, classMethodStatement,  moduleFunctionStatement, 
+                                        classMember,importStatement,iterStatement,modLevelAssignment,modGlobaling,tupleAssingnment));
+        
+
+        var Replacer=Class(function(publ,priv,supr){
+            publ.__init__=function(match, repl){
+                this.match=re(match);
+                this.replacement=repl;
+            };
+            
+            publ.run = function(a){
+                if(a.match(this.match)){
+                    return a.replace(this.match, this.replacement);
+                }else{
+                    return null;
+                }
+            };
+        });
+        
+        
+        var compile=function(src){
+            var replacers=[
+                new Replacer(moduleFunctionStatement, '$1var $3 = mod.$3=function$4' ),
+                new Replacer(classMethodStatement, '$1publ.$4=function$5' ) ,      
+                new Replacer(classStatement, '$1var $3 = mod.$3=Class("$3", $4, function(publ,priv,supr){' ),       
+                new Replacer(simpleClassStatement, '$1var $3 = mod.$3=Class("$3", function(publ,priv,supr){' ),       
+                new Replacer(classMember, '$1publ.$3' ),
+                new Replacer(modLevelAssignment, '$1var $2 = mod.$2 =' ),
+                new Replacer(modGlobaling, '$1 = mod.$1 =' )
+            ];
+            
+            var importRE=re(importStatement);
+            var iterRE =re(iterStatement);
+            var tupleRE =re(tupleAssingnment);
+            
+            var imports=[];
+            
+            src =src.replace(allStatments, function(a){
+                var reslt=null;
+
+                
+                for(var i=0;i<replacers.length;i++){
+                    rslt=replacers[i].run(a);
+                    if(rslt!=null){ 
+                        return rslt;
+                    }else{
+                        if(a.match(importRE)){
+                            imports.push(RegExp.$3);
+                            return '/*' + a + '*/';
+                        }else if(a.match(iterRE)){
+                            imports.push('itertools:iter');
+
+                            return a.replace(iterRE, "$1for(var $3,  _$3_iterator_= iter($4);  ($3=_$3_iterator_.next())!== undefined;){");
+                        }else if(a.match(tupleRE)){
+                            var names= RegExp.$1;
+                            var expr= RegExp.$2;
+                            
+                            names = names.replace(/\s/g,'').split(',');
+                            var s =' var ' + names.join(',')+', _' + names.join('_') + '=' + expr +';'
+                            for(var i=0;i<names.length;i++){
+                                s+=names[i] + '= _' + names.join('_') + '['+i+'];';
+                            }
+                            return s;
+                        }
+                    }
+                }
+                return a;
+            });
+            
+            return {imports: imports, src:src};
+        };
+        var src = compile(src);
+        //print(src.src)
+        return src;
+    };
+    
+    
+    
+    mod.run=function(modName, methodName, alertError){
+        mod.loadModule(modName, function(m, err){
+            if(err){
+                if(alertError){
+                    alert(err);
+                }
+                throw err;
+            }else{
+                try{
+                    m[methodName].call(m);
+                }catch(e){
+                    if(alertError){
+                        alert(e);
+                    }
+                    throw e
+                }
+            }
+        });
+    
+    };
 //---------------------------------------------------String Format -------------------------------------------------------
     /**
         Creates a format specifier object.

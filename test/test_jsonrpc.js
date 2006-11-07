@@ -1,9 +1,9 @@
 __version__ = "$Revision: 44 $";
 
-imprt("testing");
-imprt('jsonrpc');
+import testing;
+import jsonrpc;
 
-mod.test=function(logger){
+def test(logger){
     
     logger.log("testing jsonrpc ...");
     var s = new jsonrpc.ServiceProxy("http://jsolait.net/services/test.jsonrpc",["echo"]);
@@ -15,7 +15,7 @@ mod.test=function(logger){
     testing.assertEquals(jsonrpc.marshall(r), '[1.234, 5, {"a": "Hello \' \\" World", "b": [12, 3]}, "{ [ "]');
 };
 
-mod.__main__=function(){
-    mod.test({log:print});
+def __main__(){
+    test({log:print});
 };
 

@@ -1,13 +1,13 @@
 
 
-mod.Critical=50;
-mod.Error=40;
-mod.Warning=30;
-mod.Info=20;
-mod.Debug=10;
-mod.NotSet=0;
+Critical=50;
+Error=40;
+Warning=30;
+Info=20;
+Debug=10;
+NotSet=0;
 
-var levelNames = {
+levelNames = {
     50 : 'CRITICAL',
     40 : 'ERROR',
     30 : 'WARNING',
@@ -17,62 +17,62 @@ var levelNames = {
 };
 
 
-mod.getLevelName=function(lvl){
+def getLevelName(lvl){
     return levelNames[lvl];
 };
-mod.setLevelName=function(lvl, name){
+def setLevelName(lvl, name){
     levelNames[lvl]=name;
 };
  
-mod.debug=function(msg){
+def debug(msg){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.debug.apply(rootLogger, arguments);
 };
 
-mod.info=function(msg){
+def info(msg){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.info.apply(rootLogger, arguments);
 };
 
-mod.warning=function(msg){
+def warning(msg){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.warning.apply(rootLogger, arguments);
 };
 
-mod.error=function(msg, args){
+def error(msg, args){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.error.apply(rootLogger, arguments);
 };
 
-mod.critical=function(msg, args){
+def critical(msg, args){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.critical.apply(rootLogger, arguments);
 };
 
-mod.log=function(level, msg, args){
+def log(level, msg, args){
     if(rootLogger.handlers.length==0){
-        mod.basicConfig(0);
+        basicConfig(0);
     }
     rootLogger.log.apply(rootLogger, arguments);
 };
 
 
 
-mod.LogRecord=Class(function(publ,priv,supr){
-    publ.__init__=function(name, lvl, msg, args){
+class LogRecord({
+    publ __init__(name, lvl, msg, args){
         this.name = name;
         this.level=lvl;
-        this.levelName=mod.getLevelName(lvl);
+        this.levelName=getLevelName(lvl);
         this.args=args;
         this.created = new Date();
         this.msg=msg;
@@ -83,35 +83,35 @@ mod.LogRecord=Class(function(publ,priv,supr){
         }
     };
     
-    publ.__str__=function(){
+    publ __str__(){
         return '<LogRecord: %s, %s, %s ">'.format(this.name, this.level, this.msg);
     };
 });
 
-mod.Formatter=Class(function(publ,priv,supr){
-    publ.__init__=function(fmt){
+class Formatter({
+    publ __init__(fmt){
         this.fmt=fmt==null?"%(message)s":fmt;
     };
     
-    publ.format= function(rec){
+    publ format(rec){
         return this.fmt.format(rec);
     };
 });
 
-mod.Filter=Class(function(publ,priv,supr){
-     publ.__init__ = function(name){
+class Filter({
+     publ __init__(name){
         this.filters=[];
      }
      
-     publ.addFilter=function(fltr){
+     publ addFilter(fltr){
          this.filters.push(fltr);
      };
      
-     publ.removeFilter=function(){
+     publ removeFilter(){
          
      };
      
-     publ.filter=function(){
+     publ filter(){
         var rslt = true;
         for(var i=0;i<this.filters.length;i++){
             if(! this.filters[i].filter(rec)){
@@ -124,18 +124,18 @@ mod.Filter=Class(function(publ,priv,supr){
 });
 
 
-mod.Handler=Class(mod.Filter, function(publ,priv,supr){
-    publ.__init__ = function(level, formatter){
+class Handler extends Filter({
+    publ __init__(level, formatter){
         supr.__init__.call(this);
-        this.level = level==undefined?mod.NotSet:level;
+        this.level = level==undefined?NotSet:level;
         this.formatter=formatter;
     };
 
-    publ.emit=function(rec){
+    publ emit(rec){
         
     };
     
-    publ.format=function(rec){
+    publ format(rec){
         var fmt;
         if(this.formatter){
             fmt = this.formatter;
@@ -145,7 +145,7 @@ mod.Handler=Class(mod.Filter, function(publ,priv,supr){
         return fmt.format(rec);
     };
     
-    publ.handle=function(rec){
+    publ handle(rec){
         var rslt = this.filter(rec);
         if(rslt){
             try{
@@ -159,63 +159,63 @@ mod.Handler=Class(mod.Filter, function(publ,priv,supr){
 
 
 
-mod.Logger=Class(mod.Filter, function(publ,priv,supr){
-    publ.__init__ = function(name,level){
+class Logger extends Filter({
+    publ __init__(name,level){
         supr.__init__.call(this);
         this.name=name;
         this.parent = null;
         this.propagate = 1;
         this.handlers = [];
-        this.level = level==undefined?mod.NotSet:level;
+        this.level = level==undefined?NotSet:level;
         this.disabled = false;
     };
     
-    publ.debug=function(msg){
+    publ debug(msg){
         var args=[];
         for(var i=1;i<arguments.length;i++){
             args.push(arguments[i]);
         }
-        var rec = this.makeRecord(this.name, mod.Debug, msg, args); 
+        var rec = this.makeRecord(this.name, Debug, msg, args); 
         this.handle(rec);
     };
 
-    publ.info=function(msg){
+    publ info(msg){
         var args=[];
         for(var i=1;i<arguments.length;i++){
             args.push(arguments[i]);
         }
-        var rec = this.makeRecord(this.name, mod.Info, msg, args); 
+        var rec = this.makeRecord(this.name, Info, msg, args); 
         this.handle(rec);
     };
 
-    publ.warning=function(msg){
+    publ warning(msg){
         var args=[];
         for(var i=1;i<arguments.length;i++){
             args.push(arguments[i]);
         }
-        var rec = this.makeRecord(this.name, mod.Warning, msg, args); 
+        var rec = this.makeRecord(this.name, Warning, msg, args); 
         this.handle(rec);
     };
 
-    publ.error=function(msg){
+    publ error(msg){
         var args=[];
         for(var i=1;i<arguments.length;i++){
             args.push(arguments[i]);
         }
-        var rec = this.makeRecord(this.name, mod.Error, msg, args); 
+        var rec = this.makeRecord(this.name, Error, msg, args); 
         this.handle(rec);
     };
 
-    publ.critical=function(msg){
+    publ critical(msg){
         var args=[];
         for(var i=1;i<arguments.length;i++){
             args.push(arguments[i]);
         }
-        var rec = this.makeRecord(this.name, mod.Critical, msg, args); 
+        var rec = this.makeRecord(this.name, Critical, msg, args); 
         this.handle(rec);
     };
 
-    publ.log=function(level, msg){
+    publ log(level, msg){
         var args=[];
         for(var i=2;i<arguments.length;i++){
             args.push(arguments[i]);
@@ -224,21 +224,21 @@ mod.Logger=Class(mod.Filter, function(publ,priv,supr){
         this.handle(rec);
     };
     
-    publ.addHandler=function(hdlr){
+    publ addHandler(hdlr){
         this.handlers.push(hdlr);
     };
     
-    publ.removeHandler=function(hdlr){
+    publ removeHandler(hdlr){
 
     };
     
-    publ.handle=function(rec){
+    publ handle(rec){
         if((! this.disabled) && this.filter(rec)){
             this.callHandlers(rec);
         }
     };
     
-    publ.callHandlers=function(rec){
+    publ callHandlers(rec){
         var c = this;
         var found = 0;
         while(c!=null){
@@ -257,17 +257,17 @@ mod.Logger=Class(mod.Filter, function(publ,priv,supr){
         }
     };
     
-    publ.makeRecord=function(name, lvl, msg, args){
-        return new mod.LogRecord(name,lvl,msg,args); 
+    publ makeRecord(name, lvl, msg, args){
+        return new LogRecord(name,lvl,msg,args); 
     };
 });
     
 
-mod.basicConfig=function(level, format){
+def basicConfig(level, format){
       
     if(rootLogger.handlers.length == 0){ 
-        hdlr = new mod.Handler();
-        hdlr.formatter=new mod.Formatter(format==null?"%(levelName)s:%(name)s:%(message)s":format);
+        hdlr = new Handler();
+        hdlr.formatter=new Formatter(format==null?"%(levelName)s:%(name)s:%(message)s":format);
         
         rootLogger.addHandler(hdlr);
         rootLogger.level=level;
@@ -275,12 +275,12 @@ mod.basicConfig=function(level, format){
 };
 
 
-var rootLogger=new mod.Logger('root');
-var loggerClass=mod.Logger;
-var defaultFormatter= new mod.Formatter();
+var rootLogger=new Logger('root');
+var loggerClass=Logger;
+var defaultFormatter= new Formatter();
 var loggers={};
 
-mod.getLogger=function(name){
+def getLogger(name){
     if(name==undefined){
         l=rootLogger;
     }else{
@@ -291,7 +291,7 @@ mod.getLogger=function(name){
             var names=name.split(".");
             if(names.length>1){
                 var parentLoggerName=names.slice(-1).join('.')
-                l.parent=mod.getLogger(parentLoggerName);
+                l.parent=getLogger(parentLoggerName);
             }else{
                 l.parent=rootLogger;
             }
@@ -300,11 +300,11 @@ mod.getLogger=function(name){
     return l;
 };
 
-mod.getLoggerClass=function(){
+def getLoggerClass(){
     return loggerClass;
 };
 
-mod.setLoggerClass=function(lc){
+def setLoggerClass(lc){
     loggerClass=lc;
 };
 

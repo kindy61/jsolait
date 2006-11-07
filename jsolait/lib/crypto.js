@@ -26,12 +26,12 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-mod.__version__="$Revision$";
+__version__="$Revision$";
 /**
     Returns all all available encrypters.
     @return  An array of encrypters names.
 **/
-mod.listEncrypters=function(){
+def listEncrypters(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "encrypt_"){
@@ -44,7 +44,7 @@ mod.listEncrypters=function(){
     Returns all all available decrypters.
     @return  An array of decrypters names.
 **/
-mod.listDecrypters=function(){
+def listDecrypters(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "decrypt_"){

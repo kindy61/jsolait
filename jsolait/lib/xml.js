@@ -26,45 +26,47 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-mod.__version__="$Revision$";
-mod.XMLNS="http://www.w3.org/2000/xmlns/";
-mod.NSXML ="http://www.w3.org/XML/1998/namespace";
-mod.nsPrefixMap={"http://www.w3.org/2000/xmlns/" : "xmlns","http://www.w3.org/XML/1998/namespace":"xml"};
+
+__version__="$Revision$";
+
+XMLNS="http://www.w3.org/2000/xmlns/";
+NSXML ="http://www.w3.org/XML/1998/namespace";
+nsPrefixMap={"http://www.w3.org/2000/xmlns/" : "xmlns","http://www.w3.org/XML/1998/namespace":"xml"};
 
 /**
     Thrown if no parser could be instanciated.
 */
-mod.NoXMLParser=Class(mod.Exception, function(publ, supr){
+class NoXMLParser extends Exception({
     /**
         Initializes the Exception.
         @param trace  The error causing the Exception.
     */
-    publ.__init__=function(trace){
+    publ __init__(trace){
         supr.__init__.call(this, "Could not create an XML parser.", trace);
     };
 });
 /**
     Thrown if a document could not be parsed.
 */
-mod.ParsingFailed=Class(mod.Exception, function(publ, supr){
+class ParsingFailed extends Exception({
     /**
         Initializes the Exception.
         @param xml    The xml source which could not be parsed.
         @param trace The error causing this Exception.
     */
-    publ.__init__=function(xml,trace){
+    publ __init__(xml,trace){
          supr.__init__.call(this, "Failed parsing XML document.",trace);
         this.xml = xml;
     };
     ///The xml source which could not be parsed.
-    publ.xml;
+    publ xml;
 });
 /**
     Parses an xml document.
     @param xml     The xml text.
     @return          A DOM of the xml document.
 */
-mod.parseXML=function(xml){
+def parseXML(xml){
     var obj=null;
     var isMoz=false;
     var isIE=false;
@@ -93,7 +95,7 @@ mod.parseXML=function(xml){
                         obj = new ActiveXObject("microsoft.XMLDOM"); 
                         isIE=true;
                     }catch(e){
-                        throw new mod.NoXMLParser(e);
+                        throw new NoXMLParser(e);
                     }
                 }
             }
@@ -110,9 +112,10 @@ mod.parseXML=function(xml){
             return window.parseXML(xml, null);
         }
     }catch(e){
-        throw new mod.ParsingFailed(xml,e);
+        throw new ParsingFailed(xml,e);
     }
 };
+
 /**
     DOM2 implimentation of document.importNode().
     This will import into the current document. In SVG it will create SVG nodes in HTML it will create HTML nodes....
@@ -121,7 +124,7 @@ mod.parseXML=function(xml){
     @param deep=true        Import all childNodes recursively.
     @return                      The imported Node.
 */
-mod.importNode=function(importedNode, deep){
+def importNode(importedNode, deep){
     deep = (deep==null) ? true : deep;
     //constants from doom2
     var ELEMENT_NODE = 1;
@@ -139,7 +142,7 @@ mod.importNode=function(importedNode, deep){
     var importChildren=function(srcNode, parent){
         if(deep){
              for(var i=0; i<srcNode.childNodes.length; i++){
-                var n=mod.importNode(srcNode.childNodes.item(i), true);
+                var n=importNode(srcNode.childNodes.item(i), true);
                 parent.appendChild(n);
             }
         }
@@ -191,8 +194,8 @@ mod.importNode=function(importedNode, deep){
 var getNSPrefix = function(node, namespaceURI, nsPrefixMap){
     if(! namespaceURI){
         return "";
-    }else if(mod.nsPrefixMap[namespaceURI]){
-        return mod.nsPrefixMap[namespaceURI] + ":";
+    }else if(nsPrefixMap[namespaceURI]){
+        return nsPrefixMap[namespaceURI] + ":";
     }else if(nsPrefixMap[namespaceURI] != null){
         return nsPrefixMap[namespaceURI] + ":";
     }
@@ -200,7 +203,7 @@ var getNSPrefix = function(node, namespaceURI, nsPrefixMap){
         //check in the attributes of the node if the NS is defined.
         for(var i=0;i<node.attributes.length;i++){
             var attr =node.attributes.item(i);
-            if(attr.namespaceURI == mod.XMLNS && attr.value == namespaceURI){
+            if(attr.namespaceURI == XMLNS && attr.value == namespaceURI){
                 return attr.localName +":";
             }
         }
@@ -221,7 +224,7 @@ var getNSPrefix = function(node, namespaceURI, nsPrefixMap){
     @param node   The node to print.
     @return           A string containing the text for the XML.
 */
-mod.node2XML = function(node, nsPrefixMap, attrParent){
+def node2XML(node, nsPrefixMap, attrParent){
     nsPrefixMap = (nsPrefixMap == null)?{}:nsPrefixMap;
     var ELEMENT_NODE = 1;
     var ATTRIBUTE_NODE = 2;
@@ -291,7 +294,7 @@ mod.node2XML = function(node, nsPrefixMap, attrParent){
         case DOCUMENT_TYPE_NODE:
         case NOTATION_NODE:
         case ENTITY_NODE:
-            throw new mod.Exception("Nodetype(%s) not supported.".format(node.nodeType));
+            throw new Exception("Nodetype(%s) not supported.".format(node.nodeType));
             break;
     }
     return s;

@@ -1,8 +1,8 @@
 __version__ = "$Revision: 44 $";
-imprt("testing");
-imprt('strings')
+import testing;
+import strings;
 
-mod.test=function( logger){
+def test( logger){
    
     logger.log("testing strings");
     
@@ -18,6 +18,6 @@ mod.test=function( logger){
     testing.assertEquals("natural compare", a.join(", "), "jsolait 1, jsolait 2, jsolait 11");
 };
 
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };

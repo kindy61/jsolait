@@ -27,26 +27,29 @@
     @lastchangeddate    $Date$
 **/
 
-mod.__version__="$Revision$";
+__version__="$Revision$";
+
+import urllib;
+
 /**
     A class that resembles the functionality of an HTML form.
     One can access the elements using the elements property of the form or
     by accessing the element as a named property of the form object(formObj.elemName ...).
 **/
-mod.Form=Class(function(publ, supr){
+class Form({
     ///Contains the form elements.
-    publ.elements=[];
+    publ elements=[];
     ///The URL to submit the form to.
-    publ.action="";
+    publ action="";
     ///The method to use for subitting the form(GET/POST)
-    publ.method="GET";
+    publ method="GET";
     
     /**
         Initializes a Form object.
         @param action=""  The URL to submit the form to.
         @param method="GET"  The method to use for submitting(GET, POST).
     **/
-    publ.__init__=function(action, method){
+    publ __init__(action, method){
         this.elements=[];
         this.action= (action==null)?"":action;
         this.method= (method==null)?"GET":method;
@@ -58,7 +61,7 @@ mod.Form=Class(function(publ, supr){
         @param value The value of the form element.
         @return The Element set.
     **/
-    publ.set=function(name, value){
+    publ set(name, value){
         var f = null;
         for(var i=0;i<this.elements;i++){
             if(name == this.elements[i].name){
@@ -67,7 +70,7 @@ mod.Form=Class(function(publ, supr){
             }
         }
         if(f == null){//add a new element
-            f = new mod.Element(name, value);
+            f = new Element(name, value);
             this.elements.push(f);
         }
         //add the element as a properyt to the form object
@@ -82,7 +85,7 @@ mod.Form=Class(function(publ, supr){
         Encodes the form to a form data String.
         @return The encoded form.
     **/
-    publ.encode=function(){
+    publ encode(){
         var data=[];
         for(var i=0;i<this.elements.length;i++){
             data.push(this.elements[i].encode());
@@ -96,7 +99,7 @@ mod.Form=Class(function(publ, supr){
         This can be used for GET requests.
         @return The query string of the form.
     **/
-    publ.queryString=function(){
+    publ queryString(){
         return this.action + "?" + this.encode();
     };
             
@@ -106,7 +109,7 @@ mod.Form=Class(function(publ, supr){
         In SVG only forms with GET method wil be submitted by setting the browsers 
         location to the action URL appended with the data.
     **/
-    publ.submit=function(){
+    publ submit(){
         if(this.method.toLowerCase() == "get"){
             try{//this should work in HTML browsers
                 location.href = this.queryString();
@@ -140,10 +143,9 @@ mod.Form=Class(function(publ, supr){
         The urllib module is used to accomplish this by sending a request to the server.
         See urllib for information on callback usage and return values.
     **/
-    publ.submitNoReload=function(callback){
+    publ submitNoReload(callback){
         if(this.action && this.method){
-            var urllib = imprt("urllib");
-            
+
             switch(this.method.toLowerCase()){
                 case "get":
                     return urllib.getURL(this.queryString(),[["Content-Type", "application/x-www-form-urlencoded"]], callback);
@@ -163,18 +165,18 @@ mod.Form=Class(function(publ, supr){
 /**
     A form element class.
 **/
-mod.Element=Class(function(publ, supr){
+class Element({
     ///The name of the element.
-    publ.name="";
+    publ name="";
     ///The value of the elenet.
-    publ.value="";
+    publ value="";
     
     /**
         Initializes a form element.
         @param name  The name of the element.
         @param value  The value of the element.
     **/
-    publ.__init__=function(name, value){
+    publ __init__(name, value){
         this.name = name;
         this.value = value;
     };
@@ -182,14 +184,15 @@ mod.Element=Class(function(publ, supr){
         Encodes an element as form data.
         @return The encoded element data.
     **/
-    publ.encode=function(){
+    publ encode(){
         return encodeURIComponent(this.name) + "=" + encodeURIComponent(this.value);
     };
 }) ;   
 
-mod.__main__=function(){
-    var fm = new mod.Form("http://localhost/echoform.py", "get");
-    print("testing all sorts of chars, the should be encoded.");
+def __main__(){
+    var fm = new Form("http://localhost/echoform.py", "get");
+    print("testing all sorts of chars, that should be encoded.");
+    
     fm.set("testchars", "abcdefghijklmnopqrstuvwxyz1234567890 \n\t!@#$%^&*()_+-=[]{};'\\:\"|,./<>?");
     print(fm.encode());
     try{
@@ -200,3 +203,4 @@ mod.__main__=function(){
     fm.method="post";
     print(fm.submitNoReload().responseText);
 };
+

@@ -26,18 +26,18 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-mod.__version__="$Revision$";
+__version__="$Revision$";
 
 /**
     Thrown if an item was not found in the set.
 **/
-mod.ItemNotFoundInSet=Class(mod.Exception, function(publ, supr){
+class ItemNotFoundInSet extends Exception({
     ///The set the item was not found in.
-    publ.set;
+    publ set;
     ///The item that was not found.
-    publ.item;
+    publ item;
 
-    publ.__init__=function(set, item){
+    publ __init__(set, item){
         this.set =set;
         this.item=item;
     };
@@ -47,12 +47,12 @@ mod.ItemNotFoundInSet=Class(mod.Exception, function(publ, supr){
     The Set class.
     All Items added to a set must be id-able using jsolait's id() function.
 **/
-mod.Set=Class(function(publ, supr){
+class Set({
     /**
         Initializes a Set instance.
         @param elem*   An element which is added to the set or an Array object of which the elements are added to the set.
     **/
-    publ.__init__=function(elem){
+    publ __init__(elem){
         this.items = {};
         
         if(arguments.length > 1){
@@ -66,7 +66,7 @@ mod.Set=Class(function(publ, supr){
                     this.add(elems[i]);
                 }
             }else{
-                throw new mod.Exception("Expecting an Array object or multiple arguments");
+                throw new Exception("Expecting an Array object or multiple arguments");
             }
         }
     };
@@ -76,7 +76,7 @@ mod.Set=Class(function(publ, supr){
         @param item  A hashable item to add.
         @return        The item added.
     **/
-    publ.add=function(item){
+    publ add(item){
         this.items[id(item)] = item;
         return item;
     };
@@ -87,10 +87,10 @@ mod.Set=Class(function(publ, supr){
         @param item The item to remove.
         @return        The item that was removed.
     **/
-    publ.remove=function(item){
+    publ remove(item){
         var h = id(item);
         if(this.items[h] === undefined){
-            throw new mod.ItemNotFoundInSet(this, item);
+            throw new ItemNotFoundInSet(this, item);
         }else{
             item = this.items[h];
             delete this.items[h];
@@ -103,7 +103,7 @@ mod.Set=Class(function(publ, supr){
         @param item The item to remove.
         @return        The item that was removed.
     **/
-    publ.discard=function(item){
+    publ discard(item){
         var h = id(item);
         item = this.items[h];
         delete this.items[h];
@@ -115,7 +115,7 @@ mod.Set=Class(function(publ, supr){
         @param item The item in question.
         @return        True if the item is found in the set, false otherwise.
     **/
-    publ.contains=function(item){
+    publ contains(item){
         return (this.items[id(item)] !== undefined);
     };
     /**
@@ -123,7 +123,7 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set to check against.
         @return True if the set is a subset of setObj. False otherwise.
     **/
-    publ.isSubset = function(setObj){
+    publ isSubset(setObj){
         for(var n in this.items){
             if(setObj.contains(this.items[n])==false){
                 return false;
@@ -137,7 +137,7 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set to check against.
         @return True if the set is a super set of setObj. False otherwise.
     **/
-    publ.isSuperset = function(setObj){
+    publ isSuperset(setObj){
         return setObj.isSubset(this);
     };
 
@@ -146,11 +146,11 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set to check against.
         @return True if the set is equal to setObj. False otherwise.
     **/
-    publ.equals=function(setObj){
+    publ equals(setObj){
         return (this.isSubset(setObj) && setObj.isSubset(this));
     };
 
-    publ.__eq__=function(setObj){
+    publ __eq__(setObj){
         if(setObj.isSubset!==undefined){
             return this.equals(setObj);
         }else{
@@ -163,7 +163,7 @@ mod.Set=Class(function(publ, supr){
         @param set The set to union with.
         @return A new set.
     **/
-    publ.union=function(setObj){
+    publ union(setObj){
         var ns= this.copy();
         ns.unionUpdate(setObj);
         return ns;
@@ -174,8 +174,8 @@ mod.Set=Class(function(publ, supr){
         @param set The set to intersect with.
         @return A new set.
     **/
-    publ.intersection=function(setObj){
-        var ns=new mod.Set();
+    publ intersection(setObj){
+        var ns=new Set();
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)){
@@ -189,8 +189,8 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set containing the elements to subtract from the set.
         @return A new set.
     **/
-    publ.difference=function(setObj){
-        var ns=new mod.Set();
+    publ difference(setObj){
+        var ns=new Set();
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)==false){
@@ -206,7 +206,7 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set to create a symmetric difference with.
         @return A new set.
     **/
-    publ.symmDifference=function(setObj){
+    publ symmDifference(setObj){
         var ns = this.difference(setObj);
         return ns.unionUpdate(setObj.difference(this));
     };
@@ -217,7 +217,7 @@ mod.Set=Class(function(publ, supr){
         @param set The set to union with.
         @return The set itself.
     **/
-    publ.unionUpdate=function(setObj){
+    publ unionUpdate(setObj){
         for(var n in setObj.items){
             this.add(setObj.items[n]);
         }
@@ -229,7 +229,7 @@ mod.Set=Class(function(publ, supr){
         @param set The set to intersect with.
         @return The set itself.
     **/
-    publ.intersectionUpdate=function(setObj){
+    publ intersectionUpdate(setObj){
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)==false){
@@ -244,7 +244,7 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set containing the elements to subtract from the set.
         @return The set itself.
     **/
-    publ.differenceUpdate=function(setObj){
+    publ differenceUpdate(setObj){
         for(var n in this.items){
             var item=this.items[n];
             if(setObj.contains(item)){
@@ -259,7 +259,7 @@ mod.Set=Class(function(publ, supr){
         @param setObj The set to create a symmetric difference with.
         @return The set itself.
     **/
-    publ.symmDifferenceUpdate=function(setObj){
+    publ symmDifferenceUpdate(setObj){
         var union = setObj.difference(this);
         this.differenceUpdate(setObj);
         return this.unionUpdate(union);
@@ -269,15 +269,15 @@ mod.Set=Class(function(publ, supr){
         Creates a copy of the set.
         @return A new copy of the set.
     **/
-    publ.copy=function(){
-        var ns = new mod.Set();
+    publ copy(){
+        var ns = new Set();
         return ns.unionUpdate(this);
     };
 
     /**
         Removes all elements from teh set.
     **/
-    publ.clear=function(){
+    publ clear(){
         this.items={};
     };
 
@@ -285,7 +285,7 @@ mod.Set=Class(function(publ, supr){
         Returns an array containing all elements of the set.
         @return An array containing all elements of the set.
     **/
-    publ.toArray=function(){
+    publ toArray(){
         var a=[];
         for(var n in this.items){
             a.push(this.items[n]);
@@ -293,7 +293,7 @@ mod.Set=Class(function(publ, supr){
         return a;
     };
 
-    publ.__str__=function(){
+    publ __str__(){
         var items =[];
         for(var n in this.items){
             items.push(this.items[n]);

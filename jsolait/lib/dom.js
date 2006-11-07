@@ -24,37 +24,37 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-mod.__version__="$Revision$";
+__version__="$Revision$";
 
-imprt("sets");
+import sets;
 
 /**
     Event class.
 **/
-mod.Event=Class(function(publ, supr){
-    publ.__init__=function(type, target){
+class Event({
+    publ __init__(type, target){
         this.type = type;
         this.target = target;
     };
     ///The event type.
-    publ.type=null;
+    publ type=null;
     ///The target of the event
-    publ.target=null;
+    publ target=null;
 });
 
 
 /**
     An EventTarget implementation.
 **/
-mod.EventTarget =Class(function(publ, supr){
-    publ.__init__=function(){
+class EventTarget({
+    publ __init__(){
         this.eventListeners={};
     };
     /**
         Dispatches an event to it's listeners.
         @param evt The event to dispatch.
     **/
-    publ.dispatchEvent = function(evt){
+    publ dispatchEvent(evt){
         if(this.eventListeners[evt.type]){
             var l = this.eventListeners[evt.type].items;
             for(var h in l){
@@ -72,7 +72,7 @@ mod.EventTarget =Class(function(publ, supr){
         @param listener   The EventListener object.
         @param useCapture  todo: Not used yet.
     **/
-    publ.addEventListener=function(evtType, listener, useCapture){
+    publ addEventListener(evtType, listener, useCapture){
         if(this.eventListeners[evtType]===undefined){
             this.eventListeners[evtType] = new sets.Set();
         }
@@ -86,7 +86,7 @@ mod.EventTarget =Class(function(publ, supr){
         @param listener   The EventListener object.
         @param useCapture  todo: Not used yet.
     **/
-    publ.removeEventListener=function(evtType, listener, useCapture){
+    publ removeEventListener(evtType, listener, useCapture){
         if(this.eventListeners[evtType]){
             this.eventListeners[evtType].discard(listener);
         }
@@ -97,13 +97,13 @@ mod.EventTarget =Class(function(publ, supr){
     An EventListener wrapper.
     It forwards all events to handler methods using the evt.type as the name for the method.
 **/
-mod.EventListener=Class(function(publ){
+class EventListener({
     /**
         Handles events dispatched by an EventTarget.
         It forwards the evt to a handler method with the name == evt.type.
         @param  evt  The event to handle.
     **/
-    publ.handleEvent=function(evt){
+    publ handleEvent(evt){
         if(this['handleEvent_' +evt.type]){
             this['handleEvent_' + evt.type](evt);
         }
@@ -113,5 +113,5 @@ mod.EventListener=Class(function(publ){
 /**
     A combination of an EventTarget and a EventListener.
 **/
-mod.EventListenerTarget=Class(mod.EventTarget, mod.EventListener, function(publ, supr){
+class EventListenerTarget extends EventTarget, EventListener({
 });

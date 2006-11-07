@@ -1,11 +1,10 @@
 __version__ = "$Revision: 44 $";
 
-imprt("testing");
-imprt("itertools:*");
+import testing;
+import itertools:*;
 
-mod.test=function(logger){
+def test(logger){
     logger.log("testing itertools module ...");
-    
     
     var a=[0,1,2,3,4,5,6,7,8,9];
     var b=list(range(0,9));
@@ -70,7 +69,7 @@ mod.test=function(logger){
 };
 
 
-mod.profile=function(){
+def profile(){
     var task=function(){
         var s='';
         for(var i=0;i<100;i++){
@@ -175,6 +174,6 @@ mod.profile=function(){
     
 
 };
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };    

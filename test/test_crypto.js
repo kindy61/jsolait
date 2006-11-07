@@ -1,10 +1,10 @@
 __version__ = "$Revision: 44 $";
 
-imprt("testing");
-imprt('crypto');
-imprt('codecs');
+import testing;
+import crypto;
+import codecs;
 
-mod.test=function(logger){
+def test(logger){
     
     logger.log("testing crypto ...");
     
@@ -25,6 +25,6 @@ mod.test=function(logger){
     testing.assertEquals('decrypt("rc4")', "KYNkxjTbYmI0cqwd/IOCw56wFR7fhio6xn3xprldajko6/Mw13Vou0h1x80+1KiI06/aRYF0Be+sjirI1ILCTVVFJCa+YzpMa8EhdAiAvlTCZp5FE/sCyvkIAIQ6fjUtGrPnEAPJYYhU+nPq9pDch4A2nZEIcbH8sLFU2ygI61DrPeNlTkEEdqNYl0NtLucBsTsWDJT163jSAaIu48k86e/G+yOru/fxcz+YS5AE5iadak24hZvSTrDFGQ6aHtNmGzJQecihB3Ltv7zl9zzvDNP+fUpPcdgnCQYus0z63TlCmC3SnmfeQ3Aly7+dpABl0ocBZv5M21zcxWqgwbTyzQ==".decode("base64").decrypt("rc4", key), s);
 };
 
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };

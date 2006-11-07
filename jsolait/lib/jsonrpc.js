@@ -25,53 +25,54 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 **/
-mod.__version__="$Revision$";
-imprt("urllib");
+__version__="$Revision$";
+
+import urllib;
 
 
 /**
     Thrown if a  server did not respond with response status 200 (OK).
 **/
-mod.InvalidServerResponse = Class(mod.Exception, function(publ, supr){
+class InvalidServerResponse  extends Exception({
     /**
         Initializes the Exception.
         @param status       The status returned by the server.
     **/
-    publ.__init__= function(status){
+    publ __init__(status){
         supr.__init__.call(this, "The server did not respond with a status 200 (OK) but with: " + status);
         this.status = status;
     };
      ///The status returned by the server.
-    publ.status;
+    publ status;
 });
 
 /**
     Thrown if an JSON-RPC response is not well formed.
 **/
-mod.MalformedJSONRpc = Class(mod.Exception, function(publ, supr){
+class MalformedJSONRpc  extends Exception({
     /**
         Initializes the Exception.
         @param msg          The error message of the user.
         @param json           The json source.
         @param trace=undefined  The error causing this Exception
     **/
-    publ.__init__= function(msg, s, trace){
+    publ __init__(msg, s, trace){
         supr.__init__.call(this, msg,trace);
         this.source = s;
     };
      ///The json source which was mal formed.
-    publ.source;
+    publ source;
 });
 /**
     Thrown if an JSON-RPC error is returned.
 **/
-mod.JSONRPCError = Class(mod.Exception, function(publ, supr){
+class JSONRPCError  extends Exception({
     /**
         Initializes the Exception.
         @param err          The error object.
         @param trace=undefined  The error causing this Exception
     **/
-    publ.__init__= function(err, trace){
+    publ __init__(err, trace){
         supr.__init__.call(this, err,trace);
     };
 });
@@ -85,7 +86,7 @@ mod.JSONRPCError = Class(mod.Exception, function(publ, supr){
     @param obj    The object to marshall
     @return         An xml representation of the object.
 **/
-mod.marshall = function(obj){
+def marshall(obj){
     if(obj == null){
         return "null";
     }else if(obj.toJSON){
@@ -94,7 +95,7 @@ mod.marshall = function(obj){
         var v=[];
         for(var attr in obj){
             if(typeof obj[attr] != "function"){
-                v.push('"' + attr + '": ' + mod.marshall(obj[attr]));
+                v.push('"' + attr + '": ' + marshall(obj[attr]));
             }
         }
         return "{" + v.join(", ") + "}";
@@ -106,13 +107,13 @@ mod.marshall = function(obj){
     @param source    The source  to unmarshall.
     @return         The JavaScript object created.
 **/
-mod.unmarshall = function(source){
+def unmarshall(source){
     try {
         var obj;
         eval("obj=" + source);
         return obj;
     }catch(e){
-        throw new mod.MalformedJSONRpc("The server's response could not be parsed.", source, e);
+        throw new MalformedJSONRpc("The server's response could not be parsed.", source, e);
     }
 };
 /**
@@ -126,7 +127,7 @@ mod.unmarshall = function(source){
     then the remote method will be called asynchronously.
     The results and errors are passed to the callback.
 **/
-mod.JSONRPCMethod =Class(function(publ){
+class JSONRPCMethod({
 
     var postData = function(url, user, pass, data, callback){
         if(callback == null){//todo ===undefined
@@ -150,22 +151,22 @@ mod.JSONRPCMethod =Class(function(publ){
             }catch(e){
             }
             if(respTxt == null || respTxt == ""){
-                throw new mod.MalformedJSONRpc("The server responded with an empty document.", "");
+                throw new MalformedJSONRpc("The server responded with an empty document.", "");
             }else{
-                var rslt = mod.unmarshall(respTxt);
+                var rslt = unmarshall(respTxt);
                 if(rslt.error != null){
-                    throw new mod.JSONRPCError(rslt.error);
+                    throw new JSONRPCError(rslt.error);
                 }else{
                     return rslt.result;
                 }
             }
         }else{
-            throw new mod.InvalidServerResponse(status);
+            throw new InvalidServerResponse(status);
         }
     };
 
     var jsonRequest = function(id, methodName, args){
-        var p = [mod.marshall(id), mod.marshall(methodName), mod.marshall(args)];
+        var p = [marshall(id), marshall(methodName), marshall(args)];
         return '{"id":' + p[0] + ', "method":' + p[1] + ', "params":' + p[2] + "}";
     };
     /**
@@ -175,14 +176,14 @@ mod.JSONRPCMethod =Class(function(publ){
         @param user=null             The user name to use for HTTP authentication.
         @param pass=null             The password to use for HTTP authentication.
     **/
-    publ.__init__ = function(url, methodName, user, pass){
+    publ __init__(url, methodName, user, pass){
         this.methodName = methodName;
         this.url = url;
         this.user = user;
         this.password=pass;
     };
 
-    publ.__call__=function(){
+    publ __call__(){
         var args=new Array();
         for(var i=0;i<arguments.length;i++){
             args.push(arguments[i]);
@@ -217,7 +218,7 @@ mod.JSONRPCMethod =Class(function(publ){
         @param user    The user name.
         @param pass    The password.
     **/
-    publ.setAuthentication = function(user, pass){
+    publ setAuthentication(user, pass){
         this.user = user;
         this.password = pass;
     };
@@ -226,7 +227,7 @@ mod.JSONRPCMethod =Class(function(publ){
         Sends the call as a notification which does not have a response.
         Call this as if you would call the method itself. Callbacks are ignored.
     **/
-    publ.notify = function(){
+    publ notify(){
         var args=new Array();
         for(var i=0;i<arguments.length;i++){
             args.push(arguments[i]);
@@ -236,20 +237,20 @@ mod.JSONRPCMethod =Class(function(publ){
     };
 
     ///The name of the remote method.
-    publ.methodName;
+    publ methodName;
     ///The url of the remote service containing the method.
-    publ.url;
+    publ url;
     ///The user name used for HTTP authorization.
-    publ.user;
+    publ user;
     ///The password used for HTTP authorization.
-    publ.password;
+    publ password;
 });
 
 /**
     Creates proxy objects which resemble the remote service.
     Method calls of this proxy will result in calls to the service.
 **/
-mod.ServiceProxy=Class(function(publ){
+class ServiceProxy({
     /**
         Initializes a new ServiceProxy.
         The arguments are interpreted as shown in the examples:
@@ -262,7 +263,7 @@ mod.ServiceProxy=Class(function(publ){
         @param user=null             The user name to use for HTTP authentication.
         @param pass=null             The password to use for HTTP authentication.
     **/
-    publ.__init__ = function(url, methodNames, user, pass){
+    publ __init__(url, methodNames, user, pass){
         this._url = url;
         this._user = user;
         this._password = pass;
@@ -273,7 +274,7 @@ mod.ServiceProxy=Class(function(publ){
         Adds new JSONRPCMethods to the proxy server which can then be invoked.
         @param methodNames   Array of names of methods that can be called on the server.
     **/
-    publ._addMethodNames = function(methodNames){
+    publ _addMethodNames(methodNames){
         for(var i=0;i<methodNames.length;i++){
             var obj = this;
             //setup obj.childobj...method
@@ -290,7 +291,7 @@ mod.ServiceProxy=Class(function(publ){
             var name = names[names.length-1];
             if(obj[name]){
             }else{
-                var mth = new mod.JSONRPCMethod(this._url, methodNames[i], this._user, this._password);
+                var mth = new JSONRPCMethod(this._url, methodNames[i], this._user, this._password);
                 obj[name] = mth;
                 this._methods.push(mth);
             }
@@ -302,7 +303,7 @@ mod.ServiceProxy=Class(function(publ){
         @param user    The user name.
         @param pass    The password.
     **/
-    publ._setAuthentication = function(user, pass){
+    publ _setAuthentication(user, pass){
         this._user = user;
         this._password = pass;
         for(var i=0;i<this._methods.length;i++){
@@ -311,36 +312,36 @@ mod.ServiceProxy=Class(function(publ){
     };
 
     ///The url of the service to resemble.
-    publ._url;
+    publ _url;
     ///The user used for HTTP authentication.
-    publ._user;
+    publ _user;
     ///The password used for HTTP authentication.
-    publ._password;
+    publ _password;
     ///All methods.
-    publ._methods=new Array();
+    publ _methods=new Array();
 });
     
-mod.SimpleHTTPConnection=Class(function(publ,supr){
-     publ.__init__=function(url, datahandler){
+class SimpleHTTPConnection({
+     publ __init__(url, datahandler){
         this.url = url;
         this.datahandler = datahandler;
     };
     
-    publ.send = function(data){
+    publ send(data){
         urllib.postURL(this.url, data, bind(this, function(req){
             this.processData(req.responseText);
         }));
     };
     
-    publ.processData = function(data){
+    publ processData(data){
         if(data!=''){
             this.datahandler(data);
         }
     };
 });
 
-mod.SocketConnection = Class(function(publ,priv,supr){
-    publ.__init__=function(host, port, datahandler){
+class SocketConnection({
+    publ __init__(host, port, datahandler){
         this.host = host;
         this.port = port;
         this.datahandler = datahandler;
@@ -351,18 +352,18 @@ mod.SocketConnection = Class(function(publ,priv,supr){
         this.socket.connect(host, port);
     };
     
-    publ.send = function(data){
+    publ send(data){
         this.socket.send(data);
     };
 });
 
-mod.RPCMethod=Class(function(publ,supr){
-    publ.__init__=function(name,proxy){
+class RPCMethod({
+    publ __init__(name,proxy){
         this._name = name;
         this.proxy = proxy;
     };
     
-    publ.__call__=function(){
+    publ __call__(){
         var args=new Array();
         for(var i=0;i<arguments.length;i++){
             args.push(arguments[i]);
@@ -376,8 +377,8 @@ mod.RPCMethod=Class(function(publ,supr){
     };
 });
 
-mod.ServiceProxy2=Class(function(publ,supr){
-    publ.__init__ = function(serviceurl, methodNames, localService){
+class ServiceProxy2({
+    publ __init__(serviceurl, methodNames, localService){
         this._url = serviceurl;    
 
         if(serviceurl.slice(0,10) == "jsonrpc://"){
@@ -385,9 +386,9 @@ mod.ServiceProxy2=Class(function(publ,supr){
             hostport.push(5766);//default json-rpc port
             var host =hostport.shift();
             var port = hostport.shift();
-            this._connection = new mod.SocketConnection(host, port, bind(this, this._handleData));
+            this._connection = new SocketConnection(host, port, bind(this, this._handleData));
         }else{
-            this._connection = new mod.SimpleHTTPConnection(this._url, bind(this, this._handleData));
+            this._connection = new SimpleHTTPConnection(this._url, bind(this, this._handleData));
         }
         this._attachMethods(methodNames);
         this._localService = localService == null ? {}:localService;
@@ -398,7 +399,7 @@ mod.ServiceProxy2=Class(function(publ,supr){
         Adds new JSONRPCMethods to the proxy server which can then be invoked.
         @param methodNames   Array of names of methods that can be called on the server.
     **/
-    publ._attachMethods = function(methodNames){
+    publ _attachMethods(methodNames){
         for(var i=0;i<methodNames.length;i++){
             var obj = this;
             //setup obj.childobj...method
@@ -415,19 +416,19 @@ mod.ServiceProxy2=Class(function(publ,supr){
             var name = names[names.length-1];
             if(obj[name]){
             }else{
-                var mth = new mod.RPCMethod(methodNames[i], this);
+                var mth = new RPCMethod(methodNames[i], this);
                 obj[name] = mth;
             }
         }
     };
     
-    publ._handleData = function(data){
+    publ _handleData(data){
         var d = 'return [' + data.replace(/\n/g, ",") + ']';
         try{
             f=new Function('',d);
             var messages = f();
         }catch(e){
-            throw new mod.MalformedJSONRpc("The JSON-RPC data is not parsable",  data, e);
+            throw new MalformedJSONRpc("The JSON-RPC data is not parsable",  data, e);
         }
         
         for(var i=0;i<messages.length;i++){
@@ -438,12 +439,12 @@ mod.ServiceProxy2=Class(function(publ,supr){
             }else if(messages[i].id != null){
                 this._handleResponse(messages[i].result, messages[i].error, messages[i].id);
             }else{
-                throw new mod.MalformedJSONRpc("The JSON-RPC message does not contain appropriate properties", d);
+                throw new MalformedJSONRpc("The JSON-RPC message does not contain appropriate properties", d);
             }
         }
     };
     
-    publ._handleResponse=function(result, err, id){
+    publ _handleResponse(result, err, id){
         var r = this._pendingRequests[id];
         if(r){
             delete this._pendingRequests[id];
@@ -451,7 +452,7 @@ mod.ServiceProxy2=Class(function(publ,supr){
         }
     };
     
-    publ._handleInvokation=function(method, params, id){
+    publ _handleInvokation(method, params, id){
         if(this._localService[method]){
             var rslt = this._localService[method].apply(this._localService, params);
             this._sendResponse(rslt, null, id);
@@ -460,42 +461,42 @@ mod.ServiceProxy2=Class(function(publ,supr){
         }
     };
     
-    publ._handleNotification=function(method, params){
+    publ _handleNotification(method, params){
          if(this._localService[method]){
             this._localService[method].apply(this._localService, params);
         }
     };
     
-    publ._sendMessage = function(data){
+    publ _sendMessage(data){
         this._connection.send(data + "\n");
     };
     
-    publ._sendRequest=function(method, params, callback){
-        var r = new mod.PendingRequest(callback);
+    publ _sendRequest(method, params, callback){
+        var r = new PendingRequest(callback);
         this._pendingRequests[id(r)] = r;
-        var data = mod.marshall({method:method, params:params, id:id(r)});
+        var data = marshall({method:method, params:params, id:id(r)});
         this._sendMessage(data);
         return r;
     };
     
-    publ._sendNotification=function(method, params){
-        var data = mod.marshall({method:method, params:params, id:null});
+    publ _sendNotification(method, params){
+        var data = marshall({method:method, params:params, id:null});
         this._sendMessage(data);
     };
     
-    publ._sendResponse=function(result, error, id){
-        var data = mod.marshall({result:result, error:error, id:id});
+    publ _sendResponse(result, error, id){
+        var data = marshall({result:result, error:error, id:id});
         this._sendMessage(data);
     };
     
 });
 
-mod.PendingRequest=Class(function(publ,supr){
-    publ.__init__=function(callback){
+class PendingRequest({
+    publ __init__(callback){
         this.callback=callback;
     };
     
-    publ.handleResponse=function(result, error){
+    publ handleResponse(result, error){
         this.callback.call(null, result, error);
     };
 });
@@ -551,7 +552,7 @@ Date.prototype.toJSON= function(){
 Array.prototype.toJSON = function(){
     var v = [];
     for(var i=0;i<this.length;i++){
-        v.push(mod.marshall(this[i])) ;
+        v.push(marshall(this[i])) ;
     }
     return "[" + v.join(", ") + "]";
 };

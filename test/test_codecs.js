@@ -1,9 +1,9 @@
 __version__ = "$Revision: 44 $";
 
-imprt("testing");
-imprt('codecs');
+import testing;
+import codecs;
 
-mod.test=function(logger){
+def test(logger){
     logger.log("testing codecs ...");
    
     testing.assertEquals('encoders', codecs.listEncoders(), ['base64','uri','lzw']);
@@ -21,6 +21,6 @@ mod.test=function(logger){
 };
 
 
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };

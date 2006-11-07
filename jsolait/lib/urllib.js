@@ -25,16 +25,18 @@
     @lastchangedby       $LastChangedBy$
     @lastchangeddate    $Date$
 */
-mod.__version__="$Revision$";
+__version__="$Revision$";
+
+
 /**
     Thrown if no request object could be instanciated.
 */
-mod.NoHTTPRequestObject=Class(mod.Exception, function(publ, supr){
+class NoHTTPRequestObject extends Exception({
     /**
         Initializes the Exception.
         @param trace The error causing this exception.
     */
-    publ.__init__=function(trace){
+    publ __init__(trace){
         supr.__init__.call(this,  "Could not create an HTTP request object", trace);
     };
 });
@@ -42,12 +44,12 @@ mod.NoHTTPRequestObject=Class(mod.Exception, function(publ, supr){
 /**
     Thrown if an HTTP request could not be opened.
 */
-mod.RequestOpenFailed = Class(mod.Exception, function(publ, supr){
+class RequestOpenFailed  extends Exception({
     /**
         Initializes the Exception.
         @param trace The error causing this exception.
     */
-    publ.__init__=function(trace){
+    publ __init__(trace){
         supr.__init__.call(this,  "Opening of HTTP request failed.", trace);
     };
 });
@@ -55,12 +57,12 @@ mod.RequestOpenFailed = Class(mod.Exception, function(publ, supr){
 /**
     Thrown is arequest could not be sent to the server.
 */
-mod.SendFailed=Class(mod.Exception, function(publ, supr){
+class SendFailed extends Exception({
      /**
         Initializes the Exception.
         @param trace The error causing this exception.
     */
-    publ.__init__ = function(trace){
+    publ __init__(trace){
         supr.__init__.call(this,  "Sending of HTTP request failed.", trace);
     };
 });
@@ -69,11 +71,11 @@ mod.SendFailed=Class(mod.Exception, function(publ, supr){
     Mimics the HTTPRequest object using Adobe's SVG Viewer's postURL and getURL.
     It can only process asyncronous connection and the only header that's supported is 'Content-Type'.
 */
-var ASVRequest=Class(function(publ){
+class  ASVRequest({
     /**
         Initializes the ASVRequest.
     */
-    publ.__init__ = function(){
+    publ __init__(){
         if((getURL==null) || (postURL==null)){
             throw "getURL and postURL are not available!";
         }else{
@@ -89,7 +91,7 @@ var ASVRequest=Class(function(publ){
         @param url             The url to open.
         @param async=true True for async. connection. Otherwhise an exception is thrown.
     */
-    publ.open=function(type,url,async){
+    publ open(type,url,async){
         if (async == false){
             throw "Can only open asynchronous connections!";
         }
@@ -102,7 +104,7 @@ var ASVRequest=Class(function(publ){
         @param name  The header name. All but "Content-Type" are ignored.
         @param value  The value of the header.
     */
-    publ.setRequestHeader=function(name, value){
+    publ setRequestHeader(name, value){
         if (name=="Content-Type"){
             this.__contType =value;
         }
@@ -111,7 +113,7 @@ var ASVRequest=Class(function(publ){
         Sends the request.
         @param data   The data to send when doing a post.
     */
-    publ.send=function(data){
+    publ send(data){
         var self=this;
         var cbh=new Object();
         cbh.operationComplete = function(rsp){
@@ -141,7 +143,7 @@ var ASVRequest=Class(function(publ){
     Creates an HTTP request object for retreiving files.
     @return  HTTP request object.
 */
-var getHTTP=function() {
+def getHTTP() {
     var obj;
     try{ //to get the mozilla httprequest object
         obj = new XMLHttpRequest();
@@ -158,7 +160,7 @@ var getHTTP=function() {
                     try{//to create the ASV request object.
                         obj = new ASVRequest();
                     }catch(e){
-                        throw new mod.NoHTTPRequestObject("Neither Mozilla, IE nor ASV found. Can't do HTTP request without them.");
+                        throw new NoHTTPRequestObject("Neither Mozilla, IE nor ASV found. Can't do HTTP request without them.");
                     }
                 }
             }
@@ -196,7 +198,7 @@ var getHTTP=function() {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-mod.sendRequest=function(type, url, user, pass, data, headers, callback){
+def sendRequest(type, url, user, pass, data, headers, callback){
     var async=false;
     //check if the last argument is a function and treat it as callback;
     if(typeof arguments[arguments.length-1]  == 'function'){
@@ -232,7 +234,7 @@ mod.sendRequest=function(type, url, user, pass, data, headers, callback){
             xmlhttp.open(type, url, async);
         }
     }catch(e){
-        throw new mod.RequestOpenFailed(e);
+        throw new RequestOpenFailed(e);
     }
     //set headers
     for(var i=0;i< headers.length;i++){
@@ -246,7 +248,8 @@ mod.sendRequest=function(type, url, user, pass, data, headers, callback){
         xmlhttp.onreadystatechange=function(){
             if (xmlhttp.readyState==4) {
                 callback(xmlhttp);
-                xmlhttp = null; //help IE with garbage collection
+                xmlhttp.onreadystatechange = null; //help IE with garbage collection
+                xmlhttp = null; 
             }else if (xmlhttp.readyState==2){
                 //status property should be available (MS IXMLHTTPRequest documentation)
                 //in Mozilla it is not if the request failed(server not reachable)
@@ -273,7 +276,7 @@ mod.sendRequest=function(type, url, user, pass, data, headers, callback){
             callback(xmlhttp, e);
             xmlhttp=null;
         }else{
-            throw new mod.SendFailed(e);
+            throw new SendFailed(e);
         }
     }
     return xmlhttp;
@@ -289,12 +292,12 @@ mod.sendRequest=function(type, url, user, pass, data, headers, callback){
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-mod.getURL=function(url, user, pass, headers, callback) {
+def getURL(url, user, pass, headers, callback) {
     var a=["GET"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
     }
-    return mod.sendRequest.apply(this,a);
+    return sendRequest.apply(this,a);
 };
 /**
     Shorthand for a POST request.
@@ -308,12 +311,12 @@ mod.getURL=function(url, user, pass, headers, callback) {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-mod.postURL=function(url, user, pass, data, headers, callback) {
+def postURL(url, user, pass, data, headers, callback) {
     var a= ["POST"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
     }
-    return mod.sendRequest.apply(this,a);
+    return sendRequest.apply(this,a);
 };
 
 
@@ -321,7 +324,7 @@ mod.postURL=function(url, user, pass, data, headers, callback) {
     Returns wether or not the module is usable or not.
     @return True if the module can make HTTP requests, false otherwise.
 **/
-mod.isUsable=function(){
+def isUsable(){
     try{
         getHTTP();
         return true;                

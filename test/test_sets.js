@@ -1,8 +1,8 @@
 __version__ = "$Revision: 44 $";
-imprt("testing");
-imprt('sets');
+import testing;
+import sets;
 
-mod.test=function(logger){
+def test(logger){
     var s1=new sets.Set("0123456".split(""));
     var s2=new sets.Set("3456789".split(""));
     logger.log("testing sets...");
@@ -32,6 +32,6 @@ mod.test=function(logger){
                                 new sets.Set("012789".split("")),s2.symmDifference(s1));
 };
 
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };

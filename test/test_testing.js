@@ -1,8 +1,8 @@
 __version__ = "$Revision: 44 $";
 
-imprt("testing");
+import testing;
 
-mod.test=function( logger){
+def test( logger){
     logger.log("testing testing ...");
     
     testing.assert(true);
@@ -57,6 +57,6 @@ mod.test=function( logger){
     
 };
 
-mod.__main__=function(){
-    mod.test({log:print})
+def __main__(){
+    test({log:print})
 };    

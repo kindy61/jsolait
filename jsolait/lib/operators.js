@@ -26,9 +26,9 @@
     @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
-mod.__version__= "$Revision: 20 $";
+__version__= "$Revision: 20 $";
 
-mod.lt=function(a, b){
+def lt(a, b){
     if((a!=null) && (a.__lt__!==undefined)){
         return a.__lt__(b);
     }else if((b!=null) && (b.__lt__!==undefined)){
@@ -38,7 +38,7 @@ mod.lt=function(a, b){
     }
 };
 
-mod.le=function(a, b){
+def le(a, b){
     if((a!=null) && (a.__le__!==undefined)){
         return a.__le__(b);
     }else if((b!=null) && (b.__le__!==undefined)){
@@ -48,7 +48,7 @@ mod.le=function(a, b){
     }
 };
 
-mod.eq=function(a, b){
+def eq(a, b){
     if((a!=null) && (a.__eq__!==undefined)){
         return a.__eq__(b);
     }else if((b!=null) && (b.__eq__!==undefined)){
@@ -58,7 +58,7 @@ mod.eq=function(a, b){
     }
 };
 
-mod.ne=function(a, b){
+def ne(a, b){
     if((a!=null) && (a.__ne__!==undefined)){
         return a.__ne__(b);
     }else if((b!=null) && (b.__ne__!==undefined)){
@@ -68,7 +68,7 @@ mod.ne=function(a, b){
     }
 };
 
-mod.is=function(a,b){
+def is(a,b){
     if((a!=null) && (a.__is__!==undefined)){
         return a.__is__(b);
     }else if((b!=null) && (b.__is__!==undefined)){
@@ -78,7 +78,7 @@ mod.is=function(a,b){
     }
 };
 
-mod.isnot=function(a,b){
+def isnot(a,b){
     if((a!=null) && (a.__isnot__!==undefined)){
         return a.__isnot__(b);
     }else if((b!=null) && (b.__isnot__!==undefined)){
@@ -88,7 +88,7 @@ mod.isnot=function(a,b){
     }
 };
 
-mod.ge=function(a, b){
+def ge(a, b){
     if((a!=null) && (a.__ge__!==undefined)){
         return a.__ge__(b);
     }else if((b!=null) && (b.__ge__!==undefined)){
@@ -98,7 +98,7 @@ mod.ge=function(a, b){
     }
 };
 
-mod.gt=function(a, b){
+def gt(a, b){
     if((a!=null) && (a.__gt__!==undefined)){
         return a.__gt__(b);
     }else if((b!=null) && (b.__gt__!==undefined)){
@@ -108,7 +108,7 @@ mod.gt=function(a, b){
     }
 };
 
-mod.not=function(a){
+def not(a){
     if((a!=null) && (a.__not__!==undefined)){
         return a.__not__();
     }else{
@@ -122,7 +122,7 @@ Array.prototype.__eq__ = function(a){
         return false;
     }else{
         for(var i=0;i<this.length;i++){
-            if(! mod.eq(this[i], a[i])){
+            if(! eq(this[i], a[i])){
                 return false;
             }
         }
@@ -135,7 +135,7 @@ Array.prototype.__neq__ = function(a){
         return true;
     }else{
         for(var i=0;i<this.length;i++){
-            if(mod.neq(this[i], a[i])){
+            if(neq(this[i], a[i])){
                 return true;
             }
         }

@@ -6,14 +6,14 @@
     @lastchangedby       $LastChangedBy: Jan-Klaas Kollhof $
     @lastchangeddate    $Date: 2006-01-30 20:52:35 +0000 (Mon, 30 Jan 2006) $
 **/
-mod.__version__="$Revision: 43$";
+__version__="$Revision: 43$";
 
-mod.WordNumberStringSplitter = Class(function(publ,priv,supr){
-    publ.__init__=function(s){
+class WordNumberStringSplitter({
+    publ __init__(s){
         this.s=s;
     };
     
-    publ.next=function(){
+    publ next(){
         if(this.s.length==0){
             return;
         }
@@ -34,9 +34,9 @@ mod.WordNumberStringSplitter = Class(function(publ,priv,supr){
     };
 });
 
-mod.naturalCompare=function(a, b){
-    var asplitter=new mod.WordNumberStringSplitter(a);
-    var bsplitter=new mod.WordNumberStringSplitter(b);
+def naturalCompare(a, b){
+    var asplitter=new WordNumberStringSplitter(a);
+    var bsplitter=new WordNumberStringSplitter(b);
     
     while(true){
         var x = asplitter.next();
@@ -57,12 +57,12 @@ mod.naturalCompare=function(a, b){
     Use it when you need a writable stream to generate a large String.
     This is much faster than using string concatinations (e.g. s += "new string data)
 **/
-mod.WritableString=Class(Array, function(publ,supr){
+class WritableString extends Array({
     /**
         Initializes a WritableString object.
         @param value   The initial value of the WritableString.
     **/
-    publ.__init__ = function(value){
+    publ __init__(value){
         value = value == null ? "": value;
         if(value != ""){
             this.write(value);
@@ -73,13 +73,13 @@ mod.WritableString=Class(Array, function(publ,supr){
         Writes data to the object.
         @param data  The data to write to the object.
     **/
-    publ.write = Array.prototype.push;
+    publ write = Array.prototype.push;
     
-    publ.__str__ = function(){
+    publ __str__(){
         return this.join("");
     };
     
-    publ.__repr__ = function(){
+    publ __repr__(){
         return repr(this.join(""));
     };
 });
@@ -87,11 +87,11 @@ mod.WritableString=Class(Array, function(publ,supr){
 /**
     Default value for String::exec's codeStartDelimiter.
 **/
-mod.templateCodeStartDelimiter = "<?";
+templateCodeStartDelimiter = "<?";
 /**
     Default value for String::exec's codeEndDelimiter.
 **/
-mod.templateCodeEndDelimiter = "?>";
+templateCodeEndDelimiter = "?>";
 
 
 /**
@@ -112,8 +112,8 @@ mod.templateCodeEndDelimiter = "?>";
     
 
     @param locals={} A dictionary containing name:value-pairs for local variables exposed to the script that is run from the template.
-    @param codeStartDelimiter = mod.templateCodeStartDelimiter  The start of a codeblock.
-    @param codeEndDelimiter = mod.templateCodeEndDelimiter     The end of a codeblock.
+    @param codeStartDelimiter = templateCodeStartDelimiter  The start of a codeblock.
+    @param codeEndDelimiter = templateCodeEndDelimiter     The end of a codeblock.
     @return A string that results from running the template.
 **/
 String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
@@ -139,7 +139,7 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
                     code.push(text);
                 }
             }else{
-                throw mod.Exception("No code end dilimiter: '%s' found".format(codeEndDelimiter));
+                throw Exception("No code end dilimiter: '%s' found".format(codeEndDelimiter));
             }
         }else{
             code.push(';out.write("' + s.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"").replace(/\n/g, "\\n").replace(/\r/g,"\\r") + '");');
@@ -147,7 +147,7 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
         }
     }
     
-    var sout=new mod.WritableString();
+    var sout=new WritableString();
     var params  = [sout];
     
     var paramNames = ["out"];
@@ -158,7 +158,7 @@ String.prototype.exec=function(locals, codeStartDelimiter, codeEndDelimiter){
     try{
         var f = new Function(paramNames.join(","), code.join(""));
     }catch(e){
-        throw new mod.Exception("Error compiling template:\n\n%s".format(code.join("")),e);
+        throw new Exception("Error compiling template:\n\n%s".format(code.join("")),e);
     }
     f.apply(sout, params);
     return str(sout);
