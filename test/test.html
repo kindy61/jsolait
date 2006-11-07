@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>jsolait testing</title>
-        <script src="../build/jsolait/jsolait.js"></script>
+        <script src="../jsolait/jsolait.js"></script>
         <script>
             var print=function(){
                 var s='';
@@ -12,9 +12,15 @@
                 document.write(s + '<br/>')
             };
             
-            var test = imprt('test');
-            var testing = imprt("testing");
-            test.test(testing, {log:print});
+            jsolait.loadModule('test', function(test, err){
+                if(err){
+                    print(err);
+                }else{
+                    test.test({log:print});
+                }
+            
+            });
+            
         
         </script>
     </head>

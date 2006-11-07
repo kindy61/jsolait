@@ -47,6 +47,18 @@ def test(logger){
     });
     testing.assertEquals('iter(a) with stop during iteration.', s, "0,1,2,3,4");
     
+    var s = ''
+    iter(item in a){
+        if(item == 4){
+            s+=item;
+            break;
+        }else{
+            s+=item + ',';
+        };
+    }
+    testing.assertEquals('iter( item in){} with stop during iteration.', s, "0,1,2,3,4");
+    
+    
     var a=[0,2,4,6,8,10];
     var n = filter(range(0,10), function(item){
             return item % 2 == 0
@@ -176,4 +188,5 @@ def profile(){
 };
 def __main__(){
     test({log:print})
+
 };    

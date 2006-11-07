@@ -898,7 +898,7 @@ jsolait=(function(mod){
         
         var importStatement = anyWhiteSpaceStart + wrd('import')+'\\s+'  + grp('.+?') + '[\\r\\n;]';
         
-        var iterStatement= anyWhiteSpaceStart + wrd('iter') + '\\s+' +grp(identifier())+  '\\s+' + wrd('in') + '\\s+' + grp('.+?') + '\\{';
+        var iterStatement= anyWhiteSpaceStart + wrd('iter') + '\\s*\\(\\s*' +grp(identifier())+  '\\s+' + wrd('in') + '\\s+' + grp('.+?') + '\\)\\{';
         
         var modLevelAssignment=startOfLine +grp(identifier())+'\\s*=';
         
