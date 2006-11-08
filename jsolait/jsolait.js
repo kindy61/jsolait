@@ -72,7 +72,7 @@ jsolait=(function(mod){
     **/
     mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
    
-    mod.packagesURI = "%(baseURI)s/packages";
+    mod.packagesURI = "%(baseURI)s/../jsolait-packages";
     
     mod.modules={};
  
@@ -519,58 +519,67 @@ jsolait=(function(mod){
     
 
     mod.loadURI=function(uri, cb){
-        var errorNotHandled=true;
-        try{
-            var xmlhttp = mod.getHTTPRequestObject();
-        }catch(e){
-            cb(null, new mod.LoadURIFailed(uri, new mod.Exception(uri,e)));
-            return;
-        }
-        
-        xmlhttp.onreadystatechange=function(){
-            if (xmlhttp.readyState==4) {
-                //todo: the status checking needs testing
-                if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
-                    var s= str(xmlhttp.responseText);
-                    xmlhttp = null;
-                    cb(s);
-                }else{
-                    if(errorNotHandled){
-                        errorNotHandled=false;
-                        cb(null, new mod.LoadURIFailed(uri, new mod.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status)));
-                    }
-                }
-                xmlhttp=null;
-            }else if (xmlhttp.readyState==2){
-                //status property should be available (MS IXMLHTTPRequest documentation)
-                //in Mozilla it is not if the request failed(server not reachable)
-                //in IE it is not available at all ?!
-                try{//see if it is mozilla otherwise don't care.
-                    var isNetscape = netscape;
-                    try{//if status is not available the request failed.
-                        var s=xmlhttp.status;
-                    }catch(e){//call the callback because Mozilla will not get to readystate 4
+        // IE7 is shite or I am an idiot
+        // it looks like it calls onreadystatechange before returning from the send() call
+        // for urls that are cached, thus making the call sync and not async.
+        // this is clearly wrong !!!
+        //so we emulate everything using a setTimeout ... ugh 
+        setTimeout(function(){
+            
+            var errorNotHandled=true;
+            try{
+                var xmlhttp = mod.getHTTPRequestObject();
+            }catch(e){
+                cb(null, new mod.LoadURIFailed(uri, new mod.Exception(uri,e)));
+                return;
+            }
+            
+            xmlhttp.onreadystatechange=function(){
+                if (xmlhttp.readyState==4) {
+                    //todo: the status checking needs testing
+                    if(xmlhttp.status == 200 || xmlhttp.status == 0 || xmlhttp.status == null || xmlhttp.status == 304){
+                        var s= str(xmlhttp.responseText);
+                        xmlhttp = null;
+                        cb(s);
+                    }else{
                         if(errorNotHandled){
-                            xmlhttp = null;
                             errorNotHandled=false;
-                            cb(null, new mod.LoadURIFailed(uri, new mod.Exception("url request failed ",e)));
+                            cb(null, new mod.LoadURIFailed(uri, new mod.Exception("Server did not respond with status code 200 but with: " + xmlhttp.status)));
                         }
                     }
-                }catch(e){
+                    xmlhttp=null;
+                }else if (xmlhttp.readyState==2){
+                    //status property should be available (MS IXMLHTTPRequest documentation)
+                    //in Mozilla it is not if the request failed(server not reachable)
+                    //in IE it is not available at all ?!
+                    try{//see if it is mozilla otherwise don't care.
+                        var isNetscape = netscape;
+                        try{//if status is not available the request failed.
+                            var s=xmlhttp.status;
+                        }catch(e){//call the callback because Mozilla will not get to readystate 4
+                            if(errorNotHandled){
+                                xmlhttp = null;
+                                errorNotHandled=false;
+                                cb(null, new mod.LoadURIFailed(uri, new mod.Exception("url request failed ",e)));
+                            }
+                        }
+                    }catch(e){
+                    }
                 }
             }
-        };
         
-        try{
-            xmlhttp.open("GET", uri, true);
-            xmlhttp.send("");
-        }catch(e){
-            if(errorNotHandled){
-                errorNotHandled=false;
-                xmlhttp=null;
-                cb (null, new mod.LoadURIFailed(uri, e));
+        
+            try{
+                xmlhttp.open("GET", uri, true);
+                xmlhttp.send("");
+            }catch(e){
+                if(errorNotHandled){
+                    errorNotHandled=false;
+                    xmlhttp=null;
+                    cb (null, new mod.LoadURIFailed(uri, e));
+                }
             }
-        }
+        },0);
     };
     
     
@@ -634,6 +643,7 @@ jsolait=(function(mod){
        @param loadedCB   A callback which gets called (callback(module, error) 
                                 when the module is loaded or an error occurs.
     **/
+    
     mod.loadModule=function(name, loadedCB){
 
         if(mod.modules[name]){ //module already loaded
@@ -690,7 +700,7 @@ jsolait=(function(mod){
                 var args = [];
                 
                 args.push(newMod);
-                args.push(new Function("",""));
+                args.push(new Function("","throw 'imprt not supported';"));
                 args.push(mod);
                 
                 for(var key in locals){
@@ -988,7 +998,7 @@ jsolait=(function(mod){
         mod.loadModule(modName, function(m, err){
             if(err){
                 if(alertError){
-                    alert(err);
+                    alert('error loading module' + modName + '\n' + err);
                 }
                 throw err;
             }else{
@@ -996,13 +1006,12 @@ jsolait=(function(mod){
                     m[methodName].call(m);
                 }catch(e){
                     if(alertError){
-                        alert(e);
+                        alert('error running ' + modName +'.' + methodName + '\n' + err);
                     }
                     throw e
                 }
             }
         });
-    
     };
 //---------------------------------------------------String Format -------------------------------------------------------
     /**

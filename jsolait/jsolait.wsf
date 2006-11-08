@@ -32,7 +32,9 @@
     
     <script language="JavaScript"> <![CDATA[
         jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
-
+        setTimeout=function(fn){
+            fn();
+        };
 
     jsolait.Module("jsolaitws", function(mod){
 
