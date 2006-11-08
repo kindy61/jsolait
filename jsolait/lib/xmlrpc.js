@@ -93,7 +93,7 @@ class Fault  extends Exception({
     @param obj    The object to marshall
     @return         An xml representation of the object.
 */
-def marshall(obj){
+publ marshall(obj){
     if(obj.toXmlRpc!=null){
         return obj.toXmlRpc();
     }else{
@@ -114,7 +114,7 @@ def marshall(obj){
     @param xml    The xml document source to unmarshall.
     @return         The JavaScript object created from the XML.
 */
-def unmarshall(xml){
+publ unmarshall(xml){
     try {//try to parse xml ... this will throw an Exception if failed
         var doc = parseXML(xml);
     }catch(e){
@@ -131,7 +131,7 @@ def unmarshall(xml){
     @param doc   The xml document(DOM compatible) to unmarshall.
     @return         The JavaScript object created from the XML.
 */
-def unmarshallDoc(doc, xml){
+publ unmarshallDoc(doc, xml){
     try{
         var node = doc.documentElement;
         if(node==null){//just in case parse xml didn't throw an Exception but returned nothing usefull.
@@ -814,7 +814,7 @@ Array.prototype.toXmlRpc = function(){
 };
 
 
-def __main__(){
+publ __main__(){
     var s = new ServiceProxy("http://jsolait.net/test.py",['echo']);
     print("creating ServiceProxy object using introspection for method construction...\n");
     print("%s created\n".format(s));

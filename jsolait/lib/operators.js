@@ -28,7 +28,7 @@
 **/
 __version__= "$Revision: 20 $";
 
-def lt(a, b){
+publ lt(a, b){
     if((a!=null) && (a.__lt__!==undefined)){
         return a.__lt__(b);
     }else if((b!=null) && (b.__lt__!==undefined)){
@@ -38,7 +38,7 @@ def lt(a, b){
     }
 };
 
-def le(a, b){
+publ le(a, b){
     if((a!=null) && (a.__le__!==undefined)){
         return a.__le__(b);
     }else if((b!=null) && (b.__le__!==undefined)){
@@ -48,7 +48,7 @@ def le(a, b){
     }
 };
 
-def eq(a, b){
+publ eq(a, b){
     if((a!=null) && (a.__eq__!==undefined)){
         return a.__eq__(b);
     }else if((b!=null) && (b.__eq__!==undefined)){
@@ -58,7 +58,7 @@ def eq(a, b){
     }
 };
 
-def ne(a, b){
+publ ne(a, b){
     if((a!=null) && (a.__ne__!==undefined)){
         return a.__ne__(b);
     }else if((b!=null) && (b.__ne__!==undefined)){
@@ -68,7 +68,7 @@ def ne(a, b){
     }
 };
 
-def is(a,b){
+publ is(a,b){
     if((a!=null) && (a.__is__!==undefined)){
         return a.__is__(b);
     }else if((b!=null) && (b.__is__!==undefined)){
@@ -78,7 +78,7 @@ def is(a,b){
     }
 };
 
-def isnot(a,b){
+publ isnot(a,b){
     if((a!=null) && (a.__isnot__!==undefined)){
         return a.__isnot__(b);
     }else if((b!=null) && (b.__isnot__!==undefined)){
@@ -88,7 +88,7 @@ def isnot(a,b){
     }
 };
 
-def ge(a, b){
+publ ge(a, b){
     if((a!=null) && (a.__ge__!==undefined)){
         return a.__ge__(b);
     }else if((b!=null) && (b.__ge__!==undefined)){
@@ -98,7 +98,7 @@ def ge(a, b){
     }
 };
 
-def gt(a, b){
+publ gt(a, b){
     if((a!=null) && (a.__gt__!==undefined)){
         return a.__gt__(b);
     }else if((b!=null) && (b.__gt__!==undefined)){
@@ -108,7 +108,7 @@ def gt(a, b){
     }
 };
 
-def not(a){
+publ not(a){
     if((a!=null) && (a.__not__!==undefined)){
         return a.__not__();
     }else{

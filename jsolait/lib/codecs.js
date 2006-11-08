@@ -32,7 +32,7 @@ __version__ = "$Revision$";
     Returns all all available encoders.
     @return  An array of encoder names.
 **/
-def listEncoders(){
+publ listEncoders(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "encode_"){
@@ -45,7 +45,7 @@ def listEncoders(){
     Returns all all available decoders.
     @return  An array of decoder names.
 **/
-def listDecoders(){
+publ listDecoders(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 7) == "decode_"){

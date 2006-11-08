@@ -66,7 +66,7 @@ class ParsingFailed extends Exception({
     @param xml     The xml text.
     @return          A DOM of the xml document.
 */
-def parseXML(xml){
+publ parseXML(xml){
     var obj=null;
     var isMoz=false;
     var isIE=false;
@@ -124,7 +124,7 @@ def parseXML(xml){
     @param deep=true        Import all childNodes recursively.
     @return                      The imported Node.
 */
-def importNode(importedNode, deep){
+publ importNode(importedNode, deep){
     deep = (deep==null) ? true : deep;
     //constants from doom2
     var ELEMENT_NODE = 1;
@@ -224,7 +224,7 @@ var getNSPrefix = function(node, namespaceURI, nsPrefixMap){
     @param node   The node to print.
     @return           A string containing the text for the XML.
 */
-def node2XML(node, nsPrefixMap, attrParent){
+publ node2XML(node, nsPrefixMap, attrParent){
     nsPrefixMap = (nsPrefixMap == null)?{}:nsPrefixMap;
     var ELEMENT_NODE = 1;
     var ATTRIBUTE_NODE = 2;

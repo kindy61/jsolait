@@ -184,7 +184,7 @@ class Range extends Iterator({
     @param end       The last item in the range.
     @param step=1 The steps between each Item.
 **/
-def range(start, end, step){
+publ range(start, end, step){
     var r=new Range(Class);
     r.__init__.apply(r, arguments);
     return r;
@@ -284,7 +284,7 @@ class ObjectIterator extends Iterator({
     @param cb                  An IterationCallback object to call for each step.
     @return                      An iterator object or the return value returned by the callback.
 **/
-def iter(iterable, thisObj, cb){
+publ iter(iterable, thisObj, cb){
     var iterator;
     if(iterable.__iter__ !==undefined){
         iterator = iterable.__iter__();
@@ -311,7 +311,7 @@ def iter(iterable, thisObj, cb){
     @param item The item returned by the iterator for the current step.
     @param iteration The Iteration object handling the iteration.
 **/
-def IterationCallback(item, iteration){};
+publ IterationCallback(item, iteration){};
 
 /**
     Returns a list containing all elements from an iteratable object for which the callback returns true.
@@ -321,7 +321,7 @@ def IterationCallback(item, iteration){};
     @param cb                  An IterationCallback object to call for each item.
     @return                      A list containing all elements that were filtered.
 **/
-def filter(iterable, thisObj,cb){
+publ filter(iterable, thisObj,cb){
     var iterator = iter(iterable);
     if(cb == null){
         cb = thisObj;
@@ -338,7 +338,7 @@ def filter(iterable, thisObj,cb){
     @param cb                  An IterationCallback object to call for each item.
     @return                      A list containing new elements.
 **/        
-def map(iterable, thisObj, cb){
+publ map(iterable, thisObj, cb){
     var iterator  = iter(iterable);
     if(cb == null){
         cb = thisObj;
@@ -354,7 +354,7 @@ def map(iterable, thisObj, cb){
     @param iterable          The iterable object.
     @return                      A list containing all elements.
 **/    
-def list(iterable){
+publ list(iterable){
     return iter(iterable).__list__();
 };
 
@@ -389,7 +389,7 @@ class Zipper extends Iterator({
     @param iterable*  Any number of iterable objects.
     @return a Zipper iterator.
 **/
-def zip(iterable){
+publ zip(iterable){
     var iterators =[];
     for(var i=0;i<arguments.length;i++){
         iterators.push(iter(arguments[i]));

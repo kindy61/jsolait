@@ -143,7 +143,7 @@ class  ASVRequest({
     Creates an HTTP request object for retreiving files.
     @return  HTTP request object.
 */
-def getHTTP() {
+publ getHTTP() {
     var obj;
     try{ //to get the mozilla httprequest object
         obj = new XMLHttpRequest();
@@ -198,7 +198,7 @@ def getHTTP() {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-def sendRequest(type, url, user, pass, data, headers, callback){
+publ sendRequest(type, url, user, pass, data, headers, callback){
     var async=false;
     //check if the last argument is a function and treat it as callback;
     if(typeof arguments[arguments.length-1]  == 'function'){
@@ -292,7 +292,7 @@ def sendRequest(type, url, user, pass, data, headers, callback){
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-def getURL(url, user, pass, headers, callback) {
+publ getURL(url, user, pass, headers, callback) {
     var a=["GET"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
@@ -311,7 +311,7 @@ def getURL(url, user, pass, headers, callback) {
     @param callback=null   Callback for asynchronous connections. The callback is called after completion and is passed the request object as 1st Parameter.
     @return                     HTTP request object.
 */
-def postURL(url, user, pass, data, headers, callback) {
+publ postURL(url, user, pass, data, headers, callback) {
     var a= ["POST"];
     for(var i=0;i<arguments.length;i++){
         a.push(arguments[i]);
@@ -324,7 +324,7 @@ def postURL(url, user, pass, data, headers, callback) {
     Returns wether or not the module is usable or not.
     @return True if the module can make HTTP requests, false otherwise.
 **/
-def isUsable(){
+publ isUsable(){
     try{
         getHTTP();
         return true;                

@@ -189,7 +189,7 @@ class Element({
     };
 }) ;   
 
-def __main__(){
+publ __main__(){
     var fm = new Form("http://localhost/echoform.py", "get");
     print("testing all sorts of chars, that should be encoded.");
     

@@ -86,7 +86,7 @@ class JSONRPCError  extends Exception({
     @param obj    The object to marshall
     @return         An xml representation of the object.
 **/
-def marshall(obj){
+publ marshall(obj){
     if(obj == null){
         return "null";
     }else if(obj.toJSON){
@@ -107,7 +107,7 @@ def marshall(obj){
     @param source    The source  to unmarshall.
     @return         The JavaScript object created.
 **/
-def unmarshall(source){
+publ unmarshall(source){
     try {
         var obj;
         eval("obj=" + source);

@@ -31,7 +31,7 @@ __version__="$Revision$";
     Returns all all available encrypters.
     @return  An array of encrypters names.
 **/
-def listEncrypters(){
+publ listEncrypters(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "encrypt_"){
@@ -44,7 +44,7 @@ def listEncrypters(){
     Returns all all available decrypters.
     @return  An array of decrypters names.
 **/
-def listDecrypters(){
+publ listDecrypters(){
     var c=[];
     for(var attr in String.prototype){
         if(attr.slice(0, 8) == "decrypt_"){

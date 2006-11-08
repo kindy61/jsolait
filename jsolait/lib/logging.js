@@ -17,49 +17,49 @@ levelNames = {
 };
 
 
-def getLevelName(lvl){
+publ getLevelName(lvl){
     return levelNames[lvl];
 };
-def setLevelName(lvl, name){
+publ setLevelName(lvl, name){
     levelNames[lvl]=name;
 };
  
-def debug(msg){
+publ debug(msg){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
     rootLogger.debug.apply(rootLogger, arguments);
 };
 
-def info(msg){
+publ info(msg){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
     rootLogger.info.apply(rootLogger, arguments);
 };
 
-def warning(msg){
+publ warning(msg){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
     rootLogger.warning.apply(rootLogger, arguments);
 };
 
-def error(msg, args){
+publ error(msg, args){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
     rootLogger.error.apply(rootLogger, arguments);
 };
 
-def critical(msg, args){
+publ critical(msg, args){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
     rootLogger.critical.apply(rootLogger, arguments);
 };
 
-def log(level, msg, args){
+publ log(level, msg, args){
     if(rootLogger.handlers.length==0){
         basicConfig(0);
     }
@@ -263,7 +263,7 @@ class Logger extends Filter({
 });
     
 
-def basicConfig(level, format){
+publ basicConfig(level, format){
       
     if(rootLogger.handlers.length == 0){ 
         hdlr = new Handler();
@@ -280,7 +280,7 @@ var loggerClass=Logger;
 var defaultFormatter= new Formatter();
 var loggers={};
 
-def getLogger(name){
+publ getLogger(name){
     if(name==undefined){
         l=rootLogger;
     }else{
@@ -300,11 +300,11 @@ def getLogger(name){
     return l;
 };
 
-def getLoggerClass(){
+publ getLoggerClass(){
     return loggerClass;
 };
 
-def setLoggerClass(lc){
+publ setLoggerClass(lc){
     loggerClass=lc;
 };
 

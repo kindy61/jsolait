@@ -38,7 +38,7 @@ minProfileTime=500;
     @param fn         The function to execute.
     @param ...         The rest of the parameters are sent to the function as arguments.
 */
-def timeExec(repeat, fn){
+publ timeExec(repeat, fn){
     var args = [];
     for(var i=2;i<arguments.length;i++){
         args.push(arguments[i]);
@@ -57,7 +57,7 @@ def timeExec(repeat, fn){
     @param fn                              The function to profile. The function wil be called until the min-time is reached.
     @return                                  The time it took to run the function a single time. The time is averaged by the total time/repetitions
 **/
-def profile(min,fn){
+publ profile(min,fn){
     if(arguments.length==1){
         fn=min;
         min=mod.minProfileTime;
@@ -133,7 +133,7 @@ class Test({
     @param name='anonymous' The name for the test.
     @param testScope  A function to test.
 **/
-def test(name, testScope){
+publ test(name, testScope){
     if(arguments.length == 1){
         testScope = name;
         name = 'anonymous';
@@ -146,7 +146,7 @@ def test(name, testScope){
 /**
     Tests a module by running each of the modules test_ methods;
 **/
-def testModule(modObj){
+publ testModule(modObj){
     
     for(var key in modObj){
         if(key.slice(0,5)=='test_'){
@@ -172,7 +172,7 @@ class AssertFailed extends Exception({
     @param value          A boolean to testfor true.
     @param failMsg=''     A message to pass to the AssertFailed constructor in case the assertion fails.
 **/
-def assert(comment, value, failMsg){
+publ assert(comment, value, failMsg){
     if(typeof comment == 'boolean'){
         failMsg=value;
         value = comment;
@@ -189,7 +189,7 @@ def assert(comment, value, failMsg){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-def assertTrue(comment, value){
+publ assertTrue(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -202,7 +202,7 @@ def assertTrue(comment, value){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-def assertFalse(comment, value){
+publ assertFalse(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -215,7 +215,7 @@ def assertFalse(comment, value){
     @param comment=''  A comment for the assertion.
     @param value          A boolean to test.
 **/
-def assertEquals(comment, value1, value2){
+publ assertEquals(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
@@ -224,7 +224,7 @@ def assertEquals(comment, value1, value2){
     assert(comment, eq(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
 };
     
-def assertNotEquals(comment, value1, value2){
+publ assertNotEquals(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
@@ -233,7 +233,7 @@ def assertNotEquals(comment, value1, value2){
     assert(comment, ne(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
 };
 
-def assertIs(comment, value1, value2){
+publ assertIs(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
@@ -242,7 +242,7 @@ def assertIs(comment, value1, value2){
     assert(comment, is(value1, value2), "Expected %s === %s.".format(repr(value1), repr(value2)));
 };
     
-def assertIsNot(comment, value1, value2){
+publ assertIsNot(comment, value1, value2){
     if(arguments.length==2){
         value2=value1;
         value1 = comment;
@@ -251,7 +251,7 @@ def assertIsNot(comment, value1, value2){
     assert(comment, isnot(value1, value2), "Expected %s !== %s.".format(repr(value1), repr(value2)));
 };
 
-def assertNull(comment, value){
+publ assertNull(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -259,7 +259,7 @@ def assertNull(comment, value){
     assert(comment, value===null, "Expected %s === null.".format(repr(value)));
 };
 
-def assertNotNull(comment, value){
+publ assertNotNull(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -267,7 +267,7 @@ def assertNotNull(comment, value){
     assert(comment, value !==null, "Expected %s !== null.".format(repr(value)));
 };
 
-def assertUndefined(comment, value){
+publ assertUndefined(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -275,7 +275,7 @@ def assertUndefined(comment, value){
     assert(comment, value===undefined, "Expected %s === undefined.".format(repr(value)));
 };
 
-def assertNotUndefined(comment, value){
+publ assertNotUndefined(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -283,7 +283,7 @@ def assertNotUndefined(comment, value){
     assert(comment, value!==undefined, "Expected %s !== undefined".format(repr(value)));
 };
 
-def assertNaN(comment, value){
+publ assertNaN(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -291,7 +291,7 @@ def assertNaN(comment, value){
     assert(comment, isNaN(value)===true, "Expected %s === NaN.".format(repr(value)));
 };
 
-def assertNotNaN(comment, value){
+publ assertNotNaN(comment, value){
     if(arguments.length==1){
         value = comment;
         comment ='';
@@ -299,11 +299,11 @@ def assertNotNaN(comment, value){
     assert(comment, isNaN(value)!==true, "Expected %s !== NaN".format(repr(value)));
 };
 
-def fail(comment){
+publ fail(comment){
     throw new AssertFailed(comment, "Fail was called");
 };
 
-def objectKeys(obj){
+publ objectKeys(obj){
     var keys=[];
     for(var n in obj){
         keys.push(n);

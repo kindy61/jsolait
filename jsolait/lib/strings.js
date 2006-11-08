@@ -34,7 +34,7 @@ class WordNumberStringSplitter({
     };
 });
 
-def naturalCompare(a, b){
+publ naturalCompare(a, b){
     var asplitter=new WordNumberStringSplitter(a);
     var bsplitter=new WordNumberStringSplitter(b);
     
