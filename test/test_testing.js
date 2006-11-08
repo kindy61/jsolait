@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 
 import testing;
 
-def test( logger){
+publ test( logger){
     logger.log("testing testing ...");
     
     testing.assert(true);
@@ -57,6 +57,6 @@ def test( logger){
     
 };
 
-def __main__(){
+publ __main__(){
     test({log:print})
 };    

@@ -2,11 +2,11 @@ __version__ ="$Revision: 44 $";
 
 var moduleNames=['testing','core','sets','itertools','codecs','crypto','urllib', 'jsonrpc','xmlrpc'];
 
-def log(){
+publ log(){
     print.apply(null, arguments);
 };
 
-def test(logger){
+publ test(logger){
         
 
     var step=function(i){
@@ -32,7 +32,7 @@ def test(logger){
     
 };
 
-def __main__(){
+publ __main__(){
     test(mod);
 };    
 

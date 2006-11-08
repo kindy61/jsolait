@@ -3,7 +3,7 @@ __version__ = "$Revision: 44 $";
 import testing;
 import codecs;
 
-def test(logger){
+publ test(logger){
     logger.log("testing codecs ...");
    
     testing.assertEquals('encoders', codecs.listEncoders(), ['base64','uri','lzw']);
@@ -21,6 +21,6 @@ def test(logger){
 };
 
 
-def __main__(){
+publ __main__(){
     test({log:print})
 };

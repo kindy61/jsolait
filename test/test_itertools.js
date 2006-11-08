@@ -3,7 +3,7 @@ __version__ = "$Revision: 44 $";
 import testing;
 import itertools:*;
 
-def test(logger){
+publ test(logger){
     logger.log("testing itertools module ...");
     
     var a=[0,1,2,3,4,5,6,7,8,9];
@@ -47,7 +47,7 @@ def test(logger){
     });
     testing.assertEquals('iter(a) with stop during iteration.', s, "0,1,2,3,4");
     
-    var s = ''
+    var s = '';
     iter(item in a){
         if(item == 4){
             s+=item;
@@ -81,7 +81,7 @@ def test(logger){
 };
 
 
-def profile(){
+publ profile(){
     var task=function(){
         var s='';
         for(var i=0;i<100;i++){
@@ -186,7 +186,7 @@ def profile(){
     
 
 };
-def __main__(){
+publ __main__(){
     test({log:print})
 
 };    

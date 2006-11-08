@@ -905,8 +905,7 @@ jsolait=(function(mod){
         var modGlobaling =wrd('mod') + '\\s+' + grp(identifier())  +'\\s*=';
         
         var tupleAssingnment ='\\s\\[' + grp('.*?')  + '\\]\\s*=' + grp('.+?') + ';';
-        
-        
+   
         var allStatments=re(or(blockComment, comment, string("'"), string('"'), 
                                         classStatement, simpleClassStatement, classMethodStatement,  moduleFunctionStatement, 
                                         classMember,importStatement,iterStatement,modLevelAssignment,modGlobaling,tupleAssingnment));
@@ -984,8 +983,7 @@ jsolait=(function(mod){
         return src;
     };
     
-    
-    
+
     mod.run=function(modName, methodName, alertError){
         mod.loadModule(modName, function(m, err){
             if(err){

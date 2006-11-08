@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 import testing;
 import strings;
 
-def test( logger){
+publ test( logger){
    
     logger.log("testing strings");
     
@@ -18,6 +18,6 @@ def test( logger){
     testing.assertEquals("natural compare", a.join(", "), "jsolait 1, jsolait 2, jsolait 11");
 };
 
-def __main__(){
+publ __main__(){
     test({log:print})
 };

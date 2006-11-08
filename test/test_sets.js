@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 import testing;
 import sets;
 
-def test(logger){
+publ test(logger){
     var s1=new sets.Set("0123456".split(""));
     var s2=new sets.Set("3456789".split(""));
     logger.log("testing sets...");
@@ -32,6 +32,6 @@ def test(logger){
                                 new sets.Set("012789".split("")),s2.symmDifference(s1));
 };
 
-def __main__(){
+publ __main__(){
     test({log:print})
 };

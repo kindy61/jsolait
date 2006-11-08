@@ -2,7 +2,7 @@ __version__ = "$Revision: 44 $";
 
 import testing;
 
-def test(logger){
+publ test(logger){
     logger.log("testing core String methods ...");
     
     testing.assertEquals("%s", "...%s...".format("abc"), "...abc...");
@@ -81,6 +81,6 @@ def test(logger){
     //testing.assertEquals("jsolait.loadURI()", str(jsolait.loadURI(__sourceURI__.slice(0,-2) + "txt")), "test\n");
 };
 
-def __main__(){
+publ __main__(){
     test({log:print})
 };

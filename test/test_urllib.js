@@ -3,7 +3,7 @@ __version__ = "$Revision: 44 $";
 import testing;
 import urllib;
 
-def test(logger){
+publ test(logger){
     logger.log("testing urllib ...");
     testing.assertTrue("urllib usable", urllib.isUsable());
     
@@ -14,6 +14,6 @@ def test(logger){
     testing.assertEquals(resp.responseText, "test")
     
 };
-def __main__(){
+publ __main__(){
     test({log:print});
 };
