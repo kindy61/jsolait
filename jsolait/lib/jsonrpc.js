@@ -72,8 +72,9 @@ class JSONRPCError  extends Exception({
         @param err          The error object.
         @param trace=undefined  The error causing this Exception
     **/
-    publ __init__(err, trace){
-        supr.__init__.call(this, err,trace);
+    publ __init__(msg, err, trace){
+        supr.__init__.call(this, msg, trace);
+        this.error = err;
     };
 });
 
@@ -128,7 +129,7 @@ publ unmarshall(source){
     The results and errors are passed to the callback.
 **/
 class JSONRPCMethod({
-
+    
     var postData = function(url, user, pass, data, callback){
         if(callback == null){//todo ===undefined
             var rslt = urllib.postURL(url, user, pass, data, [["Content-Type", "text/plain"]]);
@@ -155,7 +156,7 @@ class JSONRPCMethod({
             }else{
                 var rslt = unmarshall(respTxt);
                 if(rslt.error != null){
-                    throw new JSONRPCError(rslt.error);
+                    throw new JSONRPCError('Error returned by Service', rslt.error);
                 }else{
                     return rslt.result;
                 }
@@ -185,6 +186,11 @@ class JSONRPCMethod({
 
     publ __call__(){
         var args=new Array();
+        
+        for(var i=0;i<this._defaultArgs.length;i++){
+            args.push(this._defaultArgs[i]);
+        }
+        
         for(var i=0;i<arguments.length;i++){
             args.push(arguments[i]);
         }
@@ -244,6 +250,8 @@ class JSONRPCMethod({
     publ user;
     ///The password used for HTTP authorization.
     publ password;
+    
+    publ _defaultArgs=[];
 });
 
 /**

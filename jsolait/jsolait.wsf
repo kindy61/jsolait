@@ -29,26 +29,22 @@
     </runtime>
     
     <script language="JavaScript" src="./jsolait.js" />
+    <script language="JavaScript" src="./packages/packages.pth" />
+
     
     <script language="JavaScript"> <![CDATA[
+        var fs= new ActiveXObject("Scripting.FileSystemObject");
+
         jsolait.__sourceURI__ = 'file://' + WScript.scriptFullName.slice(0,-3) + "js";
+        jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
+        jsolait.moduleSearchURIs = ["%(baseURI)s/lib"].concat(ModuleSearchPaths);
+        
+        
         setTimeout=function(fn){
             fn();
         };
 
-    jsolait.Module("jsolaitws", function(mod){
 
-        mod.__version__ = "$Revision$"
-        mod.__sourceURI__ = 'file://' + WScript.scriptFullName;
-        
-        var fs= new ActiveXObject("Scripting.FileSystemObject");
-        ///The location where jsolait is installed.
-        jsolait.baseURI = 'file://' + fs.getParentFolderName(WScript.scriptFullName);
-        jsolait.moduleSearchURIs = ["%(baseURI)s/lib"];
-        
-        var wshShell= new ActiveXObject("WScript.Shell");
-        var ForReading = 1, ForWriting = 2;
-        
         print = function(m){
             var s=[];
             for(var i=0;i<arguments.length;i++){
@@ -57,7 +53,7 @@
             
             WScript.echo(s.join(" "));
         }
-         
+        
         pprint= function(m, indent){
             var m = m.split("\n");
             
@@ -81,88 +77,35 @@
             }
         }
         pprint.indent=0;
-        
+
         Error.prototype.toString=function(){
-            return  this.name +": " + this.message;
+            s=""
+            for(var key in this){
+                s+='\n' + key+':' + this[key] 
+            }
+            return   s;
         }
 
-        mod.run=function(finishedCB){
-            
-            if (WScript.arguments.unnamed.length==0){
-                WScript.Arguments.ShowUsage();                                              
-                return;
-            }else{
-                //var fileName=fs.getAbsolutePathName(WScript.arguments.unnamed.item(0));
-                var fileName=WScript.arguments.unnamed.item(0);
-                //todo:check if file exists
-            }
-            
-            //get the base of the file to execute
-            var fileBase= fs.getParentFolderName(fileName);
-            //make sure the search path is updated to include the fileBase
-            jsolait.moduleSearchURIs = [fileBase,  "%(baseURI)s/lib"];
-            
-            //change working dir to the file's location
-            //todo:is it OK to change cwd?
-            if(fileBase.slice(0, 'file://'.length) == 'file://'){
-                wshShell.currentDirectory = fileBase.slice('file://'.length);
-            }
-
-            if(fileName.toLowerCase() != jsolait.__sourceURI__.toLowerCase()  &&  fileName.toLowerCase() != mod.__sourceURI__.toLowerCase()){
-                jsolait.moduleSourceURIs['__main__']=fileName;
-                
-                jsolait.loadModule('__main__', function(modl, err){
+        __wsFinished__=false;
+        try{   
+            jsolait.loadModule("wscript", function(jsolaitws,err){
+                jsolaitws.run( function(err){
+                    __wsFinished__=true;
                     if(err){
-                        finishedCB(err);
-                    }else{
-                        try{
-                            var tmain =typeof(modl.__main__);
-                        }catch(e){
-                            var tmain="";
-                        }
-                        
-                        if(tmain=='function'){
-                            //todo find arguments
-                            if(WScript.arguments.named.exists("script-args")){
-                                var args = WScript.arguments.named.Item("script-args");
-                                switch(args.slice(0,1)){
-                                    case "{": case "'":  case "[":  case '"':
-                                        break;
-                                    default:
-                                        args = jsolait.repr(args);
-                                }
-                                f=new Function( "return " + args);
-                                args = [f()];
-                            }else{
-                                var args =[];
-                            }
-                            
-                            try{
-                                modl.__main__.apply(modl, args);
-                                finishedCB(null);
-                            }catch(e){
-                                finishedCB( new mod.Exception("runing %s  __main__()  failed\n".format(modl),e));
-                            }
-                        }
+                        print(''+err);
+                        throw err;
                     }
-                }); 
-            }
-        };
-    });
-
-    try{   
-        jsolait.loadModule("jsolaitws", function(jsolaitws,err){
-            jsolaitws.run( function(err){
-                if(err){
-                    WScript.Echo(''+err);
-                }
-            
+                
+                });
             });
-        });
-    }catch(e){
+        }catch(e){
+            throw e;
+        }
         
-    }
-       
+        while(!__wsFinished__){
+            WScript.sleep(0);
+        }
+           
     ]]>
     </script>
     

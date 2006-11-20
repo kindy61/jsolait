@@ -11,6 +11,7 @@ publ test(logger){
 
     var step=function(i){
         var modName= 'test_' + moduleNames[i];
+        logger.log('loading', modName)
         jsolait.loadModule(modName, function(m,err){
             if(err){
                 logger.log(err);

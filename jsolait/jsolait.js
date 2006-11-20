@@ -41,10 +41,7 @@ jsolait=(function(mod){
     mod.toString=mod.__str__;
     
     ///The location where jsolait is installed.
-    //do not edit the following lines, it will be replaced by the build script
-    /*@baseURI begin*/
     mod.baseURI="./jsolait";
-    /*@baseURI end*/
     
     try{// to guess the location where jsolait is installed
         var elems=document.getElementsByTagName('script');
@@ -72,7 +69,7 @@ jsolait=(function(mod){
     **/
     mod.moduleSearchURIs = [".", "%(baseURI)s/lib"];
    
-    mod.packagesURI = "%(baseURI)s/../jsolait-packages";
+    mod.packagesURI = "%(baseURI)s/packages";
     
     mod.modules={};
  
@@ -230,7 +227,6 @@ jsolait=(function(mod){
         }
     };
     
-    
     /**
         Creates a new class object which inherits from superClass.
         @param name="anonymous"  The name of the new class.
@@ -315,7 +311,7 @@ jsolait=(function(mod){
                 }
             }
         }
-        //make sure all jsolait objects have a id method
+        //make sure all jsolait objects have an id method
         if(proto.__id__ === undefined){
             proto.__id__=function(){
                 this.__id__ = '@' + (Class.__idcount__++);
@@ -325,12 +321,8 @@ jsolait=(function(mod){
         proto.__class__=__class__;
 
         //run the class setup function provided as classScope
-        if(classScope.length-1 > baseProtos.length){
-            var privId = '__priv__' + __class__.__id__;
-            classScope.apply(this,[proto, privId].concat(baseProtos));
-        }else{
-            classScope.apply(this,[proto].concat(baseProtos));
-        }
+        var privId = '__priv__' + __class__.__id__;
+        classScope.apply(this,[proto, privId].concat(baseProtos));
         
         //make sure the toString points to __str__, this will make overwriting __str__ after object construction impossible (todo ?)
         //but will be faster than having toString call __str__, also overwriting methods unless they are ment to be overridden is not cool anyways.
@@ -516,7 +508,6 @@ jsolait=(function(mod){
         ///The path paths jsolait tried to load the file from.
         publ.sourceURI;
     });
-    
 
     mod.loadURI=function(uri, cb){
         // IE7 is shite or I am an idiot
@@ -568,7 +559,6 @@ jsolait=(function(mod){
                 }
             }
         
-        
             try{
                 xmlhttp.open("GET", uri, true);
                 xmlhttp.send("");
@@ -593,7 +583,6 @@ jsolait=(function(mod){
         var sourceURI;
         
         var searchURIs = [];
-        
         if(mod.moduleSourceURIs[name] != undefined){
             searchURIs.push(mod.moduleSourceURIs[name].format(mod));
         }else{
@@ -605,7 +594,6 @@ jsolait=(function(mod){
                 }
                 searchURIs.push("%s/%s.js".format(mod.packagesURI.format(mod),name.join('/')));
             }
-            
             for(var i=0;i<mod.moduleSearchURIs.length; i++){
                 searchURIs.push("%s/%s.js".format(mod.moduleSearchURIs[i].format(mod), name.join("/")));
             }
@@ -675,7 +663,7 @@ jsolait=(function(mod){
     
     mod.createModuleFromSource =function(name, source, sourceURI, createdCB){
         var newMod = new mod.ModuleClass(name, source, sourceURI);
-    
+        
         var cmpSrc = mod.compileSource(source);
         
         var deps= cmpSrc.imports;
@@ -771,7 +759,6 @@ jsolait=(function(mod){
             resolvedCB(attachTo);
         }
     };
-
     
     mod.ModuleClass=Class(function(publ,priv,supr){
         publ.__name__;
@@ -813,26 +800,6 @@ jsolait=(function(mod){
         }
     });
     
-    mod.createModule=function(name, source, sourceURI, modFn){
-        var newMod = new mod.ModuleClass(name, source, sourceURI);
-        
-        try{//to run the module source
-            modFn.call(newMod, newMod);
-        }catch(e){
-            throw new mod.CreateModuleFailed(newMod, e);
-        }
-        
-        applyNames(newMod);
-       
-        mod.modules[name] = newMod;
-        return newMod;
-    };
-    
-    
-    mod.Module = function(name, modFn){
-        return mod.createModule(name, str(modFn), 'unknown', modFn);
-    };
-    
     var applyNames=function(container){
         for(var n in container){
             var obj = container[n];
@@ -842,157 +809,129 @@ jsolait=(function(mod){
         }
     };
 
-    mod.compileSource=function(src){
-        var or=function(){
-            var a=[];
-            for(var i=0;i<arguments.length;i++){
-                a.push(grp(arguments[i]));
-            }
-            return a.join('|');
-        }
-        
-        var grp=function(a){
-            return '(' + a + ')';
-        }
 
-        var wrd=function(w){
-            w= w.replace(/\\/g,'\\\\');
-            w= w.replace(/\(/g,'\\(');
-            w= w.replace(/\)/g,'\\)');
-            w= w.replace(/\//g,'\\/');
-            w= w.replace(/\*/g,'\\*');
-            w= w.replace(/\./g,'\\.');
-            w= w.replace(/\]/g,'\\]');
-            w= w.replace(/\[/g,'\\[');
-            w= w.replace(/\{/g,'\\{');
-            w= w.replace(/\}/g,'\\}');
-            
-            return '\\b' + w + '\\b';
-        };
-        
-
-        var parens= function(a){
-            return '\\('+a+'\\)';
+//begin compiler
+    var or=function(){
+        var a=[];
+        for(var i=0;i<arguments.length;i++){
+            a.push(grp(arguments[i]));
         }
-        
-        var re=function(s){
-            return new RegExp(s,'g');
-        };
-        
-        var string=function(d){
-            return   d + '(\\\\'+d+'|.' + d + ')*?' ;
-        };
-        
-        var identifier=function(){
-           return '\\w+';
-        };
-        
-        var anyWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
-        var someWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
-        var startOfLine= grp('^|[\\n\\r]');
-        
-        var blockComment='/\\*([\\n\\r]|.)*?\\*/';
-        
-        var comment='//' + '.*' ;
-        
-        var methodDecl= grp([wrd('function'), wrd('def'),wrd('publ')].join('|')) ;
-        
-        var moduleFunctionStatement = startOfLine + methodDecl +'\\s+' +grp(identifier()) + '\\s*' +  grp(parens('.*?'));
-        
-        var classMethodStatement = someWhiteSpaceStart + methodDecl +'\\s+' +grp(identifier()) +  '\\s*' + grp(parens('.*?'));
-        
-        var classMember= someWhiteSpaceStart + wrd('publ')+ '\\s+'  +grp(identifier());
-        
-        var classStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s+' + wrd('extends') +'\\s+' + grp('.+?') + '\\(\\{';
-        var simpleClassStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s*\\(\\{';
-        
-        var importStatement = anyWhiteSpaceStart + wrd('import')+'\\s+'  + grp('.+?') + '[\\r\\n;]';
-        
-        var iterStatement= anyWhiteSpaceStart + wrd('iter') + '\\s*\\(\\s*' +grp(identifier())+  '\\s+' + wrd('in') + '\\s+' + grp('.+?') + '\\)\\{';
-        
-        var modLevelAssignment=startOfLine +grp(identifier())+'\\s*=';
-        
-        var modGlobaling =wrd('mod') + '\\s+' + grp(identifier())  +'\\s*=';
-        
-        var tupleAssingnment ='\\s\\[' + grp('.*?')  + '\\]\\s*=' + grp('.+?') + ';';
-   
-        var allStatments=re(or(blockComment, comment, string("'"), string('"'), 
-                                        classStatement, simpleClassStatement, classMethodStatement,  moduleFunctionStatement, 
-                                        classMember,importStatement,iterStatement,modLevelAssignment,modGlobaling,tupleAssingnment));
-        
+        return a.join('|');
+    }
+    var grp=function(a){return '(' + a + ')'; };
+    var wrd=function(w){
+        w= w.replace(/\\/g,'\\\\');
+        w= w.replace(/\(/g,'\\(');
+        w= w.replace(/\)/g,'\\)');
+        w= w.replace(/\//g,'\\/');
+        w= w.replace(/\*/g,'\\*');
+        w= w.replace(/\./g,'\\.');
+        w= w.replace(/\]/g,'\\]');
+        w= w.replace(/\[/g,'\\[');
+        w= w.replace(/\{/g,'\\{');
+        w= w.replace(/\}/g,'\\}');
+        return '\\b' + w + '\\b';
+    };
 
-        var Replacer=Class(function(publ,priv,supr){
-            publ.__init__=function(match, repl){
-                this.match=re(match);
-                this.replacement=repl;
-            };
-            
-            publ.run = function(a){
-                if(a.match(this.match)){
-                    return a.replace(this.match, this.replacement);
+    var parens= function(a){return '\\('+a+'\\)';};
+    var re=function(s){ return new RegExp(s,'g');};
+    var string=function(d){return   d + '(\\\\'+d+'|.' + d + ')*?' ;};
+    var identifier=function(){return '\\w+';};
+    var anyWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
+    var someWhiteSpaceStart= grp('(^|[\\n\\r])\\s*') ;
+    var startOfLine= grp('^|[\\n\\r]');
+    var blockComment='/\\*([\\n\\r]|.)*?\\*/';
+    var comment='//' + '.*' ;
+    var methodDecl= grp([wrd('function'), wrd('def'),wrd('publ')].join('|')) +'\\s+' +grp(identifier()) + '\\s*' +  grp(parens('.*?'));
+    
+    var moduleFunctionStatement = startOfLine + methodDecl ;
+    var classMethodStatement = someWhiteSpaceStart + methodDecl;
+    
+    var classMember= someWhiteSpaceStart + wrd('publ')+ '\\s+'  +grp(identifier());
+    var classStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s+' + wrd('extends') +'\\s+' + grp('.+?') + '\\s*\\(\\{';
+    var simpleClassStatement = anyWhiteSpaceStart + wrd('class')+'\\s+'  +grp(identifier()) + '\\s*\\(\\{';
+    
+    var importStatement = anyWhiteSpaceStart + wrd('import')+'\\s+'  + grp('.+?') + '[\\r\\n;]';
+    var iterStatement= anyWhiteSpaceStart + wrd('iter') + '\\s*\\(\\s*' +grp(identifier())+  '\\s+' + wrd('in') + '\\s+' + grp('.+?') + '\\)\\s*\\{';
+    var modLevelAssignment=startOfLine +grp(identifier())+'\\s*=';
+    var modGlobaling =wrd('mod') + '\\s+' + grp(identifier())  +'\\s*=';
+    var tupleAssingnment ='\\s\\[' + grp('.*?')  + '\\]\\s*=' + grp('.+?') + ';';
+    var allStatments=re(or(blockComment, comment, string("'"), string('"'), 
+                                    classStatement, simpleClassStatement, classMethodStatement,  moduleFunctionStatement, 
+                                    classMember,importStatement,iterStatement,modLevelAssignment,modGlobaling,tupleAssingnment));
+    
+    var Replacer=Class(function(publ,priv,supr){
+        publ.__init__=function(match, repl){
+            this.match=re(match);
+            this.replacement=repl;
+        };
+        
+        publ.run = function(a){
+            if(a.match(this.match)){
+                if(typeof this.replacement=='function'){
+                    return this.replacement(a,RegExp.$1,RegExp.$2,RegExp.$3,RegExp.$4,RegExp.$5,RegExp.$6,RegExp.$7,RegExp.$8,RegExp.$9);
                 }else{
-                    return null;
+                    return a.replace(this.match, this.replacement);
                 }
-            };
+            }else{
+                return null;
+            }
+        };
+    });
+
+    mod.compileSource=function(src){
+        var imports=[];
+        
+        var replacers=[
+            new Replacer(moduleFunctionStatement, '$1var $3 = mod.$3=function$4' ),
+            new Replacer(classMethodStatement, '$1publ.$4=function$5' ) ,      
+            new Replacer(classStatement, function(s, re1,re2,re3,baseNames){
+                s=s.replace(this.match,'$1var $3 = mod.$3=Class("$3", $4, function(publ,priv,supr){var ');
+                var names = baseNames.split(',');
+                for(var i=0;i<names.length;i++){
+                    var name=names[i].replace(/\s/g,'');
+                    names[i]='$' + name + '=' + name + '.prototype';
+                }
+                s= s + names.join(', ') + ';';
+                return s;
+            }),       
+            new Replacer(simpleClassStatement, '$1var $3 = mod.$3=Class("$3", function(publ,priv,supr){' ),       
+            new Replacer(classMember, '$1publ.$3' ),
+            new Replacer(modLevelAssignment, '$1var $2 = mod.$2 =' ),
+            new Replacer(modGlobaling, '$1 = mod.$1 =' ),
+            new Replacer(importStatement, function(s, re1,re2,impcode){
+                imports.push(impcode);
+                return '/*' + s + '*/';
+            }),
+            new Replacer(iterStatement, function(s){
+                imports.push('itertools:iter');
+                return s.replace(this.match, "$1for(var $3,  _$3_iterator_= iter($4);  ($3=_$3_iterator_.next())!== undefined;){");
+            }),
+            new Replacer(tupleAssingnment, function(s, names, expr){
+                names = names.replace(/\s/g,'').split(',');
+                var s =' var ' + names.join(',')+', _' + names.join('_') + '=' + expr +';'
+                for(var i=0;i<names.length;i++){
+                    s+=names[i] + '= _' + names.join('_') + '['+i+'];';
+                }
+                return s;
+            })
+        ];    
+        
+        src =src.replace(allStatments, function(a){
+            var reslt=null;
+            for(var i=0;i<replacers.length;i++){
+                rslt=replacers[i].run(a);
+                if(rslt!=null){ 
+                    return rslt;
+                }
+            }
+            return a;
         });
         
-        
-        var compile=function(src){
-            var replacers=[
-                new Replacer(moduleFunctionStatement, '$1var $3 = mod.$3=function$4' ),
-                new Replacer(classMethodStatement, '$1publ.$4=function$5' ) ,      
-                new Replacer(classStatement, '$1var $3 = mod.$3=Class("$3", $4, function(publ,priv,supr){' ),       
-                new Replacer(simpleClassStatement, '$1var $3 = mod.$3=Class("$3", function(publ,priv,supr){' ),       
-                new Replacer(classMember, '$1publ.$3' ),
-                new Replacer(modLevelAssignment, '$1var $2 = mod.$2 =' ),
-                new Replacer(modGlobaling, '$1 = mod.$1 =' )
-            ];
-            
-            var importRE=re(importStatement);
-            var iterRE =re(iterStatement);
-            var tupleRE =re(tupleAssingnment);
-            
-            var imports=[];
-            
-            src =src.replace(allStatments, function(a){
-                var reslt=null;
-
-                
-                for(var i=0;i<replacers.length;i++){
-                    rslt=replacers[i].run(a);
-                    if(rslt!=null){ 
-                        return rslt;
-                    }else{
-                        if(a.match(importRE)){
-                            imports.push(RegExp.$3);
-                            return '/*' + a + '*/';
-                        }else if(a.match(iterRE)){
-                            imports.push('itertools:iter');
-
-                            return a.replace(iterRE, "$1for(var $3,  _$3_iterator_= iter($4);  ($3=_$3_iterator_.next())!== undefined;){");
-                        }else if(a.match(tupleRE)){
-                            var names= RegExp.$1;
-                            var expr= RegExp.$2;
-                            
-                            names = names.replace(/\s/g,'').split(',');
-                            var s =' var ' + names.join(',')+', _' + names.join('_') + '=' + expr +';'
-                            for(var i=0;i<names.length;i++){
-                                s+=names[i] + '= _' + names.join('_') + '['+i+'];';
-                            }
-                            return s;
-                        }
-                    }
-                }
-                return a;
-            });
-            
-            return {imports: imports, src:src};
-        };
-        var src = compile(src);
-        //print(src.src)
-        return src;
+        //print(src)
+        return {imports: imports, src:src};
     };
-    
+//end compiler    
 
     mod.run=function(modName, methodName, alertError){
         mod.loadModule(modName, function(m, err){
