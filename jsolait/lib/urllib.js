@@ -248,7 +248,7 @@ publ sendRequest(type, url, user, pass, data, headers, callback){
         xmlhttp.onreadystatechange=function(){
             if (xmlhttp.readyState==4) {
                 callback(xmlhttp);
-                xmlhttp.onreadystatechange = null; //help IE with garbage collection
+                //xmlhttp.onreadystatechange = null; //help IE with garbage collection
                 xmlhttp = null; 
             }else if (xmlhttp.readyState==2){
                 //status property should be available (MS IXMLHTTPRequest documentation)

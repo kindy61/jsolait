@@ -32,14 +32,19 @@ import sets;
     Event class.
 **/
 class Event({
-    publ __init__(type, target){
-        this.type = type;
+    publ __init__(target){
+        this.type = this.__class__.__name__;
         this.target = target;
     };
     ///The event type.
     publ type=null;
     ///The target of the event
     publ target=null;
+
+    publ __str__(){
+        return '[Event %s]'.format(this.type);
+    
+    };
 });
 
 
