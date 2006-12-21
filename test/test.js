@@ -1,29 +1,39 @@
-Module("test", "$Revision: 44 $", function(mod){
-    
-    var moduleNames=['testing','core','sets','iter','codecs','crypto','urllib', 'jsonrpc','xmlrpc'];
+__version__ ="$Revision: 44 $";
 
-    mod.log=function(){
-        print.apply(null, arguments);
-    };
-    
-    mod.test=function(t, logger){
-            
-        for(var i=0;i<moduleNames.length;i++){
-            var modName= 'test_' + moduleNames[i];
+var moduleNames=['testing','core','sets','itertools','codecs','crypto','urllib', 'jsonrpc','xmlrpc'];
+
+publ log(){
+    print.apply(null, arguments);
+};
+
+publ test(logger){
         
-            var m = imprt(modName);
-            try{
-                m.test(t, logger);
-            }catch(e){
-                logger.log(e);
-                throw(e)
-            }
-        }
-    };
-    
-    mod.__main__=function(){
-        var testing = imprt("testing");
-        mod.test(testing, mod);
-    };    
 
-});
+    var step=function(i){
+        var modName= 'test_' + moduleNames[i];
+        logger.log('loading', modName)
+        jsolait.loadModule(modName, function(m,err){
+            if(err){
+                logger.log(err);
+            }else{
+                try{
+                    m.test(logger);
+                }catch(e){
+                    logger.log(e);
+                }
+            }
+            if(i<moduleNames.length-1){
+                step(i+1);
+            }
+        });
+    }
+    
+    step(0);
+        
+    
+};
+
+publ __main__(){
+    test(mod);
+};    
+
