@@ -96,7 +96,7 @@ publ marshall(obj){
         var v=[];
         for(var attr in obj){
             if(typeof obj[attr] != "function"){
-                v.push('"' + attr + '": ' + marshall(obj[attr]));
+                v.push(marshall(attr) + ': ' + marshall(obj[attr]));
             }
         }
         return "{" + v.join(", ") + "}";
